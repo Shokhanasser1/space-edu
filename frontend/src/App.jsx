@@ -5,6 +5,7 @@ import Navigation from '@/components/layout/Navigation';
 import ParticleBackground from '@/components/layout/ParticleBackground';
 import PageTransition from '@/components/layout/PageTransition';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import StaffRoute from '@/components/StaffRoute';
 import Footer from '@/components/layout/Footer';
 import CosmicLoader from '@/components/ui/CosmicLoader';
 import ChatSystem from '@/features/chat/ChatSystem';
@@ -16,6 +17,7 @@ import HomeView     from '@/views/home/HomeView';
 import NotFoundView from '@/views/misc/NotFoundView';
 
 // Lazy — everything else
+import RouteErrorBoundary from '@/components/RouteErrorBoundary';
 const SolarSystemView     = lazy(() => import('@/views/explore/SolarSystemView'));
 const StarFinderView      = lazy(() => import('@/views/explore/StarFinderView'));
 const SpaceRunView        = lazy(() => import('@/views/game/SpaceRunView'));
@@ -32,8 +34,6 @@ const InterviewsView      = lazy(() => import('@/views/learn/InterviewsView'));
 const InterviewsTopicView = lazy(() => import('@/views/learn/InterviewsTopicView'));
 const ProblemsView        = lazy(() => import('@/views/learn/ProblemsView'));
 const ProblemDetailView   = lazy(() => import('@/views/learn/ProblemDetailView'));
-const UnitView            = lazy(() => import('@/views/learn/UnitView'));
-const LessonView          = lazy(() => import('@/views/learn/LessonView'));
 const UniversalLessonView = lazy(() => import('@/views/learn/UniversalLessonView'));
 const DailyChallengeView  = lazy(() => import('@/views/community/DailyChallengeView'));
 const LeaderboardView     = lazy(() => import('@/views/community/LeaderboardView'));
@@ -62,7 +62,8 @@ export default function App() {
   const isGame  = location.pathname === GAME_PATH;
   const isAuth  = ['/login', '/register'].includes(location.pathname);
   const isAdmin = location.pathname === '/admin-panel';
-  const shouldHideFooter = ['/history', '/live'].includes(location.pathname) || isAdmin;
+  const isHome  = location.pathname === '/';
+  const shouldHideFooter = ['/history', '/live', '/'].includes(location.pathname) || isAdmin;
 
   return (
     <div className="relative min-h-screen text-white font-sans">
@@ -70,6 +71,12 @@ export default function App() {
       {!isGame && !isAuth && !isAdmin && <Navigation />}
 
       <main className="relative z-10">
+        {/* One broken screen is a broken screen, not a broken site. The only
+            boundary used to be the root one, which replaces the whole
+            application with a crash page — and SpaceLabView reaches
+            `useLoader` at unpkg.com and raw.githubusercontent.com, which throws
+            when a third-party host is blocked or rate-limited. */}
+        <RouteErrorBoundary>
         <Suspense fallback={<CosmicLoader />}>
           <Routes>
             {/* Public */}
@@ -79,7 +86,6 @@ export default function App() {
             <Route path="/leaderboard"  element={<PT><LeaderboardView /></PT>} />
             <Route path="/history"      element={<PT><HistoryView /></PT>} />
             <Route path="/market"       element={<PT><MarketView /></PT>} />
-            <Route path="/store"        element={<PT><RewardsStoreView /></PT>} />
             <Route path="/space-game"   element={<PT><SpaceRunView /></PT>} />
             <Route path="/lab"          element={<PT><SpaceLabView /></PT>} />
             <Route path="/3d-solar-system" element={<PT><SolarSystemView /></PT>} />
@@ -107,17 +113,18 @@ export default function App() {
             <Route path="/learn/:subject/:topicId/lesson/:lessonIdx"                    element={<PT><UniversalLessonView /></PT>} />
             <Route path="/learn/problems"                 element={<PT><ProblemsView /></PT>} />
             <Route path="/learn/problems/:id"             element={<PT><ProblemDetailView /></PT>} />
-            <Route path="/unit/:unitId"                   element={<PT><UnitView /></PT>} />
-            <Route path="/lesson/:unitId/:lessonId"       element={<PT><LessonView /></PT>} />
 
-            {/* Community + Profile */}
-            <Route path="/profile"   element={<PT><ProfileView /></PT>} />
-            <Route path="/portfolio" element={<PT><PortfolioView /></PT>} />
-            <Route path="/chat"      element={<PT><ChatView /></PT>} />
-            <Route path="/daily"     element={<PT><DailyChallengeView /></PT>} />
-
-            {/* Admin */}
+            {/* Protected Routes */}
             <Route element={<ProtectedRoute />}>
+              <Route path="/store"     element={<PT><RewardsStoreView /></PT>} />
+              <Route path="/profile"   element={<PT><ProfileView /></PT>} />
+              <Route path="/portfolio" element={<PT><PortfolioView /></PT>} />
+              <Route path="/chat"      element={<PT><ChatView /></PT>} />
+              <Route path="/daily"     element={<PT><DailyChallengeView /></PT>} />
+            </Route>
+
+            {/* Admin — staff only, not merely signed in */}
+            <Route element={<StaffRoute />}>
               <Route path="/admin-panel" element={<PT><AdminDashboard /></PT>} />
             </Route>
 
@@ -125,9 +132,10 @@ export default function App() {
             <Route path="*" element={<NotFoundView />} />
           </Routes>
         </Suspense>
+        </RouteErrorBoundary>
       </main>
 
-      {!isGame && !isAuth && !isAdmin && <ChatSystem />}
+      {!isGame && !isAuth && !isAdmin && !isHome && <ChatSystem />}
       {!isGame && !isAuth && !isAdmin && !shouldHideFooter && <Footer />}
     </div>
   );

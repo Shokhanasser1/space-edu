@@ -1,16 +1,15 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import SectionPageHeader from '@/components/layout/SectionPageHeader';
-import { astronomyTopicsData } from '@/data/astronomyTopicsData';
-import { interviewsTopicsData } from '@/data/interviewsTopicsData';
-import { creativityTopicsData } from '@/data/creativityTopicsData';
-import { physicsTopicsData } from '@/data/physicsTopicsData';
-import { Play, Info, CheckCircle2, Trophy, Coins, Heart } from 'lucide-react';
+import { useLearnTopics } from '@/hooks/useLearnTopics';
+import { slugAtPath } from '@/lib/learnContent';
+import { Play, Info, CheckCircle2, Trophy, Coins, Heart, Rocket } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useGamificationStore } from '@/store/useGamificationStore';
 import { useLikesStore } from '@/store/useLikesStore';
 import { useLearningStore } from '@/store/useLearningStore';
 import confetti from 'canvas-confetti';
+import api from '@/lib/api';
 import { useTranslation } from '@/hooks/useTranslation';
 
 export default function UniversalLessonView() {
@@ -18,6 +17,7 @@ export default function UniversalLessonView() {
   const { subject, topicId, subIdx, lessonIdx, partIdx } = useParams();
   const navigate = useNavigate();
   const addRewards = useGamificationStore(s => s.addRewards);
+  const pullFromServer = useGamificationStore(s => s.pullFromServer);
   const completeLessonLocal = useLearningStore(s => s.completeLesson);
   const { likeLesson, unlikeLesson, isLiked } = useLikesStore();
   
@@ -28,17 +28,12 @@ export default function UniversalLessonView() {
   const lessonUniqueId = `${subject}-${topicId}-${subIdx || ''}-${lessonIdx || ''}-${partIdx || ''}`;
   const liked = isLiked(lessonUniqueId);
 
-  // Determine data source
-  let dataSource = null;
-  let backPath = "/learn";
+  const { topics } = useLearnTopics(subject);
+  const topic = topics[topicId] ?? null;
+  const backPath = subIdx !== undefined
+    ? `/learn/${subject}/${topicId}/sub/${subIdx}`
+    : `/learn/${subject}/${topicId}`;
 
-  if (subject === 'astronomy') { dataSource = astronomyTopicsData; backPath = `/learn/astronomy/${topicId}/sub/${subIdx}`; }
-  else if (subject === 'interviews') { dataSource = interviewsTopicsData; backPath = `/learn/interviews/${topicId}/sub/${subIdx}`; }
-  else if (subject === 'creativity') { dataSource = creativityTopicsData; backPath = `/learn/creativity/${topicId}/sub/${subIdx}`; }
-  else if (subject === 'physics') { dataSource = physicsTopicsData; backPath = `/learn/physics/${topicId}`; }
-
-  const topic = dataSource ? dataSource[topicId] : null;
-  
   // Handle nested sections and sub-lessons
   let lesson = null;
   if (topic) {
@@ -49,7 +44,7 @@ export default function UniversalLessonView() {
       const allItems = topic.sections.flatMap(s => s.lessons);
       parentItem = allItems[parseInt(pIdx)];
     } else {
-      parentItem = topic.lessons[parseInt(pIdx)];
+      parentItem = (topic.lessons ?? [])[parseInt(pIdx)];
     }
 
     if (parentItem && parentItem.subLessons) {
@@ -59,6 +54,10 @@ export default function UniversalLessonView() {
       lesson = parentItem;
     }
   }
+
+  // The row the server knows this lesson by. Null while the static fallback is
+  // in play, which is why the award below has to cope with not having one.
+  const lessonSlug = slugAtPath(topic, { subIdx, lessonIdx, partIdx });
 
   // Determine video URL
   let finalVideoUrl = "";
@@ -92,17 +91,35 @@ export default function UniversalLessonView() {
   const color = topic.color || '#3b82f6';
   const displayTitle = partIdx ? `${lessonName} - ${parseInt(partIdx) + 1}-qism` : lessonName;
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     if (completed) return;
     setCompleted(true);
+
+    // Optimistic, so the counter moves at once. The server decides the real
+    // amount — this used to POST /gamification/grant/ with numbers the browser
+    // chose, and one request produced level 101.
     addRewards(25, 25);
     completeLessonLocal(lessonUniqueId, topicId, 100, 25, {
       title: displayTitle,
       subject: subject
     });
     setShowRewardModal(true);
-    
-    setToast({ msg: t('lesson', 'progressSaved'), type: 'success' });
+
+    let saved = false;
+    if (lessonSlug) {
+      try {
+        await api.post(`/progress/lessons/${lessonSlug}/complete/`, { score: 100 });
+        await pullFromServer();
+        saved = true;
+      } catch {
+        // Falls through to the unsaved message below.
+      }
+    }
+
+    setToast({
+      msg: saved ? t('lesson', 'progressSaved') : t('lesson', 'progressNotSaved'),
+      type: saved ? 'success' : 'error',
+    });
     setTimeout(() => setToast(null), 3000);
 
     confetti({
@@ -133,20 +150,61 @@ export default function UniversalLessonView() {
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
         {/* PROMINENT VIDEO PLAYER */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.55, ease: [0.22,1,0.36,1] }}
           style={{
             position: 'relative',
             width: '100%',
             aspectRatio: '16/9',
-            borderRadius: '32px',
+            marginBottom: '48px',
+            borderRadius: '20px',
             overflow: 'hidden',
             background: '#000',
-            border: '1px solid rgba(255,255,255,0.1)',
-            boxShadow: `0 30px 90px rgba(0,0,0,0.6), 0 0 50px ${color}15`,
-            marginBottom: '48px'
+            boxShadow: `0 32px 80px rgba(0,0,0,0.85), 0 0 40px ${color}25`,
+            border: `1.5px solid ${color}50`,
           }}
         >
+          {/* HUD corners */}
+          <div className="fui-hud-corners" />
+          <div className="fui-hud-corners-2" />
+          
+          {/* Diagnostic Info overlays */}
+          <div style={{
+            position: 'absolute',
+            top: '20px',
+            left: '20px',
+            fontFamily: "'Orbitron', sans-serif",
+            fontSize: '10px',
+            color: 'rgba(255, 255, 255, 0.35)',
+            letterSpacing: '0.1em',
+            zIndex: 10,
+            pointerEvents: 'none',
+            background: 'rgba(0,0,0,0.6)',
+            padding: '4px 8px',
+            borderRadius: '4px',
+            border: '1px solid rgba(255,255,255,0.1)',
+          }}>
+            [SYS.FEED: ONLINE // DECODING...]
+          </div>
+          <div style={{
+            position: 'absolute',
+            bottom: '20px',
+            right: '20px',
+            fontFamily: "'Orbitron', sans-serif",
+            fontSize: '10px',
+            color: `${color}cc`,
+            letterSpacing: '0.1em',
+            zIndex: 10,
+            pointerEvents: 'none',
+            background: 'rgba(0,0,0,0.6)',
+            padding: '4px 8px',
+            borderRadius: '4px',
+            border: `1px solid ${color}40`,
+          }}>
+            SECURE COGNITIVE LINK
+          </div>
+
           <iframe
             width="100%"
             height="100%"
@@ -155,6 +213,7 @@ export default function UniversalLessonView() {
             frameBorder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
+            style={{ position: 'relative', zIndex: 1 }}
           ></iframe>
         </motion.div>
 
@@ -173,16 +232,45 @@ export default function UniversalLessonView() {
           >
             <div style={{ marginBottom: '32px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                <span style={{ padding: '6px 14px', borderRadius: '10px', background: `${color}20`, color: color, fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                <span style={{ 
+                  fontFamily: "'Orbitron', sans-serif",
+                  padding: '6px 14px', 
+                  borderRadius: '10px', 
+                  background: `${color}20`, 
+                  color: color, 
+                  fontSize: '11px', 
+                  fontWeight: 900, 
+                  textTransform: 'uppercase', 
+                  letterSpacing: '0.1em' 
+                }}>
                   {t('lesson', 'videoLesson')}
                 </span>
                 {completed && (
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#4ade80', fontSize: '14px', fontWeight: 600 }}>
+                  <span style={{ 
+                    fontFamily: "'Orbitron', sans-serif",
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '6px', 
+                    color: '#4ade80', 
+                    fontSize: '14px', 
+                    fontWeight: 900,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em'
+                  }}>
                     <CheckCircle2 size={18} /> {t('lesson', 'completed')}
                   </span>
                 )}
               </div>
-              <h1 style={{ fontSize: '42px', fontWeight: 900, color: '#fff', lineHeight: 1.1, marginBottom: '20px' }}>
+              <h1 style={{ 
+                fontFamily: "'Orbitron', sans-serif",
+                fontSize: '36px', 
+                fontWeight: 900, 
+                color: '#fff', 
+                lineHeight: 1.2, 
+                marginBottom: '20px',
+                letterSpacing: '0.02em',
+                textTransform: 'uppercase'
+              }}>
                 {displayTitle}
               </h1>
               <p style={{ fontSize: '18px', color: 'rgba(255,255,255,0.6)', lineHeight: 1.7, maxWidth: '800px' }}>
@@ -190,27 +278,65 @@ export default function UniversalLessonView() {
               </p>
             </div>
 
-            <div style={{ 
-              background: 'rgba(255,255,255,0.03)', 
-              borderRadius: '24px', 
-              padding: '32px',
-              border: '1px solid rgba(255,255,255,0.06)'
-            }}>
-              <h3 style={{ fontSize: '20px', fontWeight: 700, color: '#fff', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Info size={20} color={color} /> {t('lesson', 'topicDetails')}
+            <div 
+              className="fui-dark-card"
+              style={{ 
+                borderRadius: '24px', 
+                padding: '32px',
+                border: '1px solid rgba(255,255,255,0.05)',
+                '--fui-accent': color,
+              }}
+            >
+              <div className="fui-corners" />
+              <h3 style={{ 
+                fontFamily: "'Orbitron', sans-serif",
+                fontSize: '18px', 
+                fontWeight: 900, 
+                color: '#fff', 
+                marginBottom: '20px', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '12px',
+                letterSpacing: '0.05em',
+                textTransform: 'uppercase'
+              }}>
+                <Info size={18} color={color} /> {t('lesson', 'topicDetails')}
               </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', color: 'rgba(255,255,255,0.5)', fontSize: '15px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                  <span>{t('lesson', 'category')}</span>
-                  <span style={{ color: '#fff', fontWeight: 600 }}>{subject.charAt(0).toUpperCase() + subject.slice(1)}</span>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', color: 'rgba(255,255,255,0.5)', fontSize: '14px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '14px', borderBottom: '1.5px dashed rgba(255,255,255,0.07)' }}>
+                  <span style={{ fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.05em', textTransform: 'uppercase', fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>
+                    {t('lesson', 'category')}
+                  </span>
+                  <span style={{ color: '#fff', fontWeight: 700, fontFamily: "'Orbitron', sans-serif", textTransform: 'uppercase' }}>
+                    {subject.charAt(0).toUpperCase() + subject.slice(1)}
+                  </span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                  <span>{t('lesson', 'duration')}</span>
-                  <span style={{ color: '#fff', fontWeight: 600 }}>{t('lesson', 'durationValue')}</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '14px', borderBottom: '1.5px dashed rgba(255,255,255,0.07)' }}>
+                  <span style={{ fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.05em', textTransform: 'uppercase', fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>
+                    {t('lesson', 'duration')}
+                  </span>
+                  <span style={{ color: '#fff', fontWeight: 700, fontFamily: "'Orbitron', sans-serif" }}>
+                    {t('lesson', 'durationValue')}
+                  </span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>{t('lesson', 'reward')}</span>
-                  <span style={{ color: '#fbbf24', fontWeight: 700 }}>25 XP + 25 Coins</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.05em', textTransform: 'uppercase', fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>
+                    {t('lesson', 'reward')}
+                  </span>
+                   <span style={{
+                    fontFamily: "'Orbitron', sans-serif",
+                    fontSize: '14px',
+                    fontWeight: 900,
+                    letterSpacing: '0.04em',
+                    background: 'linear-gradient(90deg, #ffd700 0%, #f59e0b 50%, #fde68a 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    filter: 'drop-shadow(0 0 8px rgba(251,191,36,0.55))',
+                    textShadow: 'none',
+                  }}>
+                    +25 XP &nbsp;+&nbsp; 25 COINS
+                  </span>
                 </div>
               </div>
             </div>
@@ -228,26 +354,42 @@ export default function UniversalLessonView() {
               disabled={completed}
               style={{
                 width: '100%',
-                padding: '24px',
-                borderRadius: '20px',
-                background: completed ? 'rgba(255,255,255,0.05)' : color,
-                border: 'none',
-                color: completed ? 'rgba(255,255,255,0.3)' : '#000',
-                fontSize: '18px',
-                fontWeight: 800,
+                padding: '18px 24px',
+                borderRadius: '9999px',
+                background: completed
+                  ? 'rgba(255,255,255,0.06)'
+                  : `linear-gradient(135deg, ${color} 0%, ${color}cc 100%)`,
+                border: completed ? '1px solid rgba(255,255,255,0.1)' : `1.5px solid ${color}`,
+                color: completed ? 'rgba(255,255,255,0.3)' : '#06060f',
+                fontFamily: "'Orbitron', sans-serif",
+                fontSize: '14px',
+                fontWeight: 900,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
                 cursor: completed ? 'default' : 'pointer',
                 transition: 'all 0.3s cubic-bezier(0.22,1,0.36,1)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '12px',
-                boxShadow: completed ? 'none' : `0 10px 30px ${color}40`,
-                transform: completed ? 'none' : 'scale(1)',
+                gap: '10px',
+                boxShadow: completed ? 'none' : `0 4px 28px ${color}55, 0 0 0 1px ${color}20`,
               }}
-              onMouseEnter={(e) => !completed && (e.currentTarget.style.transform = 'translateY(-4px) scale(1.02)')}
-              onMouseLeave={(e) => !completed && (e.currentTarget.style.transform = 'translateY(0) scale(1)')}
+              onMouseEnter={(e) => {
+                if (!completed) {
+                  e.currentTarget.style.transform = 'translateY(-3px)';
+                  e.currentTarget.style.boxShadow = `0 8px 36px ${color}80, 0 0 0 1px ${color}40`;
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!completed) {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = `0 4px 28px ${color}55, 0 0 0 1px ${color}20`;
+                }
+              }}
             >
-              {completed ? <CheckCircle2 /> : <Play />}
+              {completed
+                ? <CheckCircle2 size={18} />
+                : <Rocket size={18} style={{ animation: 'pulse 1.8s ease-in-out infinite' }} />}
               {completed ? t('lesson', 'completed') : t('lesson', 'finishLesson')}
             </button>
 
