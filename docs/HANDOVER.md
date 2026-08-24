@@ -387,6 +387,43 @@ done".
 
 ---
 
+## Fifth pass, second half: the site answered in the wrong language
+
+Noticed while driving the sign-in flow: the sign-up form was in Russian, and the
+moment the child pressed the button the whole site turned English.
+
+- **Signing in reset the language to English.** `_resetAllStores()` runs on both
+  sign-in and sign-out and calls `useUserStore.resetProgress()`, which set
+  `language: 'ENG'` alongside clearing the lessons and the astronaut name.
+  Language is a preference, not somebody's progress. It was being wiped every
+  single sign-in and sign-out — on a product for Uzbek schoolchildren whose
+  default should never have been English in the first place. Removed from the
+  reset; the rest of it still clears, so nothing of one pupil's is shown to the
+  next.
+- **An empty translation turned into English.** `t()` used `if (value)`, which
+  cannot tell an absent translation from a deliberately empty one. English
+  splits "Welcome Back" across two keys so the second half can be coloured;
+  Russian says it in one word, so `loginPage.welcomeHighlight` is `""` — and the
+  sign-in screen read **"С возвращением Back"**. `t()` now falls back only on
+  `undefined`/`null`.
+
+Both verified in a browser afterwards: the sign-in screen reads "С
+возвращением", the language survives signing in, and the home page comes up in
+Russian rather than English.
+
+Not a bug, checked and dismissed: the hero heading's `textContent` reads
+"Исследуйтекосмос" with no space, because the words are separate elements and
+the spacing is a CSS gap. It renders correctly.
+
+Still true and worth knowing: `User.language` exists on the server, is editable
+in the admin panel, and **nothing reads or writes it from the site**. The UI
+language lives only in that browser's local storage, so it does not follow a
+pupil to another device. Wiring it up is a small job and was left alone
+deliberately — the owner asked for plain password sign-in to be solid before
+anything gets built on top of it.
+
+---
+
 ## The deployment is gone, on purpose
 
 Removed on 24 August 2026 at the owner's request, to be set up again from

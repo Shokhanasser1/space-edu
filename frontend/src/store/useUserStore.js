@@ -51,8 +51,15 @@ export const useUserStore = create()(
             : [...s.achievements, id],
         })),
 
+      // Called when a session starts or ends, to make sure one pupil's work is
+      // never shown to the next. `language` is deliberately *not* in here: it is
+      // a preference, not somebody's progress, and resetting it to 'ENG' meant
+      // a child who chose Uzbek or Russian, filled in the sign-up form in it and
+      // pressed the button was answered by an English site — every sign-in and
+      // every sign-out, on a product for Uzbek schoolchildren whose default
+      // should never have been English in the first place.
       resetProgress: () =>
-        set({ completedLessons: [], quizScores: {}, achievements: [], astronautName: "", language: 'ENG' }),
+        set({ completedLessons: [], quizScores: {}, achievements: [], astronautName: "" }),
     }),
     { name: "uz-cosmos-storage" },
   ),

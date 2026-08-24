@@ -100,6 +100,42 @@ describe('setTokens', () => {
   });
 });
 
+describe('the language the child chose', () => {
+  // Fifth-pass finding, 24 Aug 2026. `_resetAllStores()` runs on both sign-in
+  // and sign-out and called `useUserStore.resetProgress()`, which set
+  // `language: 'ENG'`. So a child picked Russian, filled in the sign-up form in
+  // Russian, pressed the button — and landed on an English site. Every time.
+  it('survives signing in', async () => {
+    const { useUserStore } = await import('./useUserStore');
+    useUserStore.getState().setLanguage('RUS');
+
+    useAuthStore.getState().login(USER, 'access-1', 'refresh-1');
+
+    expect(useUserStore.getState().language).toBe('RUS');
+  });
+
+  it('survives signing out', async () => {
+    const { useUserStore } = await import('./useUserStore');
+    api.post.mockResolvedValue({ data: {} });
+    useAuthStore.getState().login(USER, 'access-1', 'refresh-1');
+    useUserStore.getState().setLanguage('UZB');
+
+    useAuthStore.getState().logout();
+
+    expect(useUserStore.getState().language).toBe('UZB');
+  });
+
+  it('does not carry the previous pupil progress across, though', async () => {
+    const { useUserStore } = await import('./useUserStore');
+    useUserStore.setState({ completedLessons: ['a', 'b'], astronautName: 'Aziz' });
+
+    useAuthStore.getState().login(USER, 'access-1', 'refresh-1');
+
+    expect(useUserStore.getState().completedLessons).toEqual([]);
+    expect(useUserStore.getState().astronautName).toBe('');
+  });
+});
+
 describe('logout', () => {
   it('asks the server to blacklist the refresh token', () => {
     // Without this the token stayed valid for its full seven days after the

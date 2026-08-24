@@ -389,7 +389,7 @@ CI runs all of this; run it yourself first, it is faster than waiting:
 cd backend  && python manage.py test apps base        # 320/320
 cd backend  && python manage.py makemigrations --check --dry-run
 cd frontend && npm run build                          # before the tests, see below
-cd frontend && npm test                               # 204/204
+cd frontend && npm test                               # 211/211
 cd frontend && npm run check:locales
 cd frontend && npm run content:check
 ```

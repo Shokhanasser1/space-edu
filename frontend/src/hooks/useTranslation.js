@@ -14,14 +14,19 @@ export function useTranslation() {
       return path.split('.').reduce((acc, part) => acc && acc[part], obj);
     };
 
+    // An empty string is a translation, not a missing one. `if (value)` treated
+    // the two the same, so `loginPage.welcomeHighlight: ""` — deliberately
+    // empty, because Russian says "С возвращением" in one word where English
+    // splits "Welcome Back" across two — fell through to the English half and
+    // the sign-in screen read "С возвращением Back".
     const value = getNested(sectionData, key);
-    if (value) return value;
+    if (value !== undefined && value !== null) return value;
 
     // Fallback to English
     const fallbackSection = translations.ENG[section];
     if (fallbackSection) {
       const fallbackValue = getNested(fallbackSection, key);
-      if (fallbackValue) return fallbackValue;
+      if (fallbackValue !== undefined && fallbackValue !== null) return fallbackValue;
     }
 
     return `${section}.${key}`;
