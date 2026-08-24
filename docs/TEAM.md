@@ -48,8 +48,29 @@ On `main`:
 | One approval required, from a code owner | The PR says "Review required" until the lead approves. |
 | Stale approvals dismissed on new commits | Push a fix after approval and it needs approving again. |
 | CI must pass | "Backend tests", "Frontend build" and "Repository hygiene" must be green. |
+| Branches need not be up to date | Set on purpose: GitHub runs CI against your branch *merged into* `main`, so a semantic clash is caught anyway, and requiring a rebase before every merge puts six people in a queue. |
 | Conversations must be resolved | Every review comment answered or fixed before merge. |
-| No force-push, no deletion | Applies to everyone, the lead included. |
+| No force-push, no deletion | `main` cannot be rewritten or removed. |
+
+**One exemption, and it is deliberate.** Administrators are not blocked by these
+rules (`enforce_admins: false`). With the lead as the only code owner, turning it
+on would leave the lead unable to merge anything at all — GitHub does not let
+anyone approve their own pull request, and there would be nobody else who could.
+So the rules bind the five; the lead is on their honour, and should still work
+through pull requests.
+
+The day a second person can review — a senior developer, or two area owners who
+cover each other — close the exemption:
+
+```bash
+gh api -X POST repos/Shokhanasser1/space-edu/branches/main/protection/enforce_admins
+```
+
+To check what is set at any time:
+
+```bash
+gh api repos/Shokhanasser1/space-edu/branches/main/protection
+```
 
 `.github/CODEOWNERS` decides whose approval counts. Today that is the lead on
 everything, with per-area owners to fill in as people take theirs. Settings,
