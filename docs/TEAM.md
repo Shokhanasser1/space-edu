@@ -100,6 +100,27 @@ What the free plan gives, and what it means in practice:
 | Suspends after 5 min idle | Wakes on the next query in about a second. The first request after lunch feels slow; that is all it is. |
 | Up to 10 branches | A branch is a copy-on-write clone of the data. This is the escape hatch for the migration rule below: branch, break it, throw the branch away. |
 
+### Uploaded files go to Cloudflare R2
+
+The database holds rows; the files those rows point at live in an R2 bucket,
+shared the same way. Four fields put files there: `User.avatar`,
+`MarketItem.image`, `NewsArticle.image` and `SpaceEvent.image`.
+
+Without it they would land in `backend/media/` on whichever laptop ran the
+server, and everybody else would see a broken image where a row says there is a
+picture. Verified end to end on 24 August 2026: uploaded through a model field,
+fetched over the public URL with no credentials, deleted again.
+
+Two things worth knowing:
+
+- **The stored filename is not the uploaded one.** `image_upload_to` renames
+  every upload to a UUID. That is deliberate — the served `Content-Type` is
+  derived from the name, and a file called `avatar.html` was once stored under
+  exactly that name in a public bucket. Do not "fix" it.
+- **The bucket is public and unsigned** (`AWS_QUERYSTRING_AUTH = False`), so
+  anything uploaded is readable by anyone with the URL. Fine for lesson art and
+  product pictures. Not a place for anything private.
+
 It also means one person can ruin everyone's afternoon.
 
 ### Rules
