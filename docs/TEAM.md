@@ -85,6 +85,21 @@ it is visible in what stops being true afterwards.
 One Postgres, everybody's `DB_URL` pointing at it. Content written in the admin
 panel is there for everyone the moment it is saved, which is the point.
 
+Neon, free plan, `eu-central-1` (Frankfurt), PostgreSQL 18. **The connection
+string is a password and does not belong in this file, in a commit, or in a
+chat** — the lead hands it out directly, and each person puts it in their own
+`backend/.env`, which is git-ignored and which CI fails the build over if it is
+ever committed.
+
+What the free plan gives, and what it means in practice:
+
+| | |
+|---|---|
+| 0.5 GB storage | The whole content tree plus accounts is 11 MB. Not a constraint; images live in R2, not here. |
+| 100 CU-hours a month | About 400 hours at the smallest compute size. Pin autoscaling at 0.25–0.5 CU in the Neon console, or a load spike burns them faster than a working month needs. |
+| Suspends after 5 min idle | Wakes on the next query in about a second. The first request after lunch feels slow; that is all it is. |
+| Up to 10 branches | A branch is a copy-on-write clone of the data. This is the escape hatch for the migration rule below: branch, break it, throw the branch away. |
+
 It also means one person can ruin everyone's afternoon.
 
 ### Rules
