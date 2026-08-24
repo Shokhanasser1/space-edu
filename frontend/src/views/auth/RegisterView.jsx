@@ -23,6 +23,19 @@ export default function RegisterView() {
     { name: 'password2',      label: t('registerPage', 'confirmKey'),   type: 'password', placeholder: t('registerPage', 'repeatKey') },
   ];
 
+  // `autoComplete` takes tokens from a fixed list, not our field names. Both
+  // password inputs were sent as-is, so the first one asked for `password`,
+  // which is not a token at all — browsers ignored it, and neither offered to
+  // generate a password nor to save the one that was typed.
+  const AUTOCOMPLETE = {
+    first_name: 'given-name',
+    last_name: 'family-name',
+    email: 'email',
+    date_of_birth: 'bday',
+    password: 'new-password',
+    password2: 'new-password',
+  };
+
   const [form, setForm] = useState({
     first_name: '', last_name: '', email: '',
     date_of_birth: '', password: '', password2: '',
@@ -100,7 +113,7 @@ export default function RegisterView() {
                     <input
                       name={name}
                       type={(type === 'password' && showPass) ? 'text' : type}
-                      autoComplete={name === 'password2' ? 'new-password' : name}
+                      autoComplete={AUTOCOMPLETE[name] || name}
                       value={form[name]}
                       onChange={handleChange}
                       placeholder={placeholder}

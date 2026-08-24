@@ -170,9 +170,25 @@ class ProblemCheckThrottle(SimpleRateThrottle):
     `problemsData.js` — but a student can still submit once per problem and read
     the answer back. Thirty problems is thirty requests; this makes that take
     long enough to be pointless and stops a script doing it for a whole class.
+
+    Two rates, because there are two identities. A signed-in caller is keyed on
+    their account, so 60 an hour is one person's budget. An anonymous one can
+    only be keyed on their address — and the problem set has never been behind a
+    login, so a whole class arrives as one address. A person-sized limit there
+    stopped the fourth child rather than the first script, which is why the
+    anonymous rate is machine-sized instead.
     """
 
     scope = 'problem_check'
+
+    def allow_request(self, request, view):
+        if not request.user.is_authenticated:
+            # Instances are built per request, so swapping the scope here is
+            # local to this call.
+            self.scope = 'problem_check_anon'
+            self.rate = self.get_rate()
+            self.num_requests, self.duration = self.parse_rate(self.rate)
+        return super().allow_request(request, view)
 
     def get_cache_key(self, request, view):
         ident = (

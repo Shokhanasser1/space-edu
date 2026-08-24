@@ -312,7 +312,7 @@ class ClassroomThrottleTests(TestCase):
         self._make_pupils(1)
         codes = [
             self._login(f'target{i}@example.com', 'Password123!').status_code
-            for i in range(70)
+            for i in range(125)
         ]
         self.assertIn(status.HTTP_429_TOO_MANY_REQUESTS, codes)
 
@@ -354,7 +354,7 @@ class ClassroomThrottleTests(TestCase):
         """Above the burst limit it stops, so a script cannot sit on one
         address and create accounts as fast as it can send."""
         codes = []
-        for i in range(35):
+        for i in range(65):
             codes.append(
                 self.client.post(
                     '/api/v1/auth/register/',

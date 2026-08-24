@@ -55,8 +55,16 @@ class SphereListQueryBudgetTests(TestCase):
         )
 
     def _count_queries(self, client, url):
-        from django.db import connection, reset_queries
+        from django.core.cache import cache
+        from django.db import connection
         from django.test.utils import CaptureQueriesContext
+
+        # Without REDIS_URL the cache is a database table, so the throttle's own
+        # bookkeeping shows up in this count — and whether it INSERTs or UPDATEs
+        # depends on what earlier tests left behind. Start both measurements
+        # from the same place, or this test reports on the cache rather than on
+        # the serializer it is about.
+        cache.clear()
 
         with CaptureQueriesContext(connection) as ctx:
             response = client.get(url)
@@ -89,8 +97,11 @@ class ConversationListQueryBudgetTests(TestCase):
             )
 
     def _count(self):
+        from django.core.cache import cache
         from django.db import connection
         from django.test.utils import CaptureQueriesContext
+
+        cache.clear()  # see the note in SphereListQueryBudgetTests._count_queries
 
         with CaptureQueriesContext(connection) as ctx:
             r = self.client.get('/api/v1/chat/dm/conversations/')

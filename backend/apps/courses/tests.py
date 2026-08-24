@@ -270,11 +270,43 @@ class ProblemCheckTests(TestCase):
                            {'answer': 'x'}, format='json')
         self.assertEqual(r.status_code, status.HTTP_404_NOT_FOUND)
 
-    def test_walking_the_set_is_rate_limited(self):
-        """Grading server-side stops the bundle leak; the limit stops a script
-        collecting the same key one request at a time."""
+    def test_a_class_can_work_through_the_set_anonymously(self):
+        """Fourth-pass finding, 24 August 2026. The limit was 60 an hour, keyed
+        on the caller's address because the problem set has never been behind a
+        login — and a school is one address. Thirty problems, two classes, and
+        the set stopped answering for the whole building until the next hour.
+
+        The set is public on purpose; working through it is the intended use."""
         codes = {self._check('guess').status_code for _ in range(70)}
+        self.assertNotIn(
+            status.HTTP_429_TOO_MANY_REQUESTS, codes,
+            'a class working through the problem set is the ordinary case',
+        )
+
+    def test_walking_the_set_with_a_script_is_still_rate_limited(self):
+        """What the limit is actually for. Sized for a machine rather than a
+        person, because an address is all there is to key on here."""
+        codes = {self._check('guess').status_code for _ in range(130)}
         self.assertIn(status.HTTP_429_TOO_MANY_REQUESTS, codes)
+
+    def test_a_signed_in_pupil_has_their_own_budget(self):
+        """Signed in there is an account to key on, so one pupil's attempts
+        cannot be spent by the rest of their class."""
+        from apps.accounts.models import User
+
+        pupil = User.objects.create_user(
+            username='pupil', email='pupil@school.uz', password='Str0ngPassw0rd!x'
+        )
+        client = APIClient()
+        client.force_authenticate(pupil)
+        codes = {
+            client.post(
+                f'/api/v1/courses/problems/{self.problem.id}/check/',
+                {'answer': 'guess'}, format='json',
+            ).status_code
+            for _ in range(40)
+        }
+        self.assertNotIn(status.HTTP_429_TOO_MANY_REQUESTS, codes)
 
     def test_an_ordinary_caller_still_cannot_write_a_problem(self):
         r = self.anon.patch(

@@ -62,15 +62,65 @@ class ThrottleConfigTests(SimpleTestCase):
             'unset NUM_PROXIES makes DRF key the throttle on client-supplied X-Forwarded-For',
         )
 
-    def test_anonymous_read_budget_is_realistic(self):
+
+class ThrottleSizingTests(SimpleTestCase):
+    """Fourth-pass finding, 24 August 2026.
+
+    A school reaches this API from one public address, so every address-keyed
+    limit is shared by the whole building. Sizing one of those for a person
+    locks the building — which is what `login` at 10/hour, `register` at 20/day,
+    `anon` at 2000/day and `problem_check` at 60/hour each did in turn, to real
+    pupils, while stopping no attacker who had more than one address.
+
+    The rule these encode: **keyed on the account, size it for a person; keyed
+    on the address, size it for a machine.**
+    """
+
+    PERIOD_SECONDS = {'s': 1, 'm': 60, 'h': 3600, 'd': 86400}
+
+    # Keyed on the caller's address, so shared by everyone behind it.
+    ADDRESS_KEYED = ('anon', 'problem_check_anon', 'register')
+
+    def _rates(self):
         from django.conf import settings
 
-        rate = settings.REST_FRAMEWORK['DEFAULT_THROTTLE_RATES']['anon']
+        return settings.REST_FRAMEWORK['DEFAULT_THROTTLE_RATES']
+
+    def _per_minute(self, rate):
         count, _, period = rate.partition('/')
-        self.assertTrue(
-            period != 'day' or int(count) >= 1000,
-            f'anon rate {rate} is too tight for a public education site',
-        )
+        return int(count) * 60 / self.PERIOD_SECONDS[period[0]]
+
+    def test_address_keyed_limits_clear_a_room_full_of_children(self):
+        """Thirty pupils, each costing a few requests a minute, is the ordinary
+        case and must be nowhere near any of these."""
+        for scope in self.ADDRESS_KEYED:
+            with self.subTest(scope=scope):
+                per_minute = self._per_minute(self._rates()[scope])
+                self.assertGreaterEqual(
+                    per_minute, 60,
+                    f"{scope} allows {per_minute:.0f}/min from one address, which a "
+                    f"single class exceeds; size address-keyed limits for a machine",
+                )
+
+    def test_no_limit_keeps_a_day_of_history_in_the_cache(self):
+        """DRF stores one timestamp per request for the length of the window, in
+        a single cache entry. `user` at 10000/day was a list of up to ten
+        thousand floats per pupil, read and rewritten on every request — against
+        a database-backed cache, which is what runs without REDIS_URL."""
+        for scope, rate in self._rates().items():
+            with self.subTest(scope=scope):
+                count = int(rate.partition('/')[0])
+                self.assertLessEqual(
+                    count, 500,
+                    f'{scope} = {rate} keeps up to {count} timestamps per key in the cache',
+                )
+
+    def test_the_limits_that_bound_an_attacker_are_still_there(self):
+        """The point is not that limits went away. Guessing one account, and
+        spraying one password across many, both stay bounded."""
+        rates = self._rates()
+        self.assertLessEqual(self._per_minute(rates['login']), 60)
+        self.assertLessEqual(self._per_minute(rates['login_ip']), 120)
 
 
 class JwtConfigTests(SimpleTestCase):

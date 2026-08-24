@@ -17,7 +17,7 @@ see "The deployment is gone, on purpose" below.*
 Verify the state in one go:
 
 ```bash
-cd backend  && python manage.py test apps base   # expect 311 OK
+cd backend  && python manage.py test apps base   # expect 315 OK
 cd frontend && npm run build && npm test          # expect 193 OK
 cd frontend && npm run build && npm run check:locales && npm run content:check
 ```
@@ -290,14 +290,48 @@ What changed:
 Eight backend tests cover it, the first of which is the bug as reported: thirty
 children, one address, correct passwords, thirty 200s.
 
-**Known limit.** Per-address limits are blunt behind NAT, and these numbers are
-the honest ceiling of what they can do: 150 accounts a day from one address is
+### The same defect, everywhere else
+
+Login was where it was noticed. Auditing the rest found two more of exactly the
+same shape, and one performance problem underneath all of them.
+
+- **`anon` was 2000/day, keyed on the address.** Every anonymous request from
+  the building came out of one budget — and a single page view costs several
+  requests, as the comment beside it said. A class browsing the catalogue spent
+  it by mid-afternoon, after which the public site stopped answering them until
+  the next day. Now `120/sec`: a flood guard, which is the only honest job a
+  per-address limit has here.
+- **`problem_check` was 60/hour, keyed on the address** for anonymous callers,
+  and the problem set has deliberately never been behind a login. Thirty
+  problems, two classes, and it stopped for the whole school. It now has two
+  rates: `60/hour` per account when signed in, `120/min` per address when not.
+- **`user` was 10000/day** and `anon` 2000/day, which is also a storage
+  problem. DRF keeps one timestamp per request in a single cache entry for the
+  length of the window, so those were lists of up to ten thousand and two
+  thousand floats, read and rewritten on every request — against a
+  database-backed cache, which is what runs without `REDIS_URL`. Every window
+  is now a minute or shorter except the deliberate daily registration ceiling,
+  and a test fails the build if any scope goes above 500.
+- **`write: 300/day` was dead configuration** — nothing referenced the scope.
+  Removed rather than left to imply that writes were limited.
+
+The rule all of it now follows, written at the top of `DEFAULT_THROTTLE_RATES`:
+**keyed on the account, size it for a person; keyed on the address, size it for
+a machine.** A per-address limit cannot do more than that behind NAT, and every
+time one was sized for a person it locked out pupils and stopped nobody with a
+second address.
+
+`base/tests.py` has three tests that hold the rule rather than the numbers, so
+a future edit that reintroduces a person-sized address limit fails the build.
+
+**Known limit, and the way out.** 300 accounts a day from one address is
 generous for a school and not nothing for an abuser. The real answer is
 verifying the e-mail address before an account is worth anything. The machinery
-for that already exists — `apps/accounts/email_code.py` sends and verifies
-six-digit codes — but nothing in the front end uses it, and registration does
-not require it. That is the next thing to do here, and it would let the daily
-ceiling come back down.
+already exists — `apps/accounts/email_code.py` sends and verifies six-digit
+codes, and `/auth/email-code/request/` and `/verify/` both work — but **nothing
+in the front end calls either of them**, and registration does not require
+verification. That is the next thing to do here, and it would let the ceiling
+come back down.
 
 ---
 

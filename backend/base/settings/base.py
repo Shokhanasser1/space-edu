@@ -175,40 +175,59 @@ REST_FRAMEWORK = {
         'rest_framework.throttling.UserRateThrottle',
     ],
     'DEFAULT_THROTTLE_RATES': {
-        # Reads are cheap and the catalogue is public — a single page view costs
-        # several requests, so the old 100/day locked visitors out after a dozen
-        # screens. Writes and AI calls carry their own tighter scopes.
-        'anon': '2000/day',
-        'user': '10000/day',
+        # ── How these are sized ───────────────────────────────────────────────
+        # A school reaches this API from one public address. So a limit keyed on
+        # the address is shared by everyone in the building, and one sized for a
+        # person locks the building. Two rules follow, and every number below
+        # obeys them:
+        #
+        #   Keyed on the account  -> size it for a person.
+        #   Keyed on the address  -> size it for a machine. It cannot honestly
+        #                            do more, and pretending otherwise is what
+        #                            locked out real pupils twice.
+        #
+        # Windows are short on purpose as well. DRF keeps one timestamp per
+        # request in the cache for the length of the window, so `10000/day` is a
+        # list of up to ten thousand floats per pupil, read and rewritten on
+        # every request — against a database-backed cache, which is what runs
+        # without REDIS_URL.
+
+        # Anonymous, keyed on address: a flood guard, not a quota. Far above a
+        # room full of children, far below a runaway client or a scraper.
+        # Was 2000/day, which a class browsing the catalogue spent by the
+        # afternoon, after which the public site simply stopped for them.
+        'anon': '120/sec',
+        # Signed in, keyed on account, so this one is a person's budget.
+        'user': '240/min',
+
         # Login: wrong guesses only, and see apps/accounts/throttles.py for why
         # that distinction is the whole point. `login` is per address *and*
-        # account; `login_ip` is the ceiling across all accounts from one
-        # address. A school is one address, so both have to clear a room full
-        # of children mistyping their own passwords without clearing an
-        # attacker working through a word list.
+        # account, so it is really a per-account budget; `login_ip` is the
+        # address-level ceiling that stops one password being sprayed across a
+        # list of accounts.
         'login': '10/hour',
-        'login_ip': '60/hour',
+        'login_ip': '120/hour',
+
         # Registration counts every attempt, because an account created is the
-        # cost. The previous 20/day locked out the twenty-first child in a
-        # school, which is the common case and not the attack. The burst limit
-        # clears a class told to sign up right now; the daily one clears a
-        # school onboarding and still bounds a script running all night.
-        #
-        # Per-address limits are blunt behind NAT and this is the honest
-        # ceiling of what they can do. The real answer is verifying the address
-        # before the account is worth anything — see docs/HANDOVER.md.
-        'register': '30/min',
-        'register_day': '150/day',
+        # cost. Per-address, so machine-sized: a class told to sign up right now
+        # passes, a script sitting on the endpoint does not.
+        'register': '60/min',
+        'register_day': '300/day',
+
         'ai': '40/hour',
-        'write': '300/day',
-        # Chat had no limit at all. These are set for a classroom, not a
-        # newsroom: a burst is fine, a flood is not.
+
+        # Chat is keyed on the account. Set for a classroom, not a newsroom:
+        # a burst is fine, a flood is not.
         'chat': '20/min',
         'dm': '20/min',
         'report': '30/hour',
-        # Grading is server-side now; this bounds walking the set
-        # one submission at a time.
+
+        # Grading is server-side, so the answers no longer ship to the browser,
+        # but the set can still be walked one submission at a time. Signed in,
+        # that is a person's budget. Anonymous — the problem set has never been
+        # behind a login — it is address-keyed and therefore machine-sized.
         'problem_check': '60/hour',
+        'problem_check_anon': '120/min',
     },
 }
 
