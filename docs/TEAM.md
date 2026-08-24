@@ -208,6 +208,56 @@ lines cannot be reviewed, and it will conflict with everything.
 
 ---
 
+## Your credentials
+
+The lead sends you one file: **`.env.team`**. It carries the two things the team
+genuinely shares — the connection string for the database, and the keys for the
+R2 bucket where uploads live. Put it in `backend/`, rename it to `.env`, and it
+is done.
+
+One line in it is blank on purpose:
+
+```
+SECRET_KEY=
+```
+
+**Generate your own. Do not ask anybody for theirs.**
+
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(50))"
+```
+
+This is not about trust. `SECRET_KEY` signs sessions and JWTs, and everyone runs
+their own server: sharing one means a token minted on your laptop is valid on
+everybody else's. Harmless while it stays on six laptops, and a way to forge any
+pupil's session the day the same key reaches a deployed server — including for
+whoever had the file and has since left. It costs one command to avoid.
+
+The front end needs its own file too, and it holds no secrets at all:
+
+```bash
+cd frontend
+copy .env.example .env.local
+```
+
+### The rules around it
+
+- **`.env` never goes in a commit.** It is in `.gitignore`, and the `hygiene`
+  job fails the build if one is ever tracked. That check exists because a
+  database *was* committed once — see `docs/SECURITY-INCIDENT-2026-08-22.md`.
+- **Do not paste it into a group chat**, and do not screenshot it. Not because
+  of the people in the chat: because the chat outlives the project, and so does
+  everyone's copy of it. If you lose the file, ask the lead for it again.
+- **`DB_URL` is the owner of the database.** Anybody holding it can drop the
+  schema. That is why the migration rule above is the one written in bold.
+- **The R2 keys are shared by all six.** If your laptop is lost or stolen, say
+  so the same day: those keys have to be replaced for everybody, and that is a
+  five-minute job if it happens on the day and a much worse one later.
+- **Leaving the project?** Tell the lead so the credentials get rotated. No
+  drama in it — it is the same reason an office takes the key back.
+
+---
+
 ## Day one
 
 ```bash
