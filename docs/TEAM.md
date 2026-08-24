@@ -272,10 +272,16 @@ cd backend
 python -m venv venv
 venv\Scripts\activate
 pip install -r requirements.txt
-copy .env.example .env          # SECRET_KEY, and DB_URL if you are on the shared database
-python manage.py migrate        # only when you are on your own SQLite
+copy ..\.env.team .env         # the file the lead sent you; see "Your credentials"
+python manage.py runserver      # the shared database is already migrated and seeded
+```
+
+Only if you are working on your own SQLite instead, with `DB_URL` left blank:
+
+```bash
+python manage.py migrate
 python manage.py seed_learn_content
-python manage.py runserver
+python manage.py createsuperuser
 ```
 
 Frontend, second terminal:
