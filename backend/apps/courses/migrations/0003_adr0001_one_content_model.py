@@ -10,6 +10,28 @@ Destructive by design: Level, Unit, Lesson, LessonSection and courses'
 QuizQuestion go, along with anything referencing them. Their rows came from a
 demo seed, not from students.
 """
+# On the two `db_index=False` below, added 24 August 2026.
+#
+# A SlugField is indexed by default. On PostgreSQL an indexed varchar gets two
+# indexes: the b-tree one and a `..._like` one using varchar_pattern_ops. Django
+# defers index creation for AddField to the end of the migration, so this ran:
+#
+#   ALTER TABLE courses_topic ADD CONSTRAINT courses_topic_slug_ca75af21_uniq ...
+#   CREATE INDEX courses_topic_slug_ca75af21_like ...   <- from the AlterField
+#   ...
+#   CREATE INDEX courses_topic_slug_ca75af21_like ...   <- deferred, from the AddField
+#
+# The same index name twice in one migration: "relation already exists", and the
+# migration stops there. Every time, on any PostgreSQL.
+#
+# Nobody saw it because SQLite has no `_like` indexes at all, so it passes
+# locally and in CI. It surfaced on the first real Postgres — the shared team
+# database — and it would have taken the first deployment with it.
+#
+# The intermediate field needs no index: nothing queries slug between this
+# AddField and the AlterField a few operations later, which is where the real
+# index and the unique constraint come from. The final schema is unchanged.
+
 import django.db.models.deletion
 from django.db import migrations, models
 from django.utils.text import slugify
@@ -65,7 +87,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='topic',
             name='slug',
-            field=models.SlugField(max_length=140, null=True),
+            field=models.SlugField(max_length=140, null=True, db_index=False),
         ),
         migrations.AddField(
             model_name='topic',
@@ -78,7 +100,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='topiclesson',
             name='slug',
-            field=models.SlugField(max_length=200, null=True),
+            field=models.SlugField(max_length=200, null=True, db_index=False),
         ),
         migrations.AddField(
             model_name='topiclesson',

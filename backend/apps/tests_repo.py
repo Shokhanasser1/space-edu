@@ -75,7 +75,8 @@ class WorkflowFileTests(SimpleTestCase):
             for step in job['steps']
         ]
         for required in ('Run tests', 'Check for missing migrations',
-                         'Lint', 'Build', 'Tests', 'Locale parity', 'Large files'):
+                         'Lint', 'Build', 'Tests', 'Locale parity', 'Large files',
+                         'Migrations apply to PostgreSQL'):
             self.assertIn(required, steps, f'CI no longer runs "{required}"')
 
     def test_the_frontend_builds_before_it_tests(self):

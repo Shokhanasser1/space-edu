@@ -21,6 +21,27 @@ jobs:
       run:
         working-directory: backend
 
+    # The team develops against PostgreSQL and the tests run on SQLite — on
+    # purpose, so a test run cannot reach the shared database. That gap hid a
+    # real bug: courses.0003 created the same `_like` index twice, which
+    # PostgreSQL refuses and SQLite never notices because it has no such
+    # indexes. It passed here and in every local suite, and broke on the first
+    # real database. This service exists so the migrations are proved against
+    # the engine they actually run on.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: ci
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
     steps:
       - uses: actions/checkout@v4
 
@@ -44,6 +65,19 @@ jobs:
         env:
           SECRET_KEY: ci-secret-key-not-used-anywhere-else-0123456789
         run: python manage.py test apps base --verbosity 2
+
+      - name: Migrations apply to PostgreSQL
+        # Not the test suite — that is pinned to SQLite deliberately. This is
+        # the migrations alone, against a real PostgreSQL, run twice: once on an
+        # empty database and once on top of itself, because "already exists" is
+        # the failure this is here to catch.
+        env:
+          SECRET_KEY: ci-secret-key-not-used-anywhere-else-0123456789
+          DB_URL: postgres://postgres:ci@localhost:5432/ci
+        run: |
+          python manage.py migrate --noinput
+          python manage.py migrate --noinput
+          python manage.py seed_learn_content
 
   frontend:
     name: Frontend build
