@@ -265,16 +265,23 @@ refuses to start. Never the permissive one.
 
 ```python
 # was                                  # now
-if DJANGO_ENV == 'production':         if DJANGO_ENV.strip().lower() == 'development':
-    from .production import *              from .development import *
+if ENV == 'hardened':                  if ENV.strip().lower() == 'development':
+    strict()                               permissive()
 else:                                  else:
-    from .development import *             from .production import *
+    permissive()                           strict()
 ```
 
-> **Where it bit us:** a typo, a trailing space or an unset variable silently
-> booted development — `DEBUG=True`, CORS open to everyone, and the sign-in code
-> returned in the response body. That last one is a two-request takeover of any
-> account.
+The permissive branch is the one an unset, misspelled or space-padded variable
+must **not** reach. Same rule for a feature flag, a moderation switch and a
+payment mode.
+
+> **Where it bit us:** the settings module was written the first way. A typo, a
+> trailing space or an unset variable silently booted development — `DEBUG=True`,
+> CORS open to everyone, and the sign-in code returned in the response body.
+> That last one is a two-request takeover of any account.
+>
+> There is no deployment profile in the repository at the moment. Whatever is
+> written when one comes back has to fail closed the second way.
 
 ### C-8. Security randomness comes from `secrets`
 
@@ -379,8 +386,7 @@ the ticket.
 CI runs all of this; run it yourself first, it is faster than waiting:
 
 ```bash
-cd backend  && python manage.py test apps base        # 296/296
-cd backend  && python manage.py check --deploy
+cd backend  && python manage.py test apps base        # 303/303
 cd backend  && python manage.py makemigrations --check --dry-run
 cd frontend && npm run build                          # before the tests, see below
 cd frontend && npm test                               # 193/193
@@ -454,13 +460,17 @@ Seven things. Six out of seven is not done.
 
 1. It works, and you saw it work — not "should work".
 2. A test covers it, and fails without your change.
-3. CI is green: tests, deploy checks, migrations, build, locale parity.
+3. CI is green: tests, migrations, build, locale parity.
 4. Someone else reviewed and approved the diff.
 5. New user-facing strings exist in all three locales.
 6. The PR body says why, and how AI was used if it was.
 7. Anything found but not fixed is a new ticket.
 
 ## Releases and incidents
+
+There is nothing deployed right now and no deployment configuration in the
+repository — see `docs/HANDOVER.md`. These apply from the day there is one
+again, and the day it is set up is the day to read them, not after.
 
 - **Never deploy on a Friday** or when the person who wrote the change is
   unreachable.
@@ -526,8 +536,8 @@ one person understands a part of the system.
 > You are allowed to block a merge, and you are expected to use that. You are the
 > reason a fixed bug stays fixed.
 
-- **Owns:** the 202-test suite and CI, deploys and rollbacks, the asset pipeline
-  and bundle size, incident notes.
+- **Owns:** the test suite and CI, releases and rollbacks once there is
+  somewhere to release to, the asset pipeline and bundle size, incident notes.
 - **Every week:** confirm CI is green on `main`; check no test was quietly
   deleted; watch the bundle and repo size; run a full manual pass of the site.
 - **Never:** approve a PR whose test you did not see fail; let a red build merge
@@ -558,7 +568,7 @@ Nobody reviews only their own lane — you find more in code you did not expect.
 cd backend
 python -m venv venv && venv\Scripts\activate
 pip install -r requirements.txt
-copy .env.example .env        # set SECRET_KEY, DJANGO_ENV=development
+copy .env.example .env        # set SECRET_KEY
 python manage.py migrate
 python manage.py seed         # 3 levels, 6 units, 12 lessons, 8 badges
 python manage.py createsuperuser

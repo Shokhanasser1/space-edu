@@ -8,7 +8,7 @@ red build — it looks like nothing is wrong.
 It happened here. A `find -printf "%s\\t%p\\n"` was edited by a script that
 wrote a real tab and a real newline into the YAML instead of the two-character
 escapes, which split a line in half and made the whole file unparseable. Every
-check in it — tests, migrations, deployment, the secret scan — stopped running,
+check in it — tests, migrations, the secret scan — stopped running,
 and the only signal was a grey cross.
 
 These run in the ordinary test suite, so `manage.py test` catches it before a
@@ -74,7 +74,7 @@ class WorkflowFileTests(SimpleTestCase):
             for job in parsed['jobs'].values()
             for step in job['steps']
         ]
-        for required in ('Run tests', 'Check for missing migrations', 'Deployment checks',
+        for required in ('Run tests', 'Check for missing migrations',
                          'Build', 'Tests', 'Locale parity', 'Large files'):
             self.assertIn(required, steps, f'CI no longer runs "{required}"')
 

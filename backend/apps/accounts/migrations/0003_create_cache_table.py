@@ -1,11 +1,11 @@
 """Create the DatabaseCache table.
 
 base.py falls back to DatabaseCache when REDIS_URL is absent, because the Django
-default (LocMemCache) is per-process and gunicorn runs two workers — which broke
-e-mail sign-in codes and made throttle counters meaningless.
+default (LocMemCache) is per-process and a real server runs several workers,
+which broke e-mail sign-in codes and made throttle counters meaningless.
 
 Creating the table in a migration rather than leaving it to a manual
-`manage.py createcachetable` means test databases and fresh deploys both get it.
+`manage.py createcachetable` means test databases and fresh installs both get it.
 """
 from django.core.management import call_command
 from django.db import migrations

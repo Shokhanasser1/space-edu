@@ -1,0 +1,35 @@
+# The database. This is the file the 2026-08-22 credential exposure was about;
+# see docs/SECURITY-INCIDENT-2026-08-22.md. CI fails the build if a *.sqlite3
+# is tracked, but by then it is already in someone's history.
+backend/db.sqlite3
+*.sqlite3
+
+# Secrets. .env.example is the committed one and carries no values.
+.env
+.env.*
+!.env.example
+backend/.env
+frontend/.env
+
+# Python
+backend/venv/
+backend/.venv/
+__pycache__/
+*.pyc
+
+# Django-generated
+backend/media/
+backend/staticfiles/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/coverage/
+
+# AI tooling — 31 files of it, three compiled .pyc, turned CI red once already
+.agent/
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db

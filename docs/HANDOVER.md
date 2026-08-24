@@ -1,8 +1,8 @@
 # Handover — state of the work on 22 August 2026
 
-Branch `fix/audit-critical`, 28 commits ahead of `origin/main`, **not merged
-back, not pushed**. `origin/main` has been merged *in*, so the branch contains
-everyone's work. Everything below is committed on it.
+*Updated 24 August 2026: `fix/audit-critical` is merged, `main` is the only
+branch and it is pushed. The deployment configuration has since been removed —
+see "The deployment is gone, on purpose" below.*
 
 ---
 
@@ -17,7 +17,7 @@ everyone's work. Everything below is committed on it.
 Verify the state in one go:
 
 ```bash
-cd backend  && python manage.py test apps base   # expect 296 OK
+cd backend  && python manage.py test apps base   # expect 303 OK
 cd frontend && npm run build && npm test          # expect 193 OK
 cd frontend && npm run build && npm run check:locales && npm run content:check
 ```
@@ -67,8 +67,9 @@ that blocks a red merge.
   raised `NameError` on every request.
 - `manage.py seed` had **never** worked (unpacked 9 values from 8-element
   tuples, inside `@transaction.atomic`).
-- Production `STORAGES` had no `default` alias, so every upload raised
-  `InvalidStorageError` once R2 was unconfigured.
+- The settings module layered over `base.py` rebuilt `STORAGES` without a
+  `default` alias, so every upload raised `InvalidStorageError` once R2 was
+  unconfigured. `base/tests.py` still guards that alias.
 
 ### Performance and delivery
 
@@ -226,7 +227,7 @@ second merge from the old base would reintroduce all three of the above.
 
 | | |
 |---|---|
-| **Q1 — credential exposure** | The repository is **public** and history holds a database with two superuser password hashes. **Step 1 of `docs/SECURITY-INCIDENT-2026-08-22.md` needs doing today**; it is now one command, `manage.py rotate_leaked_credentials`, and depends on nothing. It deliberately will not set the two superuser passwords — run `changepassword` for those. Steps 2–3 rewrite history and should wait until this branch is merged. |
+| **Q1 — credential exposure** | The repository is **public** and history holds a database with two superuser password hashes. **Step 1 of `docs/SECURITY-INCIDENT-2026-08-22.md` needs doing today**; it is now one command, `manage.py rotate_leaked_credentials`, and depends on nothing. It deliberately will not set the two superuser passwords — run `changepassword` for those. Steps 2–3 rewrite history and are no longer blocked — the branch is merged. Re-checked 24 August 2026: the project moved to `github.com/Shokhanasser1/space-edu`, which is still public and whose history still holds 17 versions of `backend/db.sqlite3`. The move copied the history, so nothing here is out of date. |
 | **B1 — review, then decide about DMs** | The moderation floor is built and DMs are **off** (`DM_ENABLED=false`). Turning them on is a product decision about a duty of care to 10-to-18-year-olds, not a code change. Before flipping it: decide who reads `GET /chat/reports/queue/` and how often, and how long a first suspension should be — the mechanism exists (`suspend_days`, 1-90, chat-scoped and time-boxed) but nobody has decided the policy. |
 
 ### Free to pick up
@@ -239,6 +240,60 @@ second merge from the old base would reintroduce all three of the above.
 | **115 missing problems** | The Masalalar set advertises itself as a set and holds 30. The other 115 entries were placeholders and were dropped rather than seeded; someone has to write them. |
 | **Lesson text** | `TopicLesson.content` is a bare `TextField` described as "text/markdown" and nobody renders markdown. Decide what a lesson body is before anyone writes into it. |
 | **SpaceLabView's textures** | It loads **eight** at runtime — three from `unpkg.com` and five from `raw.githubusercontent.com`, which is not an asset host: GitHub rate-limits it and does not support it for production traffic, so it fails on the day a whole class opens the page at once. A failed load no longer crashes anything (see below), but the Earth renders untextured. Hosting them means downscaling and re-encoding first; they are several megabytes raw and the repository is under a large-asset budget. |
+
+---
+
+## The deployment is gone, on purpose
+
+Removed on 24 August 2026 at the owner's request, to be set up again from
+scratch later. What is no longer in the repository:
+
+| Gone | What it did |
+|---|---|
+| `backend/railway.json` | Build and start command: migrate → `ensure_superuser` → collectstatic → `gunicorn --workers 2` |
+| `backend/runtime.txt` | Pinned Python 3.12.9 for the host's builder |
+| `backend/base/settings/production.py` | `DEBUG=False`, HSTS, secure cookies, `X_FRAME_OPTIONS`, proxy SSL header, WhiteNoise, 60-minute access tokens |
+| The `DJANGO_ENV` switch | Chose between the two settings modules, failing *closed* |
+| `frontend/vercel.json` | Build, SPA rewrite, **and every security header the site had** |
+| `ensure_superuser` | Created the first admin unattended, because the host had no console |
+| `gunicorn`, `whitenoise` | WSGI server and static-file serving |
+| CI's `Deployment checks` step | `manage.py check --deploy` |
+
+`settings/__init__.py` now loads `development` and nothing else, which means
+**`DEBUG` defaults to on**. That is fine on a laptop and is a takeover on a
+public host: with `DEBUG=True` an unhandled error renders a page containing
+`SECRET_KEY`, and the development module also opens CORS to everyone and prints
+sign-in codes instead of mailing them. Nothing may be exposed to the internet
+until the hardened module is back.
+
+Four things must come back together, and it is worth reading this list before
+starting rather than after:
+
+1. **The environment switch, failing closed** — the permissive branch must be
+   the one you have to ask for by name. See rule C-7 in `CONTRIBUTING.md`; the
+   original form of this bug returned account sign-in codes in HTTP responses.
+2. **The security headers.** They lived in `vercel.json`, not in the
+   application, so they left with it: CSP, `X-Content-Type-Options`,
+   `Referrer-Policy`, `Permissions-Policy`, frame options. The CSP was the
+   restrictive kind — an explicit `connect-src` allow-list — so it needs the API
+   origin written into it and will silently break every request if that is
+   wrong. Putting them in the app instead would mean they cannot be lost again.
+3. **A WSGI server and a way to serve static files.** `runserver` is neither.
+4. **The first administrator.** `manage.py createsuperuser` needs a console on
+   the running service; if the host has none, that command has to come back.
+
+What was deliberately **kept**: Cloudflare R2 for uploaded files, and
+`dj-database-url` + `psycopg2`, so a hosted database is one `DB_URL` away.
+
+### Where the data lives right now
+
+`DB_URL` is unset, so Django writes to `backend/db.sqlite3` — a file on one
+machine. Every account, product, order, message and XP total is in that file and
+nowhere else. It is not backed up, it cannot be shared between developers, and
+it is the same file that caused the credential exposure in Q1 when someone
+committed it. R2 does not change this: R2 holds *files* — avatars and product
+photographs — while the rows that reference them are in the database. Moving the
+data off this machine means choosing a hosted Postgres and setting `DB_URL`.
 
 ---
 
@@ -264,9 +319,9 @@ second merge from the old base would reintroduce all three of the above.
 - **`gltf-transform --texture-compress` fails on Windows** with a libvips
   colourspace error. Geometry compression works fine.
 - **`CACHES` falls back to the database** when `REDIS_URL` is absent, and the
-  table is created by a migration. Set `REDIS_URL` on Railway when you can — the
-  chat rate limits are cache-backed, and a database cache makes them slower than
-  they need to be.
+  table is created by a migration. Point `REDIS_URL` at a real Redis when there
+  is one — the chat rate limits are cache-backed, and a database cache makes
+  them slower than they need to be.
 - **The profanity filter is a floor, not a solution.** It catches the lazy case
   and it has a documented limit (a swapped vowel) with a test of its own. What
   it misses is what the report queue is for, and the report queue only works if

@@ -100,9 +100,9 @@ class LoginThrottleTests(TestCase):
         self.assertIn(status.HTTP_429_TOO_MANY_REQUESTS, codes)
 
     def test_throttle_not_bypassable_by_rotating_x_forwarded_for(self):
-        """Railway appends the real peer address to X-Forwarded-For, so with
-        NUM_PROXIES=1 the trusted value is the last entry. Anything the caller
-        prepends must be ignored."""
+        """A terminating proxy appends the real peer address to
+        X-Forwarded-For, so with NUM_PROXIES=1 the trusted value is the last
+        entry. Anything the caller prepends must be ignored."""
         codes = [
             self._bad_login(
                 HTTP_X_FORWARDED_FOR=f'203.0.113.{i}, 198.51.100.7'

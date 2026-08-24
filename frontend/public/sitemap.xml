@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- /courses, /events and /community were listed here but are not routes in
-     App.jsx. Vercel's catch-all rewrite served them as HTTP 200 with the
-     not-found body, which is the worst signal a crawler can get. -->
+     App.jsx. A single-page-app catch-all rewrite serves them as HTTP 200 with
+     the not-found body, which is the worst signal a crawler can get. Keep this
+     file to routes that exist. -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://uzcosmos.uz/</loc>

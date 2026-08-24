@@ -1,6 +1,10 @@
 # Credential exposure — 22 August 2026
 
-**Status:** open. Step 1 has not been done yet and does not depend on anything else.
+**Status:** open. Step 1 has not been done yet and does not depend on anything
+else. Re-checked 24 August 2026: the exposure moved with the project. The
+repository is now `github.com/Shokhanasser1/space-edu`, it is **public**, and
+its history still carries 17 versions of the blob — the move copied the history
+rather than rewriting it, so nothing below has been overtaken by events.
 
 ---
 
@@ -25,10 +29,11 @@ git show a9f301f^:backend/db.sqlite3 > leaked.sqlite3
 | personal data | email addresses and dates of birth, including of minors |
 | `django_session` | 2 rows |
 
-**The repository is public.** `github.com/asilbekmurodqobilov05-hash/space-edu`
-reports `visibility: public`, forking allowed. Anyone who clones it has this
-file. This is not a hypothetical risk; treat every credential in it as known to
-third parties.
+**The repository is public.** `github.com/Shokhanasser1/space-edu` reports
+`visibility: public`, forking allowed. Anyone who clones it has this file. This
+is not a hypothetical risk; treat every credential in it as known to third
+parties. The earlier location, `asilbekmurodqobilov05-hash/space-edu`, carried
+the same blob; if it still exists it has to be dealt with as well.
 
 Some of the rows look like throwaway test accounts (`qwe`, `qqq`, `john.doe`).
 Two do not: a personal Gmail address, and both superusers.
@@ -76,8 +81,8 @@ puts a live credential into a terminal scrollback and a CI log. So it refuses.
 **Everything that lives outside the database.** Rotate these by hand: the
 `SECRET_KEY` (rotating it invalidates every existing session and JWT, which is
 what we want here), the Cloudflare R2 keys, and `GEMINI_API_KEY`. If the same
-password was reused anywhere else — Railway, Vercel, the GitHub account itself —
-change it there too.
+password was reused anywhere else — the GitHub account itself, any hosting or
+mail account — change it there too.
 
 Covered by `apps/accounts/tests_incident.py`.
 
@@ -85,9 +90,9 @@ Covered by `apps/accounts/tests_incident.py`.
 
 ## Step 2 — remove the blob from history
 
-Do this **after** `fix/audit-critical` is reviewed and merged into `main`.
-Rewriting history renames every commit, so doing it while a branch is
-outstanding means rebasing that branch onto a history it no longer shares.
+Nothing is blocking this any more: `fix/audit-critical` is merged and `main`
+is the only branch. Rewriting history renames every commit, so anyone holding a
+clone has to re-clone afterwards — tell them before, not after.
 
 `git-filter-repo` is not installed:
 
@@ -99,7 +104,7 @@ Then, from a fresh clone — `filter-repo` refuses to run on a repository with
 extra remotes or uncommitted work, by design:
 
 ```bash
-git clone https://github.com/asilbekmurodqobilov05-hash/space-edu.git space-edu-clean
+git clone https://github.com/Shokhanasser1/space-edu.git space-edu-clean
 cd space-edu-clean
 
 # check what is about to go
@@ -108,7 +113,7 @@ git rev-list --objects --all | grep db.sqlite3
 git filter-repo --invert-paths --path backend/db.sqlite3
 
 # filter-repo drops the remote on purpose, so it cannot force-push by accident
-git remote add origin https://github.com/asilbekmurodqobilov05-hash/space-edu.git
+git remote add origin https://github.com/Shokhanasser1/space-edu.git
 
 # verify before pushing: this must print nothing
 git rev-list --objects --all | grep db.sqlite3
@@ -149,9 +154,11 @@ Two ways to close that:
 
 1. **Ask GitHub Support** to purge the cached views, quoting the repository and
    saying credentials were exposed. This is the documented route and they do it.
-2. **Delete and recreate the repository.** Fastest and certain. Costs the stars,
-   the issues and the watch list — currently 1 star, 0 issues, 0 forks, so the
-   cost here is close to nothing.
+2. **Delete and recreate the repository.** Fastest and certain — and note it
+   has to be a fresh repository built from the current tree, not a push of the
+   existing history, which is what happened last time and is why the blob is
+   still here. Costs the stars, the issues and the watch list — currently
+   0 stars, 0 issues, 0 forks, so the cost here is nothing.
 
 **Forks would keep a full copy.** There are 0 today. Check again before you
 start; if one has appeared, the fork's owner has to delete it themselves.
@@ -163,6 +170,12 @@ start; if one has appeared, the fork's owner has to delete it themselves.
 `.gitignore` listed `backend/db.sqlite3`, but a file that is *already tracked*
 stays tracked — `.gitignore` only affects untracked files. Nobody ran
 `git rm --cached`.
+
+**It nearly happened a second time.** Commit `96f47a4` deleted the root
+`.gitignore` outright, so `backend/db.sqlite3`, `backend/.env` and every
+`__pycache__` directory were untracked *and unignored* — one `git add -A` from
+being committed again, with the R2 keys and `SECRET_KEY` this time. Restored on
+24 August 2026. If it goes missing again, that is the thing to fix first.
 
 CI now fails the build if a `.env` or a `*.sqlite3` is tracked, if compiled
 Python is tracked, if a `VITE_*` secret has a value outside `.env.example`, or

@@ -4,7 +4,7 @@ Django's `ImageField` calls `Pillow.verify()`, which only checks that the file
 *starts* like an image. It does not bound the size, does not bound the pixel
 count, and does not rename the file — so before this module:
 
-* a 5 GB avatar was spooled to Railway's ephemeral disk and re-uploaded to R2;
+* a 5 GB avatar was spooled to the server's disk and re-uploaded to R2;
 * `avatar.html` was stored under that exact name, and `S3Boto3Storage` derives
   Content-Type from the name, so a PNG-headed polyglot became `text/html` served
   from a public bucket;

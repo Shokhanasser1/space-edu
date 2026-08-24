@@ -38,21 +38,12 @@ jobs:
       - name: Check for missing migrations
         env:
           SECRET_KEY: ci-secret-key-not-used-anywhere-else-0123456789
-          DJANGO_ENV: development
         run: python manage.py makemigrations --check --dry-run
 
       - name: Run tests
         env:
           SECRET_KEY: ci-secret-key-not-used-anywhere-else-0123456789
-          DJANGO_ENV: development
         run: python manage.py test apps base --verbosity 2
-
-      - name: Deployment checks
-        env:
-          SECRET_KEY: ci-secret-key-not-used-anywhere-else-0123456789
-          DJANGO_ENV: production
-          ALLOWED_HOSTS: example.com
-        run: python manage.py check --deploy --fail-level ERROR
 
   frontend:
     name: Frontend build

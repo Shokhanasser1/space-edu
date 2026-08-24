@@ -12,11 +12,14 @@ from django.test.utils import override_settings
 
 
 class StorageConfigTests(SimpleTestCase):
-    """Finding: base.py only defines STORAGES when Cloudflare R2 is configured, and
-    production.py then rebuilt it as {**globals().get('STORAGES', {}), 'staticfiles': ...}.
-    Without R2 that leaves no 'default' key, so every ImageField save raised
-    InvalidStorageError. manage.py check passed, so it stayed silent until the
-    first avatar upload."""
+    """Finding: base.py only defines STORAGES when Cloudflare R2 is configured,
+    and the settings module that layered on top of it rebuilt the dict as
+    {**globals().get('STORAGES', {}), 'staticfiles': ...}. Without R2 that left
+    no 'default' key, so every ImageField save raised InvalidStorageError.
+    manage.py check passed, so it stayed silent until the first avatar upload.
+
+    Anything added above base.py — a deployment profile, most likely — has to
+    keep the 'default' alias, which is what these two check."""
 
     def test_default_storage_alias_is_always_configured(self):
         from django.conf import settings
@@ -28,14 +31,10 @@ class StorageConfigTests(SimpleTestCase):
 
         self.assertIsNotNone(default_storage)
 
-    def test_production_settings_define_a_default_storage_without_r2(self):
-        prod = importlib.import_module('base.settings.production')
-        self.assertIn('default', prod.STORAGES)
-
 
 class CacheConfigTests(SimpleTestCase):
     """Finding: CACHES was never set, so Django fell back to per-process
-    LocMemCache while railway.json runs `gunicorn --workers 2`. Sign-in codes
+    LocMemCache, while any real server runs more than one worker. Sign-in codes
     stored by one worker were invisible to the other, throttle counters were
     per-worker, and cache.delete() on verify only cleared the local copy, leaving
     the code replayable for its full TTL."""
@@ -74,42 +73,6 @@ class ThrottleConfigTests(SimpleTestCase):
         )
 
 
-class EnvironmentSelectionTests(SimpleTestCase):
-    """Finding: settings/__init__.py loaded production only on an exact match of
-    the string 'production'. Any typo, stray whitespace or unset variable silently
-    booted development — DEBUG=True, CORS_ALLOW_ALL_ORIGINS=True, and the sign-in
-    code echoed in the HTTP response."""
-
-    def _resolved_env(self, value):
-        original = os.environ.get('DJANGO_ENV')
-        if value is None:
-            os.environ.pop('DJANGO_ENV', None)
-        else:
-            os.environ['DJANGO_ENV'] = value
-        try:
-            for name in [m for m in sys.modules if m.startswith('base.settings')]:
-                sys.modules.pop(name, None)
-            mod = importlib.import_module('base.settings')
-            return getattr(mod, 'DEBUG', None)
-        finally:
-            if original is None:
-                os.environ.pop('DJANGO_ENV', None)
-            else:
-                os.environ['DJANGO_ENV'] = original
-
-    def test_unset_environment_does_not_fall_open_to_debug(self):
-        self.assertFalse(self._resolved_env(None), 'unset DJANGO_ENV must not enable DEBUG')
-
-    def test_typo_does_not_fall_open_to_debug(self):
-        self.assertFalse(self._resolved_env('prod'), "'prod' must not enable DEBUG")
-
-    def test_whitespace_does_not_fall_open_to_debug(self):
-        self.assertFalse(self._resolved_env(' production '), 'stray whitespace must not enable DEBUG')
-
-    def test_explicit_development_still_works(self):
-        self.assertTrue(self._resolved_env('development'))
-
-
 class JwtConfigTests(SimpleTestCase):
     """The frontend interceptor must persist the rotated refresh token; if
     rotation is on and blacklisting is on, dropping it logs every user out."""
@@ -145,10 +108,10 @@ class PublicSurfaceTests(TestCase):
 
 
 class OriginConfigTests(SimpleTestCase):
-    """The prod outage of 2026-08-23: the Vercel front end could not reach the
-    Railway API at all, because every cross-origin request was refused before it
-    started. Three separate settings can produce that one browser message, and
-    two of them look nothing like a CORS problem, so each gets a test."""
+    """The outage of 2026-08-23: the front end could not reach the API at all,
+    because every cross-origin request was refused before it started. Three
+    separate settings can produce that one browser message, and two of them look
+    nothing like a CORS problem, so each gets a test."""
 
     def _reload_settings(self, **env):
         original = {name: os.environ.get(name) for name in env}
@@ -168,9 +131,9 @@ class OriginConfigTests(SimpleTestCase):
             importlib.import_module('base.settings')
 
     def test_a_space_after_the_comma_does_not_silently_void_an_origin(self):
-        """These lists are typed into the Railway dashboard by hand. Plain
-        .split(',') kept the space, so the second origin never matched and the
-        symptom was indistinguishable from not having set it at all."""
+        """These lists are typed in by hand. Plain .split(',') kept the space,
+        so the second origin never matched and the symptom was
+        indistinguishable from not having set it at all."""
         settings = self._reload_settings(
             CORS_ALLOWED_ORIGINS='https://a.example, https://b.example',
             ALLOWED_HOSTS='a.example, b.example',
@@ -182,34 +145,23 @@ class OriginConfigTests(SimpleTestCase):
         settings = self._reload_settings(CORS_ALLOWED_ORIGINS='https://a.example,')
         self.assertEqual(settings.CORS_ALLOWED_ORIGINS, ['https://a.example'])
 
-    def test_the_railway_hostname_is_trusted_without_being_configured(self):
+    def test_a_disallowed_host_is_the_error_that_looks_like_a_cors_error(self):
         """Django rejects a disallowed Host before CORS middleware ever runs, so
         a missing ALLOWED_HOSTS entry surfaces in the browser as a missing
-        Access-Control-Allow-Origin header — pointing at the wrong setting."""
-        settings = self._reload_settings(
-            RAILWAY_PUBLIC_DOMAIN='space-edu-production.up.railway.app',
-            ALLOWED_HOSTS='localhost',
-        )
-        self.assertIn('space-edu-production.up.railway.app', settings.ALLOWED_HOSTS)
-
-    def test_csrf_trusts_the_railway_origin_so_the_admin_can_be_signed_into(self):
-        settings = self._reload_settings(
-            RAILWAY_PUBLIC_DOMAIN='space-edu-production.up.railway.app',
-        )
-        self.assertIn(
-            'https://space-edu-production.up.railway.app',
-            settings.CSRF_TRUSTED_ORIGINS,
-        )
+        Access-Control-Allow-Origin header — pointing at the wrong setting.
+        Whatever host the API ends up on has to be listed here by hand."""
+        settings = self._reload_settings(ALLOWED_HOSTS='localhost')
+        self.assertNotIn('api.example', settings.ALLOWED_HOSTS)
 
     def test_csrf_falls_back_to_the_cors_front_ends(self):
         settings = self._reload_settings(
-            CORS_ALLOWED_ORIGINS='https://space-edu-two.vercel.app',
+            CORS_ALLOWED_ORIGINS='https://front.example',
             CSRF_TRUSTED_ORIGINS='',
         )
-        self.assertIn('https://space-edu-two.vercel.app', settings.CSRF_TRUSTED_ORIGINS)
+        self.assertIn('https://front.example', settings.CSRF_TRUSTED_ORIGINS)
 
     def test_preview_origins_are_not_opened_up_by_default(self):
-        """A regex broad enough to match Vercel previews also matches every
-        other page hosted on vercel.app. It stays opt-in."""
+        """A regex broad enough to match your own preview builds also matches
+        every other page hosted on the same domain. It stays opt-in."""
         settings = self._reload_settings(CORS_ALLOWED_ORIGINS='https://a.example')
         self.assertEqual(settings.CORS_ALLOWED_ORIGIN_REGEXES, [])

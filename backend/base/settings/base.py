@@ -17,15 +17,6 @@ def _csv(name, default=''):
 
 ALLOWED_HOSTS = _csv('ALLOWED_HOSTS', default='localhost,127.0.0.1')
 
-# Railway injects the service's own hostname. Trusting it automatically means a
-# deploy answers on its railway.app URL even when ALLOWED_HOSTS was never set.
-# Worth doing because the failure is so badly signposted: Django rejects the
-# request before CORS middleware runs, so the browser reports a missing
-# Access-Control-Allow-Origin header and sends you to the wrong setting.
-_railway_host = config('RAILWAY_PUBLIC_DOMAIN', default='').strip()
-if _railway_host and _railway_host not in ALLOWED_HOSTS:
-    ALLOWED_HOSTS.append(_railway_host)
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -84,7 +75,9 @@ AUTH_USER_MODEL = 'accounts.User'
 
 import dj_database_url
 
-# DB_URL takes priority; DATABASE_URL is the name Railway injects automatically
+# DB_URL takes priority; DATABASE_URL is the name most hosts inject on their own.
+# Neither is set locally, so this falls through to a SQLite file — which means
+# every account, product and message lives on the machine that ran the server.
 _db_url = (
     config('DB_URL', default=None)
     or config('DATABASE_URL', default=None)
@@ -139,10 +132,11 @@ else:
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # ── Cache ─────────────────────────────────────────────────────────────────────
-# Must be shared across processes: gunicorn runs 2 workers, and both the e-mail
-# sign-in codes and the DRF throttle counters live here. The Django default
-# (LocMemCache) is per-process, which made codes vanish about half the time and
-# left a verified code replayable in the worker that did not consume it.
+# Must be shared across processes: any real server runs more than one worker,
+# and both the e-mail sign-in codes and the DRF throttle counters live here.
+# The Django default (LocMemCache) is per-process, which made codes vanish about
+# half the time and left a verified code replayable in the worker that did not
+# consume it.
 _redis_url = config('REDIS_URL', default=None)
 if _redis_url:
     CACHES = {
@@ -171,7 +165,8 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
-    # How many reverse proxies sit in front of us. Railway terminates at one.
+    # How many reverse proxies sit in front of us. One is right for a single
+    # terminating proxy; set it to what actually stands in front.
     # Leaving this unset makes DRF key throttles on the whole client-supplied
     # X-Forwarded-For header, which a caller can rotate to defeat every limit.
     'NUM_PROXIES': config('NUM_PROXIES', default=1, cast=int),
@@ -210,20 +205,18 @@ SIMPLE_JWT = {
 
 CORS_ALLOWED_ORIGINS = _csv('CORS_ALLOWED_ORIGINS', default='http://localhost:3000')
 
-# Vercel gives every preview deployment its own subdomain, so an exact list
-# covers production and nothing else. Opt in deliberately: a regex as broad as
-# ^https://.*\.vercel\.app$ lets any page hosted on Vercel call this API.
+# Hosts that give every preview build its own subdomain are the reason this
+# exists, and the reason it stays empty by default: a regex broad enough to
+# match your own previews also matches every other page on that host.
 CORS_ALLOWED_ORIGIN_REGEXES = _csv('CORS_ALLOWED_ORIGIN_REGEXES')
 
 # Django checks Origin on every unsafe request from an HTTPS page, whether or
-# not CORS is involved. Without this, signing in to /admin/ behind Railway's
-# proxy fails with "CSRF verification failed" and no other clue. Defaults to the
-# CORS list because in practice they are the same set of front ends.
+# not CORS is involved. Without this, signing in to /admin/ from behind any
+# HTTPS proxy fails with "CSRF verification failed" and no other clue. Defaults
+# to the CORS list because in practice they are the same set of front ends.
 CSRF_TRUSTED_ORIGINS = _csv('CSRF_TRUSTED_ORIGINS') or [
     origin for origin in CORS_ALLOWED_ORIGINS if '://' in origin
 ]
-if _railway_host and f'https://{_railway_host}' not in CSRF_TRUSTED_ORIGINS:
-    CSRF_TRUSTED_ORIGINS.append(f'https://{_railway_host}')
 
 # ── Direct messages ───────────────────────────────────────────────────────────
 # Off by default, and deliberately so. The product is used by 10-to-18-year-olds
