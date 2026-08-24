@@ -8,36 +8,37 @@ import { BlendFunction } from 'postprocessing';
 import * as THREE from 'three';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useGamificationStore } from '@/store/useGamificationStore';
-import { useRemoteTextures } from '@/hooks/useRemoteTextures';
+import { useTextures } from '@/hooks/useTextures';
 
 /*
- * Eight textures on somebody else's servers.
+ * Eight textures, served from this site.
  *
- * These were loaded through `useLoader`, which throws when a load fails — and
- * with no boundary between this view and the root one, an unpkg outage, a
- * GitHub rate limit or a school network that blocks either replaced the whole
- * application with the crash screen. `useRemoteTextures` returns null for
- * whatever did not arrive; the materials fall back to a plain colour.
+ * Until 24 August 2026 these were fetched from `unpkg.com` and
+ * `raw.githubusercontent.com` at runtime. Neither is an asset host: GitHub
+ * rate-limits raw file access and does not support it for production traffic,
+ * so the page failed on exactly the day a whole class opened it at once, and a
+ * school network that blocks either host broke it every day. They are in
+ * `public/textures/` now — see `public/textures/ATTRIBUTION.md` for where each
+ * one came from and what was done to it.
  *
- * `raw.githubusercontent.com` in particular is not an asset host. GitHub
- * rate-limits it and does not support it for production traffic, so it fails on
- * exactly the day a whole class opens the page at once. Hosting these ourselves
- * is the real fix and needs them downscaled first — see docs/HANDOVER.md.
+ * `useTextures` stays regardless: it returns null for whatever did not load,
+ * and the materials fall back to a plain colour. A local path can still be
+ * wrong, and `useLoader` would throw the whole view away if it were.
  */
 const GLOBE_TEXTURES = [
-  'https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg',
-  'https://unpkg.com/three-globe/example/img/earth-topology.png',
-  'https://unpkg.com/three-globe/example/img/earth-water.png',
+  '/textures/earth_color_2048.jpg',
+  '/textures/earth_topology_2048.jpg',
+  '/textures/earth_water_1600.png',
 ];
 
-const TOPOLOGY_TEXTURE = ['https://unpkg.com/three-globe/example/img/earth-topology.png'];
+const TOPOLOGY_TEXTURE = ['/textures/earth_topology_2048.jpg'];
 
 const PLANET_TEXTURES = [
-  'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_atmos_2048.jpg',
-  'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_normal_2048.jpg',
-  'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_specular_2048.jpg',
-  'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_lights_2048.png',
-  'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_clouds_1024.png',
+  '/textures/earth_atmos_2048.jpg',
+  '/textures/earth_normal_2048.jpg',
+  '/textures/earth_specular_2048.jpg',
+  '/textures/earth_lights_2048.png',
+  '/textures/earth_clouds_1024.png',
 ];
 
 /** What an Earth looks like when its texture never arrived. */
@@ -45,7 +46,7 @@ const UNTEXTURED_EARTH = '#2a5d8f';
 
 // --- Realistic Earth Component ---
 const RealisticEarth = ({ radius = 5, position = [0, 0, 0] }) => {
-  const [colorMap, bumpMap, specularMap] = useRemoteTextures(GLOBE_TEXTURES);
+  const [colorMap, bumpMap, specularMap] = useTextures(GLOBE_TEXTURES);
 
   const earthRef = useRef(null);
   useFrame(() => {
@@ -677,7 +678,7 @@ const PlanetaryProcessesLab = () => {
     if (activeEvent !== 'none') trackEvent('lab_planetary_processes');
   }, [activeEvent, trackEvent]);
 
-  const [bumpMap] = useRemoteTextures(TOPOLOGY_TEXTURE);
+  const [bumpMap] = useTextures(TOPOLOGY_TEXTURE);
 
   return (
     <div className="flex flex-col md:flex-row h-full gap-6">
@@ -953,7 +954,7 @@ const OrbitalEarthAndVehicle = ({ altitude, inclination, solarPanelsDeployed, sa
   const inclinationRad = useMemo(() => inclination * (Math.PI / 180), [inclination]);
   const orbitRadius = useMemo(() => 2.8 + altitude / 900, [altitude]);
 
-  const [dayMap, bumpMap, specularMap, nightMap, cloudMap] = useRemoteTextures(PLANET_TEXTURES);
+  const [dayMap, bumpMap, specularMap, nightMap, cloudMap] = useTextures(PLANET_TEXTURES);
 
   useFrame((_, delta) => {
     if (earthRef.current) earthRef.current.rotation.y += delta * 0.06;

@@ -2,39 +2,35 @@ import { useEffect, useState } from 'react';
 import * as THREE from 'three';
 
 /**
- * Load textures that live on somebody else's server, without betting the page
- * on them being up.
+ * Load textures without betting the page on every one of them arriving.
  *
- * `SpaceLabView` fetched eight of these through `useLoader` — three from
- * `unpkg.com` and five from `raw.githubusercontent.com`. Two problems with that:
+ * `SpaceLabView` used to fetch eight of these from `unpkg.com` and
+ * `raw.githubusercontent.com` through `useLoader`. Two problems with that:
  *
  * 1. `useLoader` throws when a load fails, and there was no boundary between
  *    the view and the root one, so a blocked network, a rate limit, or an
  *    offline moment on a third-party host replaced the entire application with
- *    the crash screen. (A route boundary now exists too; this stops the throw
- *    at source.)
+ *    the crash screen.
  * 2. `raw.githubusercontent.com` is not an asset host. GitHub rate-limits it
- *    and does not support it for production traffic, so this is a dependency
- *    that fails on exactly the day the class all opens the page at once.
+ *    and does not support it for production traffic, so it was a dependency
+ *    that fails on exactly the day a whole class opens the page at once.
  *
- * This returns `null` per texture that did not load. Callers give the material
- * a plain colour instead — an untextured Earth rather than no page.
- *
- * The proper fix is to host the eight files ourselves. That is deliberately not
- * done here: they are several megabytes raw, the repository is already under a
- * large-asset budget (ticket Q3), and they need downscaling and re-encoding
- * first. See docs/HANDOVER.md.
+ * The eight files are served from `/textures/` now, so the second problem is
+ * gone. This hook stays because the first one has not changed shape: a renamed
+ * file, a typo in a path or a half-loaded response still has to degrade rather
+ * than raise. It returns `null` per texture that did not load, and callers give
+ * the material a plain colour instead — an untextured Earth rather than no page.
  */
-export function useRemoteTextures(urls) {
-  const [textures, setTextures] = useState(() => urls.map(() => null));
+export function useTextures(paths) {
+  const [textures, setTextures] = useState(() => paths.map(() => null));
 
   useEffect(() => {
     let cancelled = false;
     const loader = new THREE.TextureLoader();
     loader.setCrossOrigin('anonymous');
 
-    const loaded = urls.map(() => null);
-    let outstanding = urls.length;
+    const loaded = paths.map(() => null);
+    let outstanding = paths.length;
     if (!outstanding) return undefined;
 
     const settle = () => {
@@ -42,9 +38,9 @@ export function useRemoteTextures(urls) {
       if (outstanding === 0 && !cancelled) setTextures([...loaded]);
     };
 
-    urls.forEach((url, index) => {
+    paths.forEach((path, index) => {
       loader.load(
-        url,
+        path,
         (texture) => {
           if (cancelled) {
             texture.dispose();
@@ -65,7 +61,7 @@ export function useRemoteTextures(urls) {
       // another eight.
       for (const texture of loaded) texture?.dispose?.();
     };
-    // The url list is a module-level constant at every call site.
+    // The path list is a module-level constant at every call site.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

@@ -239,7 +239,7 @@ second merge from the old base would reintroduce all three of the above.
 | **Lesson quizzes, content** | The plumbing is done end to end — `/quiz/:category?lesson=<slug>` runs a quiz for one lesson. What is missing is content: no `ChallengeQuestion` is attached to a lesson yet. That is admin-panel work. |
 | **115 missing problems** | The Masalalar set advertises itself as a set and holds 30. The other 115 entries were placeholders and were dropped rather than seeded; someone has to write them. |
 | **Lesson text** | `TopicLesson.content` is a bare `TextField` described as "text/markdown" and nobody renders markdown. Decide what a lesson body is before anyone writes into it. |
-| **SpaceLabView's textures** | It loads **eight** at runtime — three from `unpkg.com` and five from `raw.githubusercontent.com`, which is not an asset host: GitHub rate-limits it and does not support it for production traffic, so it fails on the day a whole class opens the page at once. A failed load no longer crashes anything (see below), but the Earth renders untextured. Hosting them means downscaling and re-encoding first; they are several megabytes raw and the repository is under a large-asset budget. |
+| ~~**SpaceLabView's textures**~~ | **Done, 24 August 2026.** All eight are served from `/textures/` now. Four were already in the repository and only the view had not been told; the other four were downscaled and re-encoded on the way in — 2.6 MB of downloads became 1.0 MB committed, nothing near the 2 MB file that CI starts counting. What each one is and what was done to it: `frontend/public/textures/ATTRIBUTION.md`. The non-throwing loader stays and is now `useTextures`, because a local path can be wrong too. |
 
 ---
 

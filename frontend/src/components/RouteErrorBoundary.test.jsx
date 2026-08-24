@@ -8,6 +8,11 @@
  * `raw.githubusercontent.com` through `useLoader`, which throws when a load
  * fails — so a school network that blocks either host, or a GitHub rate limit,
  * took the entire site down rather than one screen.
+ *
+ * The textures are served from this site now (24 Aug 2026). The boundary and
+ * the non-throwing loader both stay: a local path can still be wrong, and the
+ * failure mode being fixed here is "one broken thing takes the site with it",
+ * which is not specific to who is hosting the file.
  */
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -122,24 +127,27 @@ describe('the app wires it in', () => {
   });
 });
 
-describe('third-party textures', () => {
+describe('textures', () => {
   it('SpaceLabView no longer throws its way out of a failed load', async () => {
     const source = await import('@/views/explore/SpaceLabView.jsx?raw').then((m) => m.default);
     // `useLoader` throws on error; the replacement returns null per texture.
     expect(source).not.toMatch(/useLoader\s*\(/);
-    expect(source).toMatch(/useRemoteTextures/);
+    expect(source).toMatch(/useTextures/);
   });
 
   it('the loader hands back null rather than raising', async () => {
-    const source = await import('@/hooks/useRemoteTextures.js?raw').then((m) => m.default);
+    const source = await import('@/hooks/useTextures.js?raw').then((m) => m.default);
     // Third argument to TextureLoader.load is onProgress, fourth is onError.
     expect(source).toMatch(/undefined,\s*\n\s*settle,/);
     expect(source).toMatch(/texture\?\.dispose\?\.\(\)/);
   });
 
-  it('the hosts are named so nobody has to grep for them', async () => {
+  it('no texture comes from somebody else’s host', async () => {
     const source = await import('@/views/explore/SpaceLabView.jsx?raw').then((m) => m.default);
-    expect(source).toMatch(/is not an asset host/);
-    expect(source).toMatch(/raw\.githubusercontent\.com/);
+    // The comment above the list may name the old hosts, to explain why. Code
+    // may not: this is the check that stops one being pasted back in.
+    const code = source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+    expect(code).not.toMatch(/https?:\/\//);
+    expect(code).toMatch(/'\/textures\//);
   });
 });
