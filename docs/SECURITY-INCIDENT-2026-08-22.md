@@ -1,23 +1,25 @@
 # Credential exposure — 22 August 2026
 
-**Status:** open. Step 1 has not been done yet and does not depend on anything
-else. Re-checked 24 August 2026: the exposure moved with the project. The
-repository is now `github.com/Shokhanasser1/space-edu`, it is **public**, and
-its history still carries 17 versions of the blob — the move copied the history
-rather than rewriting it, so nothing below has been overtaken by events.
+**Status:** open, one step left. 24 August 2026: step 2 is **done locally** —
+the blob is out of this clone's history — but the rewrite has not been pushed,
+so the public repository is unchanged and step 3 has not started.
+
+Step 1 turned out not to apply: there is no database anywhere any more. No
+`backend/db.sqlite3` on this machine, and nothing deployed. The accounts in the
+leak exist only inside the leaked file itself, so there is nothing for
+`rotate_leaked_credentials` to rotate. What still has to be rotated by hand is
+everything that lives outside the database — see the end of step 1.
 
 ---
 
 ## What happened
 
-`backend/db.sqlite3` was committed and later deleted in `a9f301f`
-("fix: remove database from git tracking"). Deleting a file in a later commit
-removes it from the working tree, not from history — the blob is still one
-command away:
-
-```bash
-git show a9f301f^:backend/db.sqlite3 > leaked.sqlite3
-```
+`backend/db.sqlite3` was committed and later deleted in a commit titled
+"fix: remove database from git tracking". Deleting a file in a later commit
+removes it from the working tree, not from history: until the rewrite below,
+anyone with a clone could recover it with a single `git show` of the parent
+commit. That is still true of every clone taken before the rewrite is pushed,
+and of the copy GitHub is serving right now.
 
 757,760 bytes, a valid SQLite file. It contains:
 
@@ -94,52 +96,57 @@ Nothing is blocking this any more: `fix/audit-critical` is merged and `main`
 is the only branch. Rewriting history renames every commit, so anyone holding a
 clone has to re-clone afterwards — tell them before, not after.
 
-`git-filter-repo` is not installed:
+### What was run, 24 August 2026
 
 ```bash
 pip install git-filter-repo
+
+git bundle create ../space-edu-BACKUP-before-rewrite.bundle --all   # 167 MB
+git filter-repo --force   --invert-paths --path backend/db.sqlite3   --strip-blobs-with-ids blobs-to-strip.txt
 ```
 
-Then, from a fresh clone — `filter-repo` refuses to run on a repository with
-extra remotes or uncommitted work, by design:
+`--strip-blobs-with-ids` took a list of 23 blob ids, computed as *every blob
+over 1 MB in the whole history that is not reachable from the current commit* —
+the superseded originals of the star photographs and the `.glb` models, 171 MB
+between them.
+
+**That list is the safe way to do it, and the obvious way is not.** An earlier
+draft of this document suggested
 
 ```bash
-git clone https://github.com/Shokhanasser1/space-edu.git space-edu-clean
-cd space-edu-clean
+git filter-repo --invert-paths --path-glob 'frontend/public/models/**/*.glb'
+```
 
-# check what is about to go
-git rev-list --objects --all | grep db.sqlite3
+which would have deleted the fifteen `.glb` files the game currently uses, from
+every commit including the latest — a path glob does not know the difference
+between a superseded blob and a live one. Selecting by blob id does.
 
-git filter-repo --invert-paths --path backend/db.sqlite3
+Result:
 
-# filter-repo drops the remote on purpose, so it cannot force-push by accident
-git remote add origin https://github.com/Shokhanasser1/space-edu.git
+| | Before | After |
+|---|---|---|
+| `.git` | 214 MB | 85 MB |
+| Commits | 99 | 97 |
+| `db.sqlite3` blobs in history | 17 | 0 |
 
-# verify before pushing: this must print nothing
-git rev-list --objects --all | grep db.sqlite3
+The two commits that disappeared contained nothing but the database, so
+removing it left them empty and `filter-repo` pruned them. The working tree is
+byte-for-byte identical — the top commit's tree hash is unchanged
+(`b726d387`), which is the check worth repeating after any rewrite.
 
+The backup bundle restores the pre-rewrite repository in full:
+`git clone space-edu-BACKUP-before-rewrite.bundle`.
+
+### What is left
+
+```bash
 git push --force --all
 git push --force --tags
 ```
 
-Everyone else then re-clones. Do not merge an old clone back in — it would
-reintroduce the whole rewritten history.
-
-### While you are there: the 246 MB of old assets
-
-The same rewrite is the moment to drop the superseded binaries. The working tree
-is already down to 20 MB, but history still carries the originals, so a fresh
-clone is around 250 MB:
-
-```bash
-git filter-repo --invert-paths \
-  --path backend/db.sqlite3 \
-  --path-glob 'frontend/public/images/**/*.png' \
-  --path-glob 'frontend/public/models/**/*.glb'
-```
-
-The current compressed versions are in the latest commit and are unaffected —
-only the historical blobs go.
+Then everyone else re-clones. **Do not merge an old clone back in** — it would
+reintroduce the whole rewritten history, database included, which is exactly
+how the blob survived the move between repositories.
 
 ---
 
@@ -171,7 +178,7 @@ start; if one has appeared, the fork's owner has to delete it themselves.
 stays tracked — `.gitignore` only affects untracked files. Nobody ran
 `git rm --cached`.
 
-**It nearly happened a second time.** Commit `96f47a4` deleted the root
+**It nearly happened a second time.** The commit titled "project update repo" deleted the root
 `.gitignore` outright, so `backend/db.sqlite3`, `backend/.env` and every
 `__pycache__` directory were untracked *and unignored* — one `git add -A` from
 being committed again, with the R2 keys and `SECRET_KEY` this time. Restored on
