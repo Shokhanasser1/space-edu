@@ -87,8 +87,21 @@ describe('the game gives its resources back on unmount', () => {
 
 describe('no per-frame React state updates', () => {
   it('useFrame callbacks do not call a React setter', () => {
-    // Calling a setState inside useFrame re-renders 60 times a second. The
-    // scene currently avoids this; keep it that way.
+    // Calling a setState inside useFrame re-renders 60 times a second.
+    //
+    // This test spent an unknown length of time unable to fail. The pattern held
+    // a literal backspace byte where \b was meant, so it looked for a control
+    // character followed by "set" and matched nothing, ever. ESLint's
+    // no-control-regex found it on 24 Aug 2026.
+    //
+    // Revived, it flagged `setHud` — a zustand store action called on a coin
+    // pickup and on game over, not every frame. So the heuristic was wrong as
+    // well as dead: "looks like setThing(" catches every store action and every
+    // three.js setter in the file. What this is actually about is React state,
+    // so that is what it looks for: the setters this file declares through
+    // useState, and nothing else.
+    const setters = declaredStateSetters(sceneSource);
+
     const offenders = [];
     const re = /useFrame\(\s*\(([^)]*)\)\s*=>\s*\{/g;
     let m;
@@ -106,21 +119,38 @@ describe('no per-frame React state updates', () => {
         }
       }
       const body = sceneSource.slice(start, i + 1);
+      const line = sceneSource.slice(0, m.index).split(String.fromCharCode(10)).length;
 
-      // React setters look like `setThing(`. three.js has plenty of its own:
-      // setScalar, setXYZ, setFromMatrixPosition, gl.setPixelRatio and so on.
-      const THREE_METHODS = /^(Scalar|XYZ|XY|XYZW|X|Y|Z|W|RGB|Hex|HSL|Style|FromMatrixPosition|FromSpherical|FromEuler|FromAxisAngle|Attribute|Index|DrawRange|PixelRatio|Size|ClearColor|RenderTarget|Matrix|RotationFromEuler|Length|Component)$/;
-      const hits = [...body.matchAll(/set([A-Z]\w*)\(/g)]
-        .map((h) => h[1])
-        .filter((n) => !THREE_METHODS.test(n));
-      if (hits.length) {
-        const line = sceneSource.slice(0, m.index).split(String.fromCharCode(10)).length;
-        offenders.push(`line ${line}: set${hits[0]}`);
+      for (const setter of setters) {
+        if (callsSetter(body, setter)) offenders.push(`line ${line}: ${setter}`);
       }
     }
     expect(offenders).toEqual([]);
   });
+
+  it('can actually fail', () => {
+    // The whole reason this file was edited: a guard that cannot fail reports
+    // success forever and nobody looks at it again. This exercises both halves
+    // on input that is known to be an offender.
+    const source = 'const [hp, setHp] = useState(100);\nuseFrame(() => { setHp(1); });';
+    const setters = declaredStateSetters(source);
+
+    expect(setters).toEqual(['setHp']);
+    expect(callsSetter(source, 'setHp')).toBe(true);
+    expect(callsSetter(source, 'setOther')).toBe(false);
+    // A store action that merely looks like one must not be picked up.
+    expect(declaredStateSetters('useSpaceRunHud.getState().setHud({})')).toEqual([]);
+  });
 });
+
+/** The setter halves of `const [x, setX] = useState(...)` in a source string. */
+function declaredStateSetters(source) {
+  return [...source.matchAll(/const\s*\[\s*\w+\s*,\s*(\w+)\s*\]\s*=\s*useState/g)].map((m) => m[1]);
+}
+
+function callsSetter(body, setter) {
+  return new RegExp(String.raw`\b${setter}\s*\(`).test(body);
+}
 
 describe('file size', () => {
   it('is flagged until the scene is split', () => {

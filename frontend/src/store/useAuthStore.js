@@ -73,15 +73,25 @@ export const useAuthStore = create()(
           const { data } = await api.get('/auth/me/');
           set((s) => ({ user: { ...s.user, ...data }, isAuthenticated: true }));
 
+          // Neither of these ends the session, so neither is fatal here — but
+          // neither is nothing, either. When they fail the pupil sees zero XP
+          // and no completed lessons, which looks exactly like losing their
+          // progress. Say so somewhere rather than letting the screen lie
+          // quietly; an empty catch is how the sign-out failure survived weeks
+          // of green tests.
           try {
             const { data: gamificationData } = await api.get('/gamification/profile/');
             useGamificationStore.getState().syncFromAPI(gamificationData);
-          } catch (e) { }
+          } catch (err) {
+            console.warn('Could not load the gamification profile; XP and level will read as zero.', err);
+          }
 
           try {
             const { data: progressData } = await api.get('/progress/');
             useLearningStore.getState().syncProgressFromAPI(progressData);
-          } catch (e) { }
+          } catch (err) {
+            console.warn('Could not load lesson progress; completed lessons will not be marked.', err);
+          }
           return true;
         } catch (err) {
           // Only a rejected credential ends the session. This used to catch

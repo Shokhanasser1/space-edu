@@ -1,0 +1,41 @@
+# Line endings.
+#
+# Six people on three operating systems is how a repository ends up with the
+# same file committed twice, once with CRLF and once without, and every pull
+# request showing every line as changed. Today all 304 tracked text files are
+# stored with LF; this pins that regardless of how anyone's git is configured
+# locally. Windows checkouts still get CRLF in the working tree — `eol=lf`
+# governs what is *stored*, which is the part that conflicts.
+* text=auto eol=lf
+
+# Binary. Never diffed, never normalised, never merged.
+*.png     binary
+*.jpg     binary
+*.jpeg    binary
+*.webp    binary
+*.gif     binary
+*.ico     binary
+*.glb     binary
+*.gltf    binary
+*.wasm    binary
+*.mp3     binary
+*.mp4     binary
+*.woff    binary
+*.woff2   binary
+*.ttf     binary
+*.otf     binary
+*.pdf     binary
+*.sqlite3 binary
+
+# Windows-only scripts. CRLF here is not a preference, it is what the
+# interpreter needs.
+*.ps1     text eol=crlf
+*.bat     text eol=crlf
+*.cmd     text eol=crlf
+
+# Generated, and a guaranteed conflict if two people touch it in one week.
+# Do not hand-merge either of these: regenerate.
+#   package-lock.json         -> `npm install` on the merged package.json
+#   learn_content.json        -> `npm run content:export`
+frontend/package-lock.json                       linguist-generated=true
+backend/apps/courses/fixtures/learn_content.json linguist-generated=true

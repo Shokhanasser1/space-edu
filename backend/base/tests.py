@@ -63,6 +63,38 @@ class ThrottleConfigTests(SimpleTestCase):
         )
 
 
+class TestDatabaseIsolationTests(SimpleTestCase):
+    """The team shares one database (docs/TEAM.md). The test runner must not.
+
+    Django's runner CREATEs and DROPs a database of its own. Pointed at the
+    shared Postgres that is two problems at once: it needs rights nobody should
+    hand a laptop, and two people running the suite at the same time collide on
+    the same `test_` database — the second drops the first one's mid-run.
+
+    This test passing at all is part of the evidence: it runs with whatever
+    DB_URL the developer has set, and it is still on SQLite.
+    """
+
+    def test_a_test_run_is_on_sqlite_whatever_db_url_says(self):
+        from django.conf import settings
+
+        self.assertIn(
+            'sqlite', settings.DATABASES['default']['ENGINE'],
+            'a test run reached a database that is not SQLite — check the '
+            '_running_tests guard in base/settings/base.py before running '
+            'anything else',
+        )
+
+    def test_the_guard_is_still_in_the_settings(self):
+        """Deleting it would not fail anything until the day somebody with
+        DB_URL set runs the suite, and by then it has already happened."""
+        from pathlib import Path as _Path
+
+        source = (_Path(__file__).resolve().parent / 'settings' / 'base.py').read_text(encoding='utf-8')
+        self.assertIn('_running_tests', source)
+        self.assertIn('PYTEST_CURRENT_TEST', source)
+
+
 class ThrottleSizingTests(SimpleTestCase):
     """Fourth-pass finding, 24 August 2026.
 

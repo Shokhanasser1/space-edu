@@ -1,3 +1,5 @@
+import os
+import sys
 from pathlib import Path
 from datetime import timedelta
 from decouple import config
@@ -76,13 +78,32 @@ AUTH_USER_MODEL = 'accounts.User'
 import dj_database_url
 
 # DB_URL takes priority; DATABASE_URL is the name most hosts inject on their own.
-# Neither is set locally, so this falls through to a SQLite file — which means
-# every account, product and message lives on the machine that ran the server.
+# Unset, this falls through to a SQLite file on this machine. With a team, it
+# points at the database everybody shares — see docs/TEAM.md.
 _db_url = (
     config('DB_URL', default=None)
     or config('DATABASE_URL', default=None)
     or f'sqlite:///{BASE_DIR / "db.sqlite3"}'
 )
+
+# ── Tests never touch the shared database ────────────────────────────────────
+# Django's test runner CREATEs and DROPs a database of its own. Against a shared
+# Postgres that is two problems at once: it needs rights nobody should hand a
+# developer laptop, and two people running the suite at the same time collide on
+# the same `test_` database — the second one drops the first one's out from
+# under it, mid-run.
+#
+# So a test run is pinned to SQLite whatever DB_URL says. This is not a
+# convenience: without it the first thing a new developer does after setting
+# DB_URL is run the tests, against the database the whole team is using.
+_running_tests = (
+    sys.argv[1:2] == ['test']
+    or os.environ.get('PYTEST_CURRENT_TEST') is not None
+    or os.path.basename(sys.argv[0] or '').startswith('pytest')
+)
+if _running_tests:
+    _db_url = f'sqlite:///{BASE_DIR / "db.sqlite3"}'
+
 DATABASES = {
     'default': dj_database_url.parse(_db_url, conn_max_age=600)
 }

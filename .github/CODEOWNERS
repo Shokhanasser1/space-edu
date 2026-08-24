@@ -1,0 +1,54 @@
+# Who has to approve what.
+#
+# GitHub requests a review from the owner of every path a pull request touches.
+# With "Require review from Code Owners" turned on in the branch protection
+# rule, that review is not optional — which is the mechanism behind "nothing
+# reaches main without being read by someone else".
+#
+# A username here must be a collaborator on the repository, or GitHub silently
+# ignores the line. Check with: gh api repos/:owner/:repo/collaborators
+#
+# Last match wins, so the specific rules at the bottom override the catch-all.
+
+# Everything, by default.
+* @Shokhanasser1
+
+# ── The five areas from CONTRIBUTING.md, Part 4 ───────────────────────────────
+# Add the second owner next to the lead as people take their areas. Two names on
+# a line means *either* can approve, which keeps a holiday from blocking a
+# merge. Leave the lead on every line: the lead reviews everything.
+#
+# 1. Backend & API
+#/backend/apps/          @Shokhanasser1 @username
+# 2. Frontend & UI
+#/frontend/src/           @Shokhanasser1 @username
+# 3. Content & i18n
+#/frontend/src/locales/   @Shokhanasser1 @username
+#/frontend/src/data/      @Shokhanasser1 @username
+# 4. Quality & release
+#/.github/                @Shokhanasser1 @username
+# 5. Research & docs
+#/docs/                   @Shokhanasser1 @username
+
+# ── Things that need the lead specifically, whoever else owns the area ────────
+# Not because the others are not trusted. Because a mistake in one of these is
+# not visible in review of the diff alone — it is visible in what stops being
+# true afterwards.
+
+# Settings. The fail-open settings bug turned on DEBUG in production, opened
+# CORS to everyone and returned account sign-in codes in HTTP responses.
+/backend/base/settings/   @Shokhanasser1
+
+# Authentication, rate limits, uploads, moderation. Every serious finding in the
+# 22 August audit was in one of these.
+/backend/apps/accounts/   @Shokhanasser1
+/backend/apps/chat/       @Shokhanasser1
+/backend/apps/validators.py @Shokhanasser1
+
+# CI is what stops everything else. A change here can quietly stop the tests
+# running at all, and a workflow that does not run reports success.
+/.github/                 @Shokhanasser1
+
+# Migrations are the one thing a shared database cannot take back.
+# See docs/TEAM.md — "The database is shared".
+/backend/apps/*/migrations/ @Shokhanasser1

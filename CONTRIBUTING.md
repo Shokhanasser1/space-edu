@@ -386,10 +386,11 @@ the ticket.
 CI runs all of this; run it yourself first, it is faster than waiting:
 
 ```bash
-cd backend  && python manage.py test apps base        # 320/320
+cd backend  && python manage.py test apps base        # 322/322
 cd backend  && python manage.py makemigrations --check --dry-run
 cd frontend && npm run build                          # before the tests, see below
-cd frontend && npm test                               # 223/223
+cd frontend && npm run lint
+cd frontend && npm test                               # 224/224
 cd frontend && npm run check:locales
 cd frontend && npm run content:check
 ```
@@ -599,6 +600,9 @@ npx vitest run src/lib/api.test.js
 ```
 
 ---
+
+**How six people do all this at once** — branches, what is protected on `main`,
+the shared database and the files nobody merges by hand — is in `docs/TEAM.md`.
 
 Rules are versioned. If one of these gets in the way of good work, argue with
 it — bring the case and we will change it. What is not negotiable: tests before

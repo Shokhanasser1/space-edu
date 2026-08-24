@@ -63,6 +63,13 @@ jobs:
 
       - run: npm ci
 
+      - name: Lint
+        # Errors fail the build, warnings do not. On the day the linter arrived
+        # it reported 249 problems; a check that is red on arrival teaches
+        # everyone to ignore it. The 172 warnings are the backlog — drive them
+        # down and promote rules as they reach zero. See frontend/eslint.config.js.
+        run: npm run lint
+
       # Build first: src/bundleSecrets.test.js reads dist/ to check that no
       # answer key or credential reached the browser, and has nothing to read
       # if the bundle has not been produced yet.
