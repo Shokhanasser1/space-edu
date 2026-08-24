@@ -774,7 +774,8 @@
     "launchMission": "Missiyani boshlash",
     "newToAcademy": "Akademiyada yangimisiz?",
     "initProfile": "Profilni yaratish",
-    "encrypted": "Shifrlangan ulanish"
+    "encrypted": "Shifrlangan ulanish",
+    "tooManyAttempts": "Bu tarmoqdan juda koʻp notoʻgʻri parol kiritildi. {{minutes}} daqiqadan soʻng qayta urinib koʻring."
   },
   "registerPage": {
     "joinTitle": "Qo'shiling",
@@ -792,7 +793,8 @@
     "initProfile": "Profilni yaratish",
     "haveAccount": "Hisobingiz bormi?",
     "signIn": "Kirish",
-    "secureEnroll": "Xavfsiz ro'yxatdan o'tish protokoli"
+    "secureEnroll": "Xavfsiz ro'yxatdan o'tish protokoli",
+    "tooManyAttempts": "Bu tarmoqdan hozir juda koʻp roʻyxatdan oʻtish boʻldi. {{minutes}} daqiqadan soʻng qayta urinib koʻring."
   },
   "learnPage": {
     "headerTitle": "Koinot",

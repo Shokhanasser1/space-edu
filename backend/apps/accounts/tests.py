@@ -231,3 +231,135 @@ class EmailCodeTests(TestCase):
             format='json',
         )
         self.assertEqual(r.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+@override_settings(PASSWORD_HASHERS=['django.contrib.auth.hashers.MD5PasswordHasher'])
+class ClassroomThrottleTests(TestCase):
+    """Third-pass finding, 24 August 2026: the credential throttles counted the
+    wrong events, and locked out the people they were built to protect.
+
+    A school reaches this API from one public address. The login throttle
+    counted *every* request to `/auth/login/`, successful ones included, keyed
+    on that address alone — so the eleventh child to sign in during a lesson got
+    HTTP 429, and so did everyone after them, for an hour. Reproduced against a
+    running server before the fix: ten 200s, then 429 for the rest.
+
+    Registration had the same shape at 20/day, which a single class exhausts.
+    """
+
+    def setUp(self):
+        self.client = APIClient()
+        cache.clear()
+
+    def tearDown(self):
+        cache.clear()
+
+    def _make_pupils(self, count):
+        return [
+            User.objects.create_user(
+                username=f'pupil{i}', email=f'pupil{i}@school.uz', password=VALID_PW
+            )
+            for i in range(count)
+        ]
+
+    def _login(self, email, password=VALID_PW):
+        return self.client.post(
+            '/api/v1/auth/login/',
+            {'email': email, 'password': password},
+            format='json',
+        )
+
+    def test_a_whole_class_can_sign_in_from_one_address(self):
+        """The bug, stated as a test. Thirty children, one address, correct
+        passwords: thirty 200s. Under the old throttle this failed at the
+        eleventh."""
+        self._make_pupils(30)
+        codes = [self._login(f'pupil{i}@school.uz').status_code for i in range(30)]
+        self.assertEqual(
+            codes.count(status.HTTP_200_OK), 30,
+            f'a correct sign-in must not spend anyone\'s budget; got {codes}',
+        )
+
+    def test_one_pupil_signing_in_repeatedly_is_not_limited(self):
+        """Same address, same account, over and over — a shared computer in a
+        library, or somebody reloading. Nothing wrong is happening."""
+        self._make_pupils(1)
+        codes = [self._login('pupil0@school.uz').status_code for _ in range(20)]
+        self.assertNotIn(status.HTTP_429_TOO_MANY_REQUESTS, codes)
+
+    def test_wrong_guesses_against_one_account_are_still_bounded(self):
+        """The protection that has to survive the fix."""
+        self._make_pupils(1)
+        codes = [
+            self._login('pupil0@school.uz', 'wrong').status_code for _ in range(14)
+        ]
+        self.assertIn(status.HTTP_429_TOO_MANY_REQUESTS, codes)
+
+    def test_one_pupils_typos_do_not_lock_out_the_next_child(self):
+        """Both are behind the same address. The budget is per account, so
+        `pupil0` burning theirs must leave `pupil1` able to sign in."""
+        self._make_pupils(2)
+        for _ in range(12):
+            self._login('pupil0@school.uz', 'wrong')
+        self.assertEqual(self._login('pupil0@school.uz').status_code,
+                         status.HTTP_429_TOO_MANY_REQUESTS)
+        self.assertEqual(self._login('pupil1@school.uz').status_code,
+                         status.HTTP_200_OK)
+
+    def test_spraying_one_password_across_many_accounts_is_bounded(self):
+        """Per-account budgets alone would hand an attacker a fresh one for
+        every address they try. The per-address ceiling is what stops that."""
+        self._make_pupils(1)
+        codes = [
+            self._login(f'target{i}@example.com', 'Password123!').status_code
+            for i in range(70)
+        ]
+        self.assertIn(status.HTTP_429_TOO_MANY_REQUESTS, codes)
+
+    def test_a_locked_out_bucket_is_not_pushed_further_away_by_hammering(self):
+        """Recording a hit for a request that was already refused would let an
+        attacker — or a retry loop — extend their own lockout indefinitely, and
+        the person it actually happens to is the pupil whose app retries."""
+        self._make_pupils(1)
+        for _ in range(12):
+            self._login('pupil0@school.uz', 'wrong')
+        blocked = self._login('pupil0@school.uz', 'wrong')
+        self.assertEqual(blocked.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+        first_wait = int(blocked.headers['Retry-After'])
+        for _ in range(10):
+            self._login('pupil0@school.uz', 'wrong')
+        later_wait = int(
+            self._login('pupil0@school.uz', 'wrong').headers['Retry-After']
+        )
+        self.assertLessEqual(later_wait, first_wait)
+
+    def test_a_class_can_register_together(self):
+        """Thirty sign-ups in the same minute from one address. The old 20/day
+        stopped this at the twenty-first, and stayed stopped until tomorrow."""
+        codes = []
+        for i in range(30):
+            codes.append(
+                self.client.post(
+                    '/api/v1/auth/register/',
+                    _register_payload(email=f'newpupil{i}@school.uz'),
+                    format='json',
+                ).status_code
+            )
+        self.assertEqual(
+            codes.count(status.HTTP_201_CREATED), 30,
+            f'a class signing up together is the normal case; got {codes}',
+        )
+
+    def test_registration_in_bulk_is_still_bounded(self):
+        """Above the burst limit it stops, so a script cannot sit on one
+        address and create accounts as fast as it can send."""
+        codes = []
+        for i in range(35):
+            codes.append(
+                self.client.post(
+                    '/api/v1/auth/register/',
+                    _register_payload(email=f'bulk{i}@example.com'),
+                    format='json',
+                ).status_code
+            )
+        self.assertIn(status.HTTP_429_TOO_MANY_REQUESTS, codes)

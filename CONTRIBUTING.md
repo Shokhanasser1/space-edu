@@ -386,10 +386,10 @@ the ticket.
 CI runs all of this; run it yourself first, it is faster than waiting:
 
 ```bash
-cd backend  && python manage.py test apps base        # 303/303
+cd backend  && python manage.py test apps base        # 311/311
 cd backend  && python manage.py makemigrations --check --dry-run
 cd frontend && npm run build                          # before the tests, see below
-cd frontend && npm test                               # 193/193
+cd frontend && npm test                               # 200/200
 cd frontend && npm run check:locales
 cd frontend && npm run content:check
 ```

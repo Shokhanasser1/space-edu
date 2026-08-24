@@ -180,8 +180,25 @@ REST_FRAMEWORK = {
         # screens. Writes and AI calls carry their own tighter scopes.
         'anon': '2000/day',
         'user': '10000/day',
+        # Login: wrong guesses only, and see apps/accounts/throttles.py for why
+        # that distinction is the whole point. `login` is per address *and*
+        # account; `login_ip` is the ceiling across all accounts from one
+        # address. A school is one address, so both have to clear a room full
+        # of children mistyping their own passwords without clearing an
+        # attacker working through a word list.
         'login': '10/hour',
-        'register': '20/day',
+        'login_ip': '60/hour',
+        # Registration counts every attempt, because an account created is the
+        # cost. The previous 20/day locked out the twenty-first child in a
+        # school, which is the common case and not the attack. The burst limit
+        # clears a class told to sign up right now; the daily one clears a
+        # school onboarding and still bounds a script running all night.
+        #
+        # Per-address limits are blunt behind NAT and this is the honest
+        # ceiling of what they can do. The real answer is verifying the address
+        # before the account is worth anything — see docs/HANDOVER.md.
+        'register': '30/min',
+        'register_day': '150/day',
         'ai': '40/hour',
         'write': '300/day',
         # Chat had no limit at all. These are set for a classroom, not a

@@ -774,7 +774,8 @@
     "launchMission": "Launch Mission",
     "newToAcademy": "New to the academy?",
     "initProfile": "Initialize Profile",
-    "encrypted": "Encrypted Connection"
+    "encrypted": "Encrypted Connection",
+    "tooManyAttempts": "Too many wrong passwords from this network. Try again in {{minutes}} min."
   },
   "registerPage": {
     "joinTitle": "Join the",
@@ -792,7 +793,8 @@
     "initProfile": "Initialize Profile",
     "haveAccount": "Already have an account?",
     "signIn": "Sign In",
-    "secureEnroll": "Secure Enrollment Protocol"
+    "secureEnroll": "Secure Enrollment Protocol",
+    "tooManyAttempts": "Too many sign-ups from this network just now. Try again in {{minutes}} min."
   },
   "learnPage": {
     "headerTitle": "Cosmic",

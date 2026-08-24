@@ -3,6 +3,7 @@ import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { Eye, EyeOff, Rocket, ShieldCheck } from 'lucide-react';
 import api from '@/lib/api';
+import { retryAfterMinutes } from '@/lib/retryAfter';
 
 import { useAuthStore } from '@/store/useAuthStore';
 import { useGamificationStore } from '@/store/useGamificationStore';
@@ -45,7 +46,14 @@ export default function LoginView() {
 
       navigate(from, { replace: true });
     } catch (err) {
-      setError(err.response?.data?.detail || t('loginPage', 'invalidCreds'));
+      // A rate-limited sign-in is not a wrong password, and saying so matters:
+      // the child has done nothing wrong and retrying makes it no better.
+      const minutes = retryAfterMinutes(err);
+      if (minutes !== null) {
+        setError(t('loginPage', 'tooManyAttempts').replace('{{minutes}}', minutes));
+      } else {
+        setError(err.response?.data?.detail || t('loginPage', 'invalidCreds'));
+      }
     } finally {
       setLoading(false);
     }

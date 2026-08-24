@@ -12,7 +12,14 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .email_code import store_code, verify_and_consume
 from .models import User
 from .serializers import ProfileSerializer, RegisterSerializer, UserSerializer
-from .throttles import CredentialRateThrottle, LoginRateThrottle, RegisterRateThrottle
+from .throttles import (
+    CredentialRateThrottle,
+    LoginIpRateThrottle,
+    LoginRateThrottle,
+    RegisterDailyRateThrottle,
+    RegisterRateThrottle,
+    record_credential_failure,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -27,8 +34,10 @@ class RegisterView(generics.CreateAPIView):
     serializer_class = RegisterSerializer
     permission_classes = [AllowAny]
     # Own scope: sharing the login bucket meant a burst of signups locked
-    # legitimate users out of signing in.
-    throttle_classes = [RegisterRateThrottle]
+    # legitimate users out of signing in. Two of them: a burst limit that a
+    # script trips and a class does not, and a daily ceiling that a script
+    # running all night trips and a school onboarding does not.
+    throttle_classes = [RegisterRateThrottle, RegisterDailyRateThrottle]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -45,7 +54,10 @@ class RegisterView(generics.CreateAPIView):
 
 class LoginView(APIView):
     permission_classes = [AllowAny]
-    throttle_classes = [LoginRateThrottle]
+    # Both count wrong guesses only. A sign-in that works costs nothing, which
+    # is what stops a shared school address locking its own pupils out after
+    # ten of them have signed in. See apps/accounts/throttles.py.
+    throttle_classes = [LoginRateThrottle, LoginIpRateThrottle]
 
     def post(self, request):
         raw_id = request.data.get('email') or request.data.get('username') or ''
@@ -69,6 +81,8 @@ class LoginView(APIView):
                 user = authenticate(request, username=found.username, password=password)
 
         if user is None:
+            # The only path that spends the budget.
+            record_credential_failure(request)
             return Response(
                 {'detail': 'Invalid credentials.'},
                 status=status.HTTP_401_UNAUTHORIZED,

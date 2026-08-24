@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { Eye, EyeOff, Rocket, Star, ShieldCheck } from 'lucide-react';
 import api from '@/lib/api';
+import { retryAfterMinutes } from '@/lib/retryAfter';
 
 import { useAuthStore } from '@/store/useAuthStore';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -44,6 +45,12 @@ export default function RegisterView() {
       login(data.user, data.access, data.refresh);
       navigate('/');
     } catch (err) {
+      const minutes = retryAfterMinutes(err);
+      if (minutes !== null) {
+        // Not a problem with anything they typed, so no field is marked red.
+        setErrors({ detail: t('registerPage', 'tooManyAttempts').replace('{{minutes}}', minutes) });
+        return;
+      }
       const errorData = err.response?.data || {};
       if (errorData.non_field_errors && !errorData.detail) {
         errorData.detail = errorData.non_field_errors[0];

@@ -17,7 +17,7 @@ see "The deployment is gone, on purpose" below.*
 Verify the state in one go:
 
 ```bash
-cd backend  && python manage.py test apps base   # expect 303 OK
+cd backend  && python manage.py test apps base   # expect 311 OK
 cd frontend && npm run build && npm test          # expect 193 OK
 cd frontend && npm run build && npm run check:locales && npm run content:check
 ```
@@ -240,6 +240,64 @@ second merge from the old base would reintroduce all three of the above.
 | **115 missing problems** | The Masalalar set advertises itself as a set and holds 30. The other 115 entries were placeholders and were dropped rather than seeded; someone has to write them. |
 | **Lesson text** | `TopicLesson.content` is a bare `TextField` described as "text/markdown" and nobody renders markdown. Decide what a lesson body is before anyone writes into it. |
 | ~~**SpaceLabView's textures**~~ | **Done, 24 August 2026.** All eight are served from `/textures/` now. Four were already in the repository and only the view had not been told; the other four were downscaled and re-encoded on the way in — 2.6 MB of downloads became 1.0 MB committed, nothing near the 2 MB file that CI starts counting. What each one is and what was done to it: `frontend/public/textures/ATTRIBUTION.md`. The non-throwing loader stays and is now `useTextures`, because a local path can be wrong too. |
+
+---
+
+## Fourth pass: the throttles locked out the school, not the attacker
+
+Reported as "registration and login are broken", 24 August 2026. It was, and the
+cause was a defence pointed at the wrong event.
+
+**A school is one public address.** The login throttle counted *every* request
+to `/auth/login/`, successful ones included, keyed on that address alone at
+10/hour. Reproduced against a running server: ten sign-ins with the correct
+password returned 200, the eleventh returned 429, and so did everything after
+it for an hour — for every child in the building. Registration had the same
+shape at 20/day, which one class exhausts before the second row has finished
+typing.
+
+Nothing about that was visible from the code alone, and the two tests covering
+the throttles both used *failed* logins, so both passed throughout.
+
+What changed:
+
+- **Only wrong guesses cost anything.** A sign-in that works is not what the
+  limit is defending against. `_FailureOnlyRateThrottle` checks the budget on
+  the way in and spends it only when the view reports that the credentials were
+  wrong. Registration still counts every attempt, because there the account
+  created *is* the cost.
+- **The account is part of the key.** `login` is now 10 failures per hour per
+  address *and* account, so one child's typos cannot spend their classmates'
+  budget — and an attacker cannot lock a victim out of their own account from
+  somewhere else, which the old shape allowed.
+- **A per-address ceiling replaces what that gave up.** `login_ip`, 60 failures
+  an hour across all accounts, is what stops one password being sprayed across a
+  list of addresses. A room full of people mistyping their own passwords does
+  not reach it.
+- **Registration fits a classroom:** 30/minute and 150/day per address instead
+  of 20/day.
+- **A blocked request no longer extends its own lockout.** Recording a hit for
+  something already refused meant a retrying app pushed its own unlock further
+  away every time it tried.
+- **The screen says what happened.** Both auth screens showed
+  `response.data.detail`, which on a 429 is DRF's English "Request was throttled.
+  Expected available in 3513 seconds." — shown verbatim to a Russian or Uzbek
+  child, and on the login screen sometimes replaced by "invalid email or
+  password", sending them to reset a password that was fine. `retryAfterMinutes`
+  reads the `Retry-After` header and both screens now show a translated sentence
+  with the wait in minutes.
+
+Eight backend tests cover it, the first of which is the bug as reported: thirty
+children, one address, correct passwords, thirty 200s.
+
+**Known limit.** Per-address limits are blunt behind NAT, and these numbers are
+the honest ceiling of what they can do: 150 accounts a day from one address is
+generous for a school and not nothing for an abuser. The real answer is
+verifying the e-mail address before an account is worth anything. The machinery
+for that already exists — `apps/accounts/email_code.py` sends and verifies
+six-digit codes — but nothing in the front end uses it, and registration does
+not require it. That is the next thing to do here, and it would let the daily
+ceiling come back down.
 
 ---
 
