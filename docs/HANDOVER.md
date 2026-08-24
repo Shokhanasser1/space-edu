@@ -424,6 +424,59 @@ anything gets built on top of it.
 
 ---
 
+## Sixth pass: a lesson had no text, and could not be finished on a phone
+
+Both found by opening the lesson screen in a browser with a real lesson in the
+database, 24 August 2026.
+
+**1. `TopicLesson.content` was never rendered.** The field has existed since ADR
+0001, describes itself in the model as "Lesson text/markdown content", is
+editable in the admin panel and is sent by the API. Nothing read it: the adapter
+in `learnContent.js` dropped it, and `UniversalLessonView` used only the title
+and the video URL. So an administrator could write a lesson, save it, open the
+page and find their work nowhere on it — the exact defect ADR 0001 was written
+to close, left behind when the tree was fixed.
+
+A lesson body is **markdown**, which the field's own help text had already
+decided; what was missing was the half that reads it. `LessonBody` renders it
+with `react-markdown` and `remark-gfm`, styled to the existing dark theme:
+headings, lists, bold, links, blockquotes, code blocks and tables. Lessons with
+nothing written in them keep the generic line they had, so the 144 physics
+titles do not become blank pages.
+
+**Raw HTML is deliberately not rendered.** `react-markdown` ignores HTML nodes
+unless `rehype-raw` is added, and it is not added. Lesson text is written by
+administrators and read by ten-to-eighteen-year-olds; one mistaken paste, or one
+borrowed admin account, should not put a script on every pupil's screen. There
+is a test for it. If a lesson ever genuinely needs an embed, give it a field
+with its own validation rather than opening that door.
+
+**Cost:** the lesson chunk is 183 kB / 56 kB gzipped, of which roughly 40 kB
+gzipped is the markdown machinery. It is lazy-loaded, so it is paid on the
+lesson page and nowhere else. Dropping `remark-gfm` would save about 10 kB and
+lose tables — a physics lesson listing units wants tables, so it stays.
+
+**Two things deliberately not decided here.** Mathematical notation: a physics
+curriculum will want formulas, and that means KaTeX and a decision about how
+authors write them. And images: markdown `![]()` renders, but a lesson image has
+nowhere to live yet — it would point at somebody else's host, which is the
+problem that was just removed from `SpaceLabView`. Put lesson images in R2 with
+a field of their own before encouraging them.
+
+**2. A pupil on a phone could not finish a lesson.** The info section under the
+video was an inline `gridTemplateColumns: '1fr 350px'`, and an inline style
+cannot carry a media query. At 390px the second column ran from 315px to 665px
+— entirely off the right edge — and that column holds the "finish lesson"
+button, which is what awards the XP. It is `grid-cols-1 lg:grid-cols-[1fr_350px]`
+now. Verified: the page no longer scrolls sideways at 390px and the button is
+on screen.
+
+Worth a look while somebody is in there: `CreativityTopicView` has the same
+inline-grid shape at `1.2fr 1fr`. It does not run off the edge, because both
+columns are fractional, but it gives a phone two very narrow columns.
+
+---
+
 ## The deployment is gone, on purpose
 
 Removed on 24 August 2026 at the owner's request, to be set up again from

@@ -75,6 +75,29 @@ describe('adaptTopic', () => {
     expect(adaptTopic(topic({ lessons: [lesson] })).lessons[0].videoUrl)
       .toBe('https://example.invalid/embed/x');
   });
+
+  it('carries the lesson text through', () => {
+    // It did not, until 24 Aug 2026. TopicLesson.content went from the model
+    // through the serializer to this function and stopped, so an administrator
+    // could write a lesson and find nothing of it on the page.
+    const lesson = node('a', 'One');
+    const written = `## Tezlanish
+
+Jism tezligining o‘zgarishi.`;
+    lesson.content = written;
+    expect(adaptTopic(topic({ lessons: [lesson] })).lessons[0].content).toBe(written);
+  });
+
+  it('carries it through a sub-lesson too', () => {
+    const child = node('a1', 'Part');
+    child.content = 'Ichki matn.';
+    const adapted = adaptTopic(topic({ lessons: [node('a', 'One', [child])] }));
+    expect(adapted.lessons[0].subLessons[0].content).toBe('Ichki matn.');
+  });
+
+  it('gives an unwritten lesson an empty string, not undefined', () => {
+    expect(adaptTopic(topic({ lessons: [node('a', 'One')] })).lessons[0].content).toBe('');
+  });
 });
 
 describe('adaptTree', () => {

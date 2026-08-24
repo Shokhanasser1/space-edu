@@ -11,6 +11,7 @@ import { useLearningStore } from '@/store/useLearningStore';
 import confetti from 'canvas-confetti';
 import api from '@/lib/api';
 import { useTranslation } from '@/hooks/useTranslation';
+import LessonBody from '@/components/learn/LessonBody';
 
 export default function UniversalLessonView() {
   const { t, i18n } = useTranslation();
@@ -88,6 +89,10 @@ export default function UniversalLessonView() {
   }
 
   const lessonName = typeof lesson === 'object' ? lesson.name : lesson;
+  // Written in the admin panel, stored on TopicLesson.content. Empty for most
+  // lessons today — they are titles and, sometimes, a video — so the generic
+  // line below stays as the fallback rather than leaving a blank page.
+  const lessonText = typeof lesson === 'object' ? (lesson.content || '') : '';
   const color = topic.color || '#3b82f6';
   const displayTitle = partIdx ? `${lessonName} - ${parseInt(partIdx) + 1}-qism` : lessonName;
 
@@ -217,13 +222,14 @@ export default function UniversalLessonView() {
           ></iframe>
         </motion.div>
 
-        {/* INFO SECTION BELOW VIDEO */}
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: '1fr 350px', 
-          gap: '40px',
-          alignItems: 'start'
-        }}>
+        {/* INFO SECTION BELOW VIDEO
+            One column until there is room for two. This was an inline
+            `gridTemplateColumns: '1fr 350px'`, and an inline style cannot carry
+            a media query — so on a 390px phone the second column started at
+            315px and ran to 665px, entirely off the right edge. That column
+            holds "finish lesson", the button that awards the XP. A pupil on a
+            phone could not complete a lesson at all. */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_350px] gap-8 lg:gap-10 items-start">
           {/* Main Info */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -273,9 +279,13 @@ export default function UniversalLessonView() {
               }}>
                 {displayTitle}
               </h1>
-              <p style={{ fontSize: '18px', color: 'rgba(255,255,255,0.6)', lineHeight: 1.7, maxWidth: '800px' }}>
-                {t('lesson', 'lessonDescription').replace('{lessonName}', lessonName)}
-              </p>
+              {lessonText ? (
+                <LessonBody markdown={lessonText} />
+              ) : (
+                <p style={{ fontSize: '18px', color: 'rgba(255,255,255,0.6)', lineHeight: 1.7, maxWidth: '800px' }}>
+                  {t('lesson', 'lessonDescription').replace('{lessonName}', lessonName)}
+                </p>
+              )}
             </div>
 
             <div 

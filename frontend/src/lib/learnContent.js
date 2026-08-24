@@ -41,6 +41,11 @@ const toSubLesson = (node) => ({
   name: node.name,
   slug: node.slug,
   videoUrl: node.video_url || '',
+  // The lesson's own text. Dropped here until 24 Aug 2026, which is why an
+  // administrator could write a lesson in the panel, save it, open the page and
+  // find nothing on it — the field went all the way from the model through the
+  // serializer to this function and stopped.
+  content: node.content || '',
 });
 
 const toLesson = (node) => {
