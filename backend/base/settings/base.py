@@ -124,6 +124,35 @@ STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # --- Cloudflare R2 Media Storage ---
+# Both of the values Cloudflare shows on a bucket page are easy to paste in a
+# form this used to accept silently and then get wrong:
+#
+#   "S3 API"     https://<account>.r2.cloudflarestorage.com/<bucket>
+#                The bucket is already on the end. boto3 wants the account
+#                endpoint alone and appends the bucket itself, so a pasted
+#                bucket name arrives twice and every upload 404s.
+#
+#   "Public URL" https://pub-<hash>.r2.dev
+#                This one is used as a *host*: the code writes
+#                f'https://{value}/'. Paste the scheme with it and every image
+#                URL becomes https://https://pub-... — which no test catches,
+#                because uploading still works. Only the pictures break.
+#
+# Both are now normalised rather than trusted, because the person pasting them
+# is copying out of a dashboard, not reading this file.
+def _r2_host(value):
+    """A bare host: no scheme, no trailing slash."""
+    return (value or '').strip().removeprefix('https://').removeprefix('http://').rstrip('/')
+
+
+def _r2_endpoint(value, bucket):
+    """The account endpoint, with the bucket removed if it was pasted along."""
+    endpoint = (value or '').strip().rstrip('/')
+    if bucket and endpoint.endswith(f'/{bucket}'):
+        endpoint = endpoint[: -len(f'/{bucket}')]
+    return endpoint
+
+
 _r2_key = config('CLOUDFLARE_R2_ACCESS_KEY_ID', default=None)
 
 if _r2_key:
@@ -134,18 +163,20 @@ if _r2_key:
     AWS_ACCESS_KEY_ID = _r2_key
     AWS_SECRET_ACCESS_KEY = config('CLOUDFLARE_R2_SECRET_ACCESS_KEY')
     AWS_STORAGE_BUCKET_NAME = config('CLOUDFLARE_R2_BUCKET_NAME')
-    AWS_S3_ENDPOINT_URL = config('CLOUDFLARE_R2_ENDPOINT')
+    AWS_S3_ENDPOINT_URL = _r2_endpoint(config('CLOUDFLARE_R2_ENDPOINT'), AWS_STORAGE_BUCKET_NAME)
     AWS_S3_REGION_NAME = 'auto'
     AWS_DEFAULT_ACL = None
     AWS_S3_FILE_OVERWRITE = False
     AWS_QUERYSTRING_AUTH = False
 
-    _r2_custom = config('CLOUDFLARE_R2_CUSTOM_DOMAIN', default='')
+    _r2_custom = _r2_host(config('CLOUDFLARE_R2_CUSTOM_DOMAIN', default=''))
     if _r2_custom:
         AWS_S3_CUSTOM_DOMAIN = _r2_custom
         MEDIA_URL = f'https://{_r2_custom}/'
     else:
-        MEDIA_URL = f"{config('CLOUDFLARE_R2_ENDPOINT')}/{config('CLOUDFLARE_R2_BUCKET_NAME')}/"
+        # The S3 endpoint is not public: without a public URL the rows save and
+        # the pictures 401. Cloudflare calls it "Public URL" on the bucket page.
+        MEDIA_URL = f'{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/'
 else:
     MEDIA_URL = '/media/'
     MEDIA_ROOT = BASE_DIR / 'media'

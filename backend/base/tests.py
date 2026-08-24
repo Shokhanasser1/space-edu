@@ -95,6 +95,58 @@ class TestDatabaseIsolationTests(SimpleTestCase):
         self.assertIn('PYTEST_CURRENT_TEST', source)
 
 
+class R2ValuePastingTests(SimpleTestCase):
+    """The two values Cloudflare shows on an R2 bucket page, pasted as they
+    appear there, used to be wrong in two different ways — and neither failed
+    loudly.
+
+    "S3 API" already ends in the bucket name, and boto3 appends the bucket
+    itself, so the pasted one arrived twice and every upload 404'd. "Public URL"
+    is used as a *host*, written into f'https://{value}/', so pasting the scheme
+    with it produced https://https://pub-... — uploads kept working and only the
+    pictures broke, which no test would have caught.
+
+    Whoever pastes these is copying out of a dashboard, not reading base.py.
+    """
+
+    def _fns(self):
+        from base.settings.base import _r2_endpoint, _r2_host
+
+        return _r2_host, _r2_endpoint
+
+    def test_the_public_url_survives_being_pasted_with_its_scheme(self):
+        host, _ = self._fns()
+        for pasted in ('https://pub-abc123.r2.dev', 'pub-abc123.r2.dev',
+                       'https://pub-abc123.r2.dev/', ' https://pub-abc123.r2.dev '):
+            with self.subTest(pasted=pasted):
+                self.assertEqual(host(pasted), 'pub-abc123.r2.dev')
+
+    def test_a_custom_domain_over_http_is_still_a_host(self):
+        host, _ = self._fns()
+        self.assertEqual(host('http://cdn.uzcosmos.uz/'), 'cdn.uzcosmos.uz')
+
+    def test_an_empty_public_url_stays_empty_so_the_fallback_runs(self):
+        host, _ = self._fns()
+        for blank in ('', '   ', None):
+            self.assertEqual(host(blank), '')
+
+    def test_the_endpoint_loses_a_bucket_name_that_came_with_it(self):
+        _, endpoint = self._fns()
+        account = 'https://abc.r2.cloudflarestorage.com'
+        for pasted in (f'{account}/uzcosmos-media', f'{account}/uzcosmos-media/', account):
+            with self.subTest(pasted=pasted):
+                self.assertEqual(endpoint(pasted, 'uzcosmos-media'), account)
+
+    def test_a_bucket_name_inside_the_account_id_is_not_stripped(self):
+        """Only a trailing /<bucket> goes. The name appearing elsewhere in the
+        host must survive, or the endpoint is silently mangled."""
+        _, endpoint = self._fns()
+        self.assertEqual(
+            endpoint('https://media.r2.cloudflarestorage.com', 'media'),
+            'https://media.r2.cloudflarestorage.com',
+        )
+
+
 class ThrottleSizingTests(SimpleTestCase):
     """Fourth-pass finding, 24 August 2026.
 
