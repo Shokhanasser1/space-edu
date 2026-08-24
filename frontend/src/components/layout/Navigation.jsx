@@ -453,6 +453,52 @@ export default function Navigation() {
                 </div>
               ))}
 
+              {/* Account.
+                  The dropdown that holds these is `hidden` below xl, and the
+                  compact bar only links to /profile — so on every phone, every
+                  tablet and any laptop under 1280px a signed-in pupil had no way
+                  to sign out at all. On a shared school computer that leaves the
+                  previous child's account open for the next one. */}
+              <div className="rounded-xl overflow-hidden"
+                style={{ border: '1px solid rgba(139,92,246,0.15)' }}>
+                {!isAuthenticated ? (
+                  <Link to="/login" onClick={() => setIsMobileOpen(false)}
+                    className="w-full flex items-center gap-2 px-4 py-3 text-[13px] font-medium"
+                    style={{ color: '#c4b5fd', background: 'rgba(139,92,246,0.06)' }}>
+                    <User className="w-4 h-4 flex-shrink-0" strokeWidth={1.8} />
+                    {t('auth', 'login')}
+                  </Link>
+                ) : (
+                  <>
+                    <div className="p-2 grid grid-cols-2 gap-1">
+                      {profileItems.map(({ path, label: lbl, icon: ItemIcon }) => (
+                        <Link key={path} to={path} onClick={() => setIsMobileOpen(false)}
+                          className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-[12px] font-medium transition-all"
+                          style={isActive(path)
+                            ? { color: '#c4b5fd', background: 'rgba(139,92,246,0.18)' }
+                            : { color: 'rgba(255,255,255,0.5)' }}
+                        >
+                          <ItemIcon className="w-3.5 h-3.5 flex-shrink-0" strokeWidth={1.8} />
+                          <span className="truncate">{lbl}</span>
+                        </Link>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        useAuthStore.getState().logout();
+                        setIsMobileOpen(false);
+                      }}
+                      className="w-full flex items-center gap-2 px-4 py-3 text-[13px] font-medium"
+                      style={{ color: '#ef4444', borderTop: '1px solid rgba(239,68,68,0.15)' }}
+                    >
+                      <X className="w-4 h-4 flex-shrink-0" strokeWidth={1.8} />
+                      {t('auth', 'logOut')}
+                    </button>
+                  </>
+                )}
+              </div>
+
             </div>
           </motion.div>
         )}

@@ -95,6 +95,27 @@ class LoginView(APIView):
 
 
 class LogoutView(APIView):
+    """POST { refresh } — end the session by blacklisting the refresh token.
+
+    Deliberately open. The refresh token *is* the credential being revoked, and
+    it is presented in the body; demanding a live access token on top of it does
+    not protect anything, because anyone holding the refresh token already has
+    the account. What it did instead was make the common case unrevokable:
+
+    - the access token lasts 8 hours and the refresh token 7 days, so a tab left
+      open overnight sends an expired access token and got 401 here — the
+      session then stayed alive for the rest of the week;
+    - the browser's own sign-out raced itself. `useAuthStore.logout()` cleared
+      the tokens synchronously and the interceptor read them later, so the
+      request went out with no Authorization header at all and every single
+      sign-out landed here as 401.
+
+    Both were reproduced against a running server on 24 August 2026. On a shared
+    school computer that is the whole point of the button not working.
+    """
+
+    permission_classes = [AllowAny]
+
     def post(self, request):
         refresh_token = request.data.get('refresh')
         if not refresh_token:
@@ -104,7 +125,9 @@ class LogoutView(APIView):
             )
         try:
             RefreshToken(refresh_token).blacklist()
-        except Exception as e:
+        except Exception:
+            # Already blacklisted, expired or malformed. Nothing to revoke, and
+            # saying which would tell a caller whether a token was ever real.
             return Response(
                 {'detail': 'Token is invalid, expired, or already blacklisted.'},
                 status=status.HTTP_400_BAD_REQUEST,

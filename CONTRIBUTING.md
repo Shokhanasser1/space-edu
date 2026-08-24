@@ -386,10 +386,10 @@ the ticket.
 CI runs all of this; run it yourself first, it is faster than waiting:
 
 ```bash
-cd backend  && python manage.py test apps base        # 315/315
+cd backend  && python manage.py test apps base        # 320/320
 cd backend  && python manage.py makemigrations --check --dry-run
 cd frontend && npm run build                          # before the tests, see below
-cd frontend && npm test                               # 200/200
+cd frontend && npm test                               # 204/204
 cd frontend && npm run check:locales
 cd frontend && npm run content:check
 ```
@@ -458,7 +458,11 @@ just fix it. No apologies needed.
 
 Seven things. Six out of seven is not done.
 
-1. It works, and you saw it work — not "should work".
+1. It works, and you saw it work — not "should work". If it crosses between the
+   front end and the server, you saw it work *in a browser against a running
+   server*. Sign-out was green in both suites for weeks while the button left
+   the session open: the front-end tests mocked the server, the back-end tests
+   never rendered a page, and the bug lived in the gap between them.
 2. A test covers it, and fails without your change.
 3. CI is green: tests, migrations, build, locale parity.
 4. Someone else reviewed and approved the diff.

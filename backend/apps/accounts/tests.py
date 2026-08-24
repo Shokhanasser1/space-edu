@@ -363,3 +363,84 @@ class ClassroomThrottleTests(TestCase):
                 ).status_code
             )
         self.assertIn(status.HTTP_429_TOO_MANY_REQUESTS, codes)
+
+
+class LogoutTests(TestCase):
+    """Fourth-pass finding, 24 August 2026: pressing "Log Out" did not end the
+    session. Reproduced against a running server — sign in, press it, and the
+    refresh token still buys a fresh access token.
+
+    Two causes, one on each side. The browser cleared its tokens synchronously
+    and the request interceptor read them a tick later, so the request went out
+    with no `Authorization` header; `LogoutView` required one and answered 401,
+    which `.catch(() => {})` swallowed. And because the access token expires in
+    8 hours against the refresh token's 7 days, a session left overnight could
+    not be revoked at all even when the header was sent.
+    """
+
+    def setUp(self):
+        self.client = APIClient()
+        cache.clear()
+        User.objects.create_user(
+            username='pupil', email='pupil@school.uz', password=VALID_PW
+        )
+
+    def tearDown(self):
+        cache.clear()
+
+    def _sign_in(self):
+        r = self.client.post(
+            '/api/v1/auth/login/',
+            {'email': 'pupil@school.uz', 'password': VALID_PW},
+            format='json',
+        )
+        self.assertEqual(r.status_code, status.HTTP_200_OK)
+        return r.data['refresh']
+
+    def _still_works(self, refresh):
+        return self.client.post(
+            '/api/v1/auth/token/refresh/', {'refresh': refresh}, format='json',
+        ).status_code == status.HTTP_200_OK
+
+    def test_signing_out_actually_ends_the_session(self):
+        # ROTATE_REFRESH_TOKENS is on with BLACKLIST_AFTER_ROTATION, so *using* a
+        # refresh token retires it. The precondition therefore has to be checked
+        # with a different session's token than the one under test, or the check
+        # itself is what ends the session.
+        self.assertTrue(self._still_works(self._sign_in()), 'precondition: a fresh token works')
+
+        refresh = self._sign_in()
+        r = self.client.post('/api/v1/auth/logout/', {'refresh': refresh}, format='json')
+
+        self.assertEqual(r.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(
+            self._still_works(refresh),
+            'the refresh token outlived "log out" — on a shared computer the '
+            'next person keeps the account for the rest of the week',
+        )
+
+    def test_signing_out_works_without_a_live_access_token(self):
+        """The exact request the browser sends. It carries the refresh token in
+        the body and no Authorization header, and it has to work: this is also
+        what a session left open past the access token's 8 hours looks like."""
+        refresh = self._sign_in()
+        self.client.credentials()  # no Authorization header
+
+        r = self.client.post('/api/v1/auth/logout/', {'refresh': refresh}, format='json')
+
+        self.assertEqual(r.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(self._still_works(refresh))
+
+    def test_signing_out_twice_is_not_an_error_the_second_time_it_is_a_400(self):
+        refresh = self._sign_in()
+        self.client.post('/api/v1/auth/logout/', {'refresh': refresh}, format='json')
+        again = self.client.post('/api/v1/auth/logout/', {'refresh': refresh}, format='json')
+        self.assertEqual(again.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_rubbish_is_rejected_rather_than_raising(self):
+        r = self.client.post('/api/v1/auth/logout/', {'refresh': 'not-a-token'}, format='json')
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_the_refresh_token_is_required(self):
+        r = self.client.post('/api/v1/auth/logout/', {}, format='json')
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)

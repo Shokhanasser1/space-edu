@@ -26,6 +26,9 @@ frontend/node_modules/
 frontend/dist/
 frontend/coverage/
 
+# Browser-automation output (snapshots, console logs) from Playwright MCP
+.playwright-mcp/
+
 # AI tooling — 31 files of it, three compiled .pyc, turned CI red once already
 .agent/
 .claude/

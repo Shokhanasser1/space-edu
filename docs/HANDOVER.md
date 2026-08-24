@@ -17,7 +17,7 @@ see "The deployment is gone, on purpose" below.*
 Verify the state in one go:
 
 ```bash
-cd backend  && python manage.py test apps base   # expect 315 OK
+cd backend  && python manage.py test apps base   # expect 320 OK
 cd frontend && npm run build && npm test          # expect 193 OK
 cd frontend && npm run build && npm run check:locales && npm run content:check
 ```
@@ -332,6 +332,58 @@ codes, and `/auth/email-code/request/` and `/verify/` both work — but **nothin
 in the front end calls either of them**, and registration does not require
 verification. That is the next thing to do here, and it would let the ceiling
 come back down.
+
+---
+
+## Fifth pass: signing out did not sign you out
+
+Found by driving the real thing in a browser, 24 August 2026, after the owner
+asked for plain password sign-in to be solid before anything else is built on
+top of it. Register, sign in, sign out, sign in again — three defects, none of
+which any test was going to find, because two of them only exist between the
+two halves of the system and the third only exists below 1280 pixels.
+
+**1. "Log Out" left the session open on the server.** Pressing it produced
+`401` on `POST /auth/logout/`, which `.catch(() => {})` swallowed, so the
+refresh token was never blacklisted and kept working for its full seven days.
+Confirmed by hand: sign in, sign out, then exchange the refresh token — `200`,
+with a fresh access token.
+
+Two causes, one on each side, and both had to go:
+
+- `useAuthStore.logout()` clears the tokens *synchronously* and the request
+  interceptor reads them a tick later, so the request went out with no
+  `Authorization` header at all. The store's unit test mocked the API and
+  asserted the call was made — which it was. Nobody had checked what came back.
+- `LogoutView` required authentication. Even with the header it would have
+  failed the common case: the access token lasts 8 hours against the refresh
+  token's 7 days, so a tab left open overnight could never revoke its own
+  session. It is `AllowAny` now, deliberately — the refresh token in the body
+  *is* the credential being revoked, and anyone holding it already has the
+  account, so demanding a second one protects nothing and broke the button.
+
+**2. On a phone there was no way to sign out at all.** The dropdown holding
+"Log Out" is `hidden` below Tailwind's `xl`, and the compact bar that replaces
+it only links to `/profile`. Every phone, every tablet, any laptop under
+1280px: a signed-in pupil could not end their session. On a shared school
+computer that leaves the previous child's account open for the next one. The
+mobile menu now carries the account section.
+
+**3. Signing out locally depended on the network.** If the request threw on its
+way out rather than rejecting, `logout()` aborted before clearing anything and
+the pupil stayed signed in. The existing test used `mockRejectedValue`, which
+returns a promise, so it never covered a synchronous throw. Found by the new
+Navigation test rather than by reading.
+
+Five backend tests and four front-end ones cover these. The one worth keeping
+in mind: `test_signing_out_works_without_a_live_access_token` sends exactly what
+the browser sends.
+
+**What this says about the tests.** All three lived in the seam. The front-end
+suite mocked the server, the back-end suite never rendered a browser, and both
+were green while the button did nothing. Some things have to be driven end to
+end at least once — see the note in `CONTRIBUTING.md` under "Definition of
+done".
 
 ---
 

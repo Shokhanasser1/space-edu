@@ -120,6 +120,20 @@ describe('logout', () => {
     expect(useAuthStore.getState().user).toBeNull();
   });
 
+  it('signs out locally even if the request throws on its way out', () => {
+    // `mockRejectedValue` returns a promise, so the older test above never
+    // covered a *synchronous* throw — and one of those aborted logout() before
+    // it cleared anything, leaving the pupil signed in on a shared computer
+    // because the network blinked. Found by the Navigation test, 24 Aug 2026.
+    useAuthStore.getState().login(USER, 'access-1', 'refresh-1');
+    api.post.mockImplementation(() => { throw new Error('request never left'); });
+
+    useAuthStore.getState().logout();
+
+    expect(useAuthStore.getState().isAuthenticated).toBe(false);
+    expect(useAuthStore.getState().refreshToken).toBeNull();
+  });
+
   it('empties the other stores so nothing is left for the next user', () => {
     api.post.mockResolvedValue({ data: {} });
     useAuthStore.getState().login(USER, 'access-1', 'refresh-1');

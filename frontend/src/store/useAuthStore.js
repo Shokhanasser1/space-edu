@@ -30,11 +30,32 @@ export const useAuthStore = create()(
         set((s) => ({ user: { ...s.user, ...data } })),
 
       logout: () => {
-        // Tell the server to blacklist the refresh token; without this it stayed
+        // Tell the server to blacklist the refresh token; without this it stays
         // valid for its full 7 days after the user pressed "log out".
+        //
+        // Not awaited on purpose — signing out must not wait on the network —
+        // which is exactly why this went unnoticed for so long. The state below
+        // is cleared synchronously and the request interceptor reads the token
+        // a tick later, so this request goes out with no Authorization header.
+        // `/auth/logout/` accepts that deliberately: the refresh token in the
+        // body is the credential being revoked. See the docstring on LogoutView.
         const refresh = get().refreshToken;
         if (refresh) {
-          api.post('/auth/logout/', { refresh }).catch(() => {});
+          const complain = (err) => {
+            // Never silent. A swallowed failure here means the session is still
+            // live on the server while the screen says it is not.
+            console.warn('Sign-out did not reach the server; the session may still be open.', err);
+          };
+          // Signing out locally must not depend on this call working at all.
+          // Everything below — clearing the tokens, emptying the other stores —
+          // has to happen even if the request throws on its way out, or a
+          // pupil on a shared computer stays signed in because the network
+          // blinked.
+          try {
+            api.post('/auth/logout/', { refresh })?.catch?.(complain);
+          } catch (err) {
+            complain(err);
+          }
         }
         _resetAllStores();
         set({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false });
