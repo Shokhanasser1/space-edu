@@ -29,18 +29,29 @@ export default function LeaderboardView() {
       .finally(() => setLoading(false));
   }, []);
 
+  // The leaderboard endpoint deliberately sends `display_name`, `xp` and
+  // `level` and nothing else — no username, no real name, no avatar URL. That
+  // is the fix for "the public leaderboard published children's real names and
+  // photos"; see docs/HANDOVER.md. This view still read `username`,
+  // `first_name` and `avatar_url`, so every row came out with an undefined
+  // name, an undefined React key, and `isCurrentUser` permanently false —
+  // which then pushed a duplicate row for the signed-in user on every render.
+  // Read what the server actually sends, and do not reintroduce the fields it
+  // is withholding on purpose.
+  const myDisplayName = (user?.astronaut_name || '').trim() || user?.username;
+
   const all = (Array.isArray(entries) ? entries : []).map((e) => ({
-    id: e.username,
-    name: `${e.first_name || ''} ${e.last_name || ''}`.trim() || e.username,
-    username: e.username,
+    id: e.display_name,
+    name: e.display_name,
     xp: e.xp,
     level: e.level,
-    avatar: e.avatar_url,
-    isCurrentUser: e.username === user?.username,
+    // Two players may choose the same astronaut name, and the server sends
+    // nothing else to tell them apart. The highlight is best-effort.
+    isCurrentUser: Boolean(myDisplayName) && e.display_name === myDisplayName,
   }));
 
   if (user && !all.find((e) => e.isCurrentUser)) {
-    all.push({ id: 'me', name: `${user.first_name} ${user.last_name}`.trim() || user.username, username: user.username, xp, level, avatar: user.avatar_url, isCurrentUser: true });
+    all.push({ id: myDisplayName || 'me', name: myDisplayName, xp, level, isCurrentUser: true });
     all.sort((a, b) => b.xp - a.xp);
   }
 
@@ -78,7 +89,12 @@ export default function LeaderboardView() {
             <div className="w-8 h-8 border-2 border-violet/30 border-t-violet rounded-full animate-spin" />
             <p className="text-[10px] font-[800] uppercase tracking-widest text-white/20">{t('leaderboard', 'syncing')}</p>
           </div>
-        ) : all.length < 3 ? (
+        ) : all.length === 0 ? (
+          // This was `all.length < 3`, and it only ever passed because the
+          // duplicate row for the signed-in user padded the count. With that
+          // gone, two real players fell under the threshold and everyone was
+          // told "be the first". The podium below already renders a blank
+          // plinth for a missing place, so one player is a fine leaderboard.
           <div className="text-center text-white/30 py-20 font-[700] italic">{t('leaderboard', 'noPioneers')}</div>
         ) : (
           <>
@@ -91,9 +107,9 @@ export default function LeaderboardView() {
                 const style = RANK_STYLES[rank];
                 const heights = ['h-32', 'h-44', 'h-28'];
                 return (
-                  <div key={u.id} className="flex flex-col items-center gap-4 group">
+                  <div key={`${u.id}-${podiumIdx}`} className="flex flex-col items-center gap-4 group">
                     <div className="relative">
-                      <img src={u.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${u.username}`}
+                      <img src={`https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(u.name || '')}`}
                         className="w-14 h-14 rounded-2xl border-2 border-white/10 shadow-2xl relative z-10 object-cover" alt={u.name} />
                       <div className="absolute inset-0 rounded-2xl bg-violet/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
@@ -108,7 +124,10 @@ export default function LeaderboardView() {
               })}
             </motion.div>
 
-            {/* Rankings List */}
+            {/* Rankings List — places 4 and below. With three players or
+                fewer they are all on the podium, and this would be a table
+                header with nothing under it. */}
+            {rest.length > 0 && (
             <GlassCard delay={0.3} className="overflow-hidden !p-0">
               <div className="grid grid-cols-12 gap-2 px-8 py-5 border-b border-white/5 bg-white/[0.02] text-[10px] font-[800] text-white/30 uppercase tracking-[0.2em]">
                 <div className="col-span-1 text-center">#</div>
@@ -118,15 +137,14 @@ export default function LeaderboardView() {
               </div>
               <div className="divide-y divide-white/5">
                 {rest.map((u, i) => (
-                  <motion.div key={u.id} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.05 * i + 0.4 }}
+                  <motion.div key={`${u.id}-${i}`} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.05 * i + 0.4 }}
                     className={`grid grid-cols-12 gap-2 px-8 py-5 items-center transition-all ${u.isCurrentUser ? 'bg-violet/10 border-l-4 border-violet shadow-inner' : 'hover:bg-white/[0.02]'}`}>
                     <div className="col-span-1 text-center text-xs font-[800] text-white/20">{i + 4}</div>
                     <div className="col-span-6 flex items-center gap-4">
-                      <img src={u.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${u.username}`}
+                      <img src={`https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(u.name || '')}`}
                         className="w-10 h-10 rounded-xl border border-white/5 shadow-lg shrink-0" alt={u.name} />
                       <div>
                         <p className={`text-sm font-[800] ${u.isCurrentUser ? 'text-violet-light' : 'text-white'}`}>{u.name}</p>
-                        <p className="text-[10px] text-white/20 font-[600]">@explorer_{u.username}</p>
                       </div>
                     </div>
                     <div className="col-span-2 text-center">
@@ -150,6 +168,7 @@ export default function LeaderboardView() {
                 </div>
               </div>
             </GlassCard>
+            )}
           </>
         )}
       </div>
