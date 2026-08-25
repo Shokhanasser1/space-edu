@@ -180,8 +180,8 @@ export default function QuizSessionView() {
   if (loadState === "empty" || questions.length === 0) {
     return (
       <div className="min-h-screen pt-32 text-center">
-        <h2 className="text-3xl text-red-400">Category not found or empty.</h2>
-        <button onClick={() => navigate("/quiz")} className="mt-6 px-6 py-2 bg-white/10 rounded-lg">Go Back</button>
+        <h2 className="text-3xl text-red-400">{t("quiz", "categoryEmpty")}</h2>
+        <button onClick={() => navigate("/quiz")} className="mt-6 px-6 py-2 bg-white/10 rounded-lg">{t("quiz", "goBack")}</button>
       </div>
     );
   }

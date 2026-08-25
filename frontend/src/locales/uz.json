@@ -639,7 +639,9 @@
     "achievementChallenger": "Da'vogar",
     "scoreNotSaved": "Natija saqlanmadi. Aloqani tekshirib, qayta urinib ko'ring.",
     "savingScore": "Natija saqlanmoqda…",
-    "lessonQuiz": "Dars boʻyicha test"
+    "lessonQuiz": "Dars boʻyicha test",
+    "categoryEmpty": "Toifa topilmadi yoki bo'sh.",
+    "goBack": "Orqaga"
   },
   "market": {
     "hub": "Do'kon",

@@ -639,7 +639,9 @@
     "achievementChallenger": "Challenger",
     "scoreNotSaved": "Your score could not be saved. Check your connection and try again.",
     "savingScore": "Saving your score…",
-    "lessonQuiz": "Lesson quiz"
+    "lessonQuiz": "Lesson quiz",
+    "categoryEmpty": "Category not found or empty.",
+    "goBack": "Go Back"
   },
   "market": {
     "hub": "Shop",
