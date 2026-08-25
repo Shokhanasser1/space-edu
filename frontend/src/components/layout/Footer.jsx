@@ -150,13 +150,23 @@ const Footer = () => {
               <p>{t('footer', 'responsibleOfficial')} <span className="text-white/50">{t('footer', 'officer')}</span></p>
             </div>
 
-            {/* Legal Links */}
+            {/* Legal Links.
+                These were <Link to="#">, which React Router resolves as a
+                relative path — so every one of them rendered an href to the
+                page you were already on, and clicking did nothing but
+                re-navigate. On a product that collects data from 10-to-18-year
+                -olds, a "Privacy Policy" that behaves like a working link and
+                leads nowhere is worse than no link at all.
+                None of these five pages exists: there is no /privacy,
+                /terms, /sitemap, /contact or /accessibility route in App.jsx.
+                Until someone writes them they are labels, not links. Make each
+                one a <Link to="/privacy"> again as its page lands. */}
             <div className="flex flex-wrap lg:justify-end gap-x-6 gap-y-2">
-              <Link to="#" className="hover:text-violet-400 transition-colors">{t('footer', 'privacyPolicy')}</Link>
-              <Link to="#" className="hover:text-violet-400 transition-colors">{t('footer', 'termsOfUse')}</Link>
-              <Link to="#" className="hover:text-violet-400 transition-colors">{t('footer', 'sitemap')}</Link>
-              <Link to="#" className="hover:text-violet-400 transition-colors">{t('footer', 'contactUs')}</Link>
-              <Link to="#" className="hover:text-violet-400 transition-colors">{t('footer', 'accessibility')}</Link>
+              <span>{t('footer', 'privacyPolicy')}</span>
+              <span>{t('footer', 'termsOfUse')}</span>
+              <span>{t('footer', 'sitemap')}</span>
+              <span>{t('footer', 'contactUs')}</span>
+              <span>{t('footer', 'accessibility')}</span>
             </div>
           </div>
 
