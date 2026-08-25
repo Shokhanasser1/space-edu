@@ -10,7 +10,7 @@ see "The deployment is gone, on purpose" below.*
 
 | Read | For |
 |---|---|
-| `docs/SECURITY-INCIDENT-2026-08-22.md` | The one thing that is still urgent |
+| `docs/SECURITY-INCIDENT-2026-08-22.md` | The exposure, what was actually in it, and why step 3 is an accepted risk |
 | `CONTRIBUTING.md` | Team rules: AI use, code, process, the five roles |
 | `docs/adr/0001-content-model.md` | The content model, now decided and built |
 
@@ -227,14 +227,14 @@ second merge from the old base would reintroduce all three of the above.
 
 | | |
 |---|---|
-| **Q1 — credential exposure** | 24 August 2026: history rewritten locally, the blob is out of this clone (`.git` 214 MB → 85 MB), **but nothing has been pushed** — `github.com/Shokhanasser1/space-edu` is public and still serving it. What is left: `git push --force --all`, everyone re-clones, then step 3 of `docs/SECURITY-INCIDENT-2026-08-22.md` (GitHub keeps unreferenced objects reachable by SHA until support purges them or the repository is recreated from the current tree). Step 1 turned out not to apply — there is no database left anywhere to rotate accounts in — but `SECRET_KEY`, the R2 keys and `GEMINI_API_KEY` still have to be replaced by hand. |
+| **Q1 — credential exposure** | **Closed 25 August 2026, except the key rotation.** History rewritten and **pushed** (`.git` 214 MB → 85 MB, `main` matches `origin/main`). Step 3 — GitHub still serving the old blobs by SHA — is now a **recorded accepted risk**, because the file was finally opened and read: it holds nine accounts of which six are tests and two are invented characters, nine `pbkdf2_sha256` hashes, two throwaway messages, and exactly one real personal address, the owner's own. **It contains no data belonging to a minor**; the three birth dates that suggested otherwise sit within days of their own `date_joined` and are a date picker defaulting to today. The row-by-row evidence and the conditions that would re-open this are in `docs/SECURITY-INCIDENT-2026-08-22.md`. Still genuinely open, and cheap: rotate `SECRET_KEY`, the R2 keys, `GEMINI_API_KEY` and the Neon role password by hand — all of them have been through a chat window. |
 | **B1 — review, then decide about DMs** | The moderation floor is built and DMs are **off** (`DM_ENABLED=false`). Turning them on is a product decision about a duty of care to 10-to-18-year-olds, not a code change. Before flipping it: decide who reads `GET /chat/reports/queue/` and how often, and how long a first suspension should be — the mechanism exists (`suspend_days`, 1-90, chat-scoped and time-boxed) but nobody has decided the policy. |
 
 ### Free to pick up
 
 | | |
 |---|---|
-| **Q3 (tail)** | History still carries the originals, so a fresh clone is ~250 MB — bundle that with Q1 step 2. Ten `.glb` models still hold 48 MB of uncompressed texture data; `npm run assets:compress` does it, **on Linux or WSL only** (libvips fails on Windows). CI now fails if that total grows. |
+| **Q3 (tail)** | The history rewrite already took a fresh clone down to ~45 MB, so this is now only about the working tree: fifteen `.glb` models hold 50 MB of uncompressed texture data in `frontend/public/models`. `npm run assets:compress` does it, **on Linux or WSL only** (libvips fails on Windows). CI now fails if that total grows. |
 | **C2 (tail)** | 31 assets the game references and does not have are pinned in `spaceRunAssets.test.js`; loading degrades rather than 404-ing, but the art is still missing. |
 | **Lesson quizzes, content** | The plumbing is done end to end — `/quiz/:category?lesson=<slug>` runs a quiz for one lesson. What is missing is content: no `ChallengeQuestion` is attached to a lesson yet. That is admin-panel work. |
 | **115 missing problems** | The Masalalar set advertises itself as a set and holds 30. The other 115 entries were placeholders and were dropped rather than seeded; someone has to write them. |
@@ -521,13 +521,27 @@ What was deliberately **kept**: Cloudflare R2 for uploaded files, and
 
 ### Where the data lives right now
 
-`DB_URL` is unset, so Django writes to `backend/db.sqlite3` — a file on one
-machine. Every account, product, order, message and XP total is in that file and
-nowhere else. It is not backed up, it cannot be shared between developers, and
-it is the same file that caused the credential exposure in Q1 when someone
-committed it. R2 does not change this: R2 holds *files* — avatars and product
-photographs — while the rows that reference them are in the database. Moving the
-data off this machine means choosing a hosted Postgres and setting `DB_URL`.
+**Since 24 August 2026 `DB_URL` points at a shared Neon Postgres** (free tier,
+Frankfurt, PostgreSQL 18) — so accounts, products, orders, messages and XP
+totals are one database that all six developers share, not a file on one
+machine. The schema is migrated and the content is seeded. The connection
+string lives only in `backend/.env`, which is git-ignored; `backend/.env.team`
+is the copy meant for handing out.
+
+Leave `DB_URL` blank and Django falls back to `backend/db.sqlite3` — a file on
+one machine, not backed up, not shareable, and the same file that caused the
+credential exposure in Q1 when someone committed it.
+
+R2 is separate and holds *files* — avatars and product photographs — while the
+rows that reference them are in the database.
+
+Two consequences of a shared database, both covered in `docs/TEAM.md`:
+migrations are irreversible for everyone at once, and the test suite is pinned
+to SQLite on purpose (`_running_tests` in `base/settings/base.py`) so that a
+test run cannot drop the shared schema. The cost of that pin is that
+Postgres-specific bugs do not show up in tests — one already slipped through,
+a duplicate `_like` index in `courses.0003` — which is why CI runs the
+migrations against a real Postgres 16 as a separate step.
 
 ---
 
