@@ -1,4 +1,6 @@
 """Regression tests for findings from the 2026-08-22 audit."""
+from collections import Counter
+
 from django.core.cache import cache
 from django.test import TestCase
 from django.utils import timezone
@@ -485,3 +487,214 @@ class SeedTranslationTests(TestCase):
         first = ChallengeQuestion.objects.count()
         call_command('seed_challenges', stdout=StringIO())
         self.assertEqual(ChallengeQuestion.objects.count(), first)
+
+
+class DailyChallengeContentTests(TestCase):
+    """Doc item 9, "Daily challange": the day has to exist with real questions
+    in it, hold as many as it says it holds, and not be a repeat of yesterday.
+
+    Three findings, all of them a child would meet on an ordinary morning:
+    a day generated before anyone ran `seed_challenges` was empty for good;
+    `question_count` was a field nothing read; and the pick had no memory, so
+    the twelve hard questions came round about every sixth day."""
+
+    def setUp(self):
+        cache.clear()
+        for i in range(8):
+            _question(i, difficulty='easy')
+        for i in range(8, 20):
+            _question(i, difficulty='medium')
+        for i in range(20, 32):
+            _question(i, difficulty='hard')
+
+    def test_a_day_generated_before_the_pool_was_seeded_fills_itself_later(self):
+        """The first visitor to a fresh install creates the row. Seeding
+        afterwards used to leave that whole day blank, because the questions
+        were only chosen on the create."""
+        ChallengeQuestion.objects.update(is_active=False)
+        empty = DailyChallenge.get_or_create_today()
+        self.assertEqual(empty.questions.count(), 0, 'nothing to choose from yet')
+
+        ChallengeQuestion.objects.update(is_active=True)
+        filled = DailyChallenge.get_or_create_today()
+        self.assertEqual(filled.pk, empty.pk, 'still the same day')
+        self.assertEqual(filled.questions.count(), 5)
+
+    def test_it_serves_as_many_questions_as_question_count_asks_for(self):
+        """`question_count` is editable in the admin and was read nowhere —
+        the pick hardcoded five in four separate places."""
+        DailyChallenge.objects.create(date=timezone.localdate(), question_count=8)
+        challenge = DailyChallenge.get_or_create_today()
+        self.assertEqual(challenge.questions.count(), 8)
+
+    def test_yesterday_s_questions_are_not_asked_again_today(self):
+        yesterday = DailyChallenge.objects.create(
+            date=timezone.localdate() - timezone.timedelta(days=1)
+        )
+        yesterday.fill_questions()
+        seen = set(yesterday.questions.values_list('id', flat=True))
+        self.assertEqual(len(seen), 5)
+
+        today = DailyChallenge.get_or_create_today()
+        self.assertFalse(
+            seen & set(today.questions.values_list('id', flat=True)),
+            'the same question two mornings running',
+        )
+
+    def test_a_pool_too_small_to_avoid_repeats_still_fills_the_day(self):
+        """Preferring unseen questions must never leave a day short. With six
+        questions in the pool and five a day, day two has to repeat — and it
+        has to be five questions, not one."""
+        ChallengeQuestion.objects.all().delete()
+        for i in range(6):
+            _question(i, difficulty='medium')
+        yesterday = DailyChallenge.objects.create(
+            date=timezone.localdate() - timezone.timedelta(days=1)
+        )
+        yesterday.fill_questions()
+
+        today = DailyChallenge.get_or_create_today()
+        self.assertEqual(today.questions.count(), 5)
+
+    def test_a_longer_day_stays_mostly_medium_and_hard(self):
+        """"Bolani test qilib sinash" — a day of easy questions is not a
+        challenge. The five-question mix is one easy, two medium, two hard;
+        a longer day has to keep those proportions rather than pad with the
+        easy ones it has most of."""
+        DailyChallenge.objects.create(date=timezone.localdate(), question_count=10)
+        challenge = DailyChallenge.get_or_create_today()
+        counts = Counter(challenge.questions.values_list('difficulty', flat=True))
+        self.assertEqual(counts['easy'], 2)
+        self.assertEqual(counts['medium'], 4)
+        self.assertEqual(counts['hard'], 4)
+
+
+class ChallengeReviewTests(TestCase):
+    """A wrong answer has to teach something. The submit response carried a
+    map of correct indices and nothing else — no text, so the screen could
+    only say "you got 3 of 5" and the child left knowing exactly what they
+    knew when they arrived."""
+
+    def setUp(self):
+        cache.clear()
+        self.user = User.objects.create_user(username='rev', email='rev@e.com', password='x')
+        self.client = APIClient()
+        self.client.force_authenticate(self.user)
+        self.q = ChallengeQuestion.objects.create(
+            category='astronomy', difficulty='easy',
+            question='Qaysi sayyora Qizil sayyora deb ataladi?',
+            question_en='Which planet is known as the Red Planet?',
+            question_ru='Какую планету называют Красной планетой?',
+            options=['Venera', 'Mars', 'Yupiter', 'Saturn'],
+            options_en=['Venus', 'Mars', 'Jupiter', 'Saturn'],
+            options_ru=['Венера', 'Марс', 'Юпитер', 'Сатурн'],
+            correct_answer=1,
+            explanation='Mars temir oksidiga boy chang bilan qoplangan.',
+            explanation_en='Mars is covered in dust rich in iron oxide.',
+            explanation_ru='Марс покрыт пылью, богатой оксидом железа.',
+        )
+        self.challenge = DailyChallenge.get_or_create_today()
+
+    def _submit(self, selected):
+        return self.client.post(
+            '/api/v1/challenges/submit/',
+            {'answers': [{'question_id': self.q.id, 'selected': selected}], 'time_taken': 9},
+            format='json',
+        )
+
+    def test_a_wrong_answer_comes_back_explained_in_all_three_languages(self):
+        response = self._submit(0)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
+        entry = response.data['review'][0]
+        self.assertEqual(entry['id'], self.q.id)
+        self.assertEqual(entry['selected'], 0)
+        self.assertFalse(entry['is_correct'])
+        self.assertEqual(entry['correct_answer'], 1)
+        self.assertEqual(entry['explanation'], 'Mars temir oksidiga boy chang bilan qoplangan.')
+        self.assertEqual(entry['explanation_en'], 'Mars is covered in dust rich in iron oxide.')
+        self.assertEqual(entry['explanation_ru'], 'Марс покрыт пылью, богатой оксидом железа.')
+
+    def test_a_question_left_blank_is_reviewed_too(self):
+        """Running out of time sends -1, and those are the ones most worth
+        explaining. They were missing from the response entirely."""
+        response = self._submit(-1)
+        entry = response.data['review'][0]
+        self.assertEqual(entry['selected'], -1)
+        self.assertFalse(entry['is_correct'])
+        self.assertTrue(entry['explanation_en'])
+
+    def test_the_explanation_does_not_reach_the_child_before_they_answer(self):
+        """It names the answer. It belongs in the submit response and nowhere
+        that runs before it — the same rule that keeps `correct_answer` out."""
+        response = APIClient().get('/api/v1/challenges/today/')
+        question = response.data['questions'][0]
+        self.assertNotIn('explanation', question)
+        self.assertNotIn('explanation_en', question)
+        self.assertNotIn('correct_answer', question)
+
+
+class SeedExplanationTests(TestCase):
+    """The pool is the product. Every row has to say *why*, in the reader's
+    language, and there have to be enough of the hard ones that a fortnight
+    is not the same five questions three times over."""
+
+    @classmethod
+    def setUpTestData(cls):
+        from io import StringIO
+
+        from django.core.management import call_command
+
+        call_command('seed_challenges', stdout=StringIO())
+
+    def test_every_seeded_question_explains_its_answer_in_three_languages(self):
+        for row in ChallengeQuestion.objects.filter(is_active=True):
+            with self.subTest(question=row.question):
+                self.assertTrue(row.explanation.strip(), 'no Uzbek explanation')
+                self.assertTrue(row.explanation_en.strip(), 'no English explanation')
+                self.assertTrue(row.explanation_ru.strip(), 'no Russian explanation')
+
+    def test_there_are_enough_hard_questions_for_a_fortnight(self):
+        """Two hard a day for fourteen days is twenty-eight. Twelve in the pool
+        meant every hard question came round twice a fortnight."""
+        hard = ChallengeQuestion.objects.filter(is_active=True, difficulty='hard').count()
+        medium = ChallengeQuestion.objects.filter(is_active=True, difficulty='medium').count()
+        self.assertGreaterEqual(hard, 28, 'fourteen days of two hard questions')
+        self.assertGreaterEqual(medium, 28, 'fourteen days of two medium questions')
+
+    def test_pressing_the_first_button_every_time_does_not_pass(self):
+        """The sharpest finding of the lot, and the cheapest to miss: 53 of the
+        64 seeded questions had their answer under option A and not one had it
+        under D, so a child who never read a question and always pressed the
+        first button scored 83%. That is not a test of anything."""
+        rows = list(ChallengeQuestion.objects.filter(is_active=True))
+        self.assertGreaterEqual(len(rows), 60)
+
+        for index in range(4):
+            share = sum(1 for r in rows if r.correct_answer == index) / len(rows)
+            with self.subTest(option='ABCD'[index]):
+                self.assertGreater(share, 0.15, 'this option is almost never the answer')
+                self.assertLess(share, 0.35, 'guessing this option every time passes')
+
+    def test_time_is_sized_to_the_question(self):
+        """The daily challenge ran one hardcoded 15-second clock for every
+        question, including "the first half at 60 km/h, the second at 40 —
+        find the average speed". It reads `time_seconds` now, so the seed has
+        to set it: a calculation needs working time, and naming the Red Planet
+        does not need a minute."""
+        calculations = ChallengeQuestion.objects.filter(is_active=True, category='problems')
+        recall = ChallengeQuestion.objects.filter(
+            is_active=True, difficulty='easy',
+        ).exclude(category='problems')
+        self.assertTrue(calculations.exists() and recall.exists())
+
+        for row in calculations:
+            with self.subTest(calculation=row.question):
+                self.assertGreaterEqual(row.time_seconds, 60, 'no working time')
+
+        # Every row used to carry the 60-second default, so this comparison was
+        # 60 < 60 and could not hold however the pool was written.
+        self.assertLess(
+            max(r.time_seconds for r in recall),
+            min(r.time_seconds for r in calculations),
+            'naming the Red Planet is given as long as a two-step calculation',
+        )

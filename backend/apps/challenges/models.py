@@ -37,8 +37,17 @@ class ChallengeQuestion(models.Model):
     options_en = models.JSONField(blank=True, default=list, help_text='Answer options in English, same order')
     options_ru = models.JSONField(blank=True, default=list, help_text='Answer options in Russian, same order')
     correct_answer = models.PositiveSmallIntegerField(help_text='0-based index of correct option')
-    explanation = models.TextField(blank=True, default='', help_text='Why this answer is correct')
-    time_seconds = models.PositiveIntegerField(default=60, help_text='Time limit per question in seconds')
+    explanation = models.TextField(blank=True, default='', help_text='Why this answer is correct (Uzbek)')
+    # Translated for the same reason the options are: an explanation is the one
+    # part of a question that has to be *read*, and a Russian child handed the
+    # Uzbek paragraph learns nothing from getting it wrong.
+    explanation_en = models.TextField(blank=True, default='')
+    explanation_ru = models.TextField(blank=True, default='')
+    time_seconds = models.PositiveIntegerField(
+        default=60,
+        help_text='Working time for this one question, in seconds. Sized to the '
+                  'question: a calculation needs more than a name.',
+    )
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -70,37 +79,101 @@ class DailyChallenge(models.Model):
     def __str__(self):
         return f'Challenge {self.date}'
 
+    # How far back the pick looks before it is willing to ask something again.
+    # A fortnight of daily challenges without a repeat is the promise; the pool
+    # has to be deep enough to keep it, and `fill_questions` falls back rather
+    # than serving a short day when it is not.
+    RECENT_DAYS = 14
+
+    # Shares of a day by difficulty, in the order easy, medium, hard. The
+    # five-question day these were written for is 1 / 2 / 2, and a longer one
+    # keeps the same shape instead of padding with the easy questions there
+    # happen to be most of.
+    MIX = (0.2, 0.4, 0.4)
+
+    def fill_questions(self):
+        """Choose this challenge's questions from the active pool.
+
+        Two rules, both of which the old inline version broke. The day holds
+        `question_count` questions — that field was editable in the admin and
+        read nowhere. And it prefers questions the last `RECENT_DAYS` days have
+        not already asked: with twelve hard questions and two a day, a child
+        doing this every morning met the same ones about every sixth day, which
+        stops being a test and becomes a memory game.
+        """
+        # `random`, not `secrets`: nothing is protected by which questions come
+        # up — CONTRIBUTING C-8 draws that line at codes and tokens.
+        import random
+
+        wanted = max(1, self.question_count)
+        pool = list(ChallengeQuestion.objects.filter(is_active=True))
+        if not pool:
+            return
+
+        recent = set(
+            ChallengeQuestion.objects
+            .filter(
+                daily_challenges__date__gte=self.date - timezone.timedelta(days=self.RECENT_DAYS),
+                daily_challenges__date__lt=self.date,
+            )
+            .values_list('id', flat=True)
+        )
+
+        def take(candidates, count, already):
+            """`count` questions, unseen ones first, never one twice.
+
+            Falling back to recently-asked questions matters: a pool too thin
+            to fill a fresh day must still fill the day. A short one is a
+            broken screen, and the child did not choose the pool size.
+            """
+            if count <= 0:
+                return []
+            free = [q for q in candidates if q not in already]
+            fresh = [q for q in free if q.id not in recent]
+            stale = [q for q in free if q.id in recent]
+            random.shuffle(fresh)
+            random.shuffle(stale)
+            return (fresh + stale)[:count]
+
+        easy_share, medium_share, _ = self.MIX
+        easy_n = max(1, round(wanted * easy_share))
+        medium_n = round(wanted * medium_share)
+        hard_n = max(0, wanted - easy_n - medium_n)
+
+        by_difficulty = {
+            level: [q for q in pool if q.difficulty == level]
+            for level in ('easy', 'medium', 'hard')
+        }
+
+        selected = []
+        for level, count in (('easy', easy_n), ('medium', medium_n), ('hard', hard_n)):
+            selected += take(by_difficulty[level], count, selected)
+
+        # A difficulty band too small to meet its share leaves the day short.
+        # Top it up from everything else rather than hand out four questions.
+        if len(selected) < wanted:
+            selected += take(pool, wanted - len(selected), selected)
+
+        self.questions.set(selected)
+
     @classmethod
     def get_or_create_today(cls):
-        """Get today's challenge, or auto-generate one from the question pool."""
+        """Today's challenge, generated from the pool if nobody made one.
+
+        No scheduler and no command to remember: the first request of the day
+        makes the day. The questions are chosen when the row is created *and*
+        whenever the row has none — a fresh install answers its first visitor
+        before anyone has run `seed_challenges`, and that day used to stay
+        blank for good because the pick only ever ran on the create.
+        """
         # localdate, not now().date(): the server runs on UTC and the site on
         # Asia/Tashkent, so the naive version rolled the day over at 05:00 local
         # and filed an evening attempt under yesterday.
         today = timezone.localdate()
-        challenge, created = cls.objects.get_or_create(date=today)
+        challenge, _ = cls.objects.get_or_create(date=today)
 
-        if created:
-            # Pick 5 random questions (1 easy, 2 medium, 2 hard)
-            import random
-            pool = list(ChallengeQuestion.objects.filter(is_active=True))
-            if len(pool) >= 5:
-                easy = [q for q in pool if q.difficulty == 'easy']
-                medium = [q for q in pool if q.difficulty == 'medium']
-                hard = [q for q in pool if q.difficulty == 'hard']
-
-                selected = []
-                selected += random.sample(easy, min(1, len(easy)))
-                selected += random.sample(medium, min(2, len(medium)))
-                selected += random.sample(hard, min(2, len(hard)))
-
-                # Fill remaining from any category
-                remaining = [q for q in pool if q not in selected]
-                while len(selected) < 5 and remaining:
-                    selected.append(remaining.pop(random.randrange(len(remaining))))
-
-                challenge.questions.set(selected[:5])
-            elif pool:
-                challenge.questions.set(pool[:5])
+        if not challenge.questions.exists():
+            challenge.fill_questions()
 
         return challenge
 
