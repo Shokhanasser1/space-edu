@@ -20,12 +20,13 @@ vi.mock('@/lib/api', () => ({
 let api;
 let fetchAllPages;
 let MarketView;
+let purchaseErrorMessage;
 
 beforeEach(async () => {
   ({ default: api } = await import('@/lib/api'));
   api.get.mockReset();
   api.post.mockReset();
-  ({ fetchAllPages, default: MarketView } = await import('./MarketView'));
+  ({ fetchAllPages, purchaseErrorMessage, default: MarketView } = await import('./MarketView'));
 });
 
 const page = (results, next = null) => ({ data: { results, next } });
@@ -205,5 +206,47 @@ describe('a real product sends the child to the shop that sells it', () => {
     expect(screen.queryByRole('link', { name: /open at the shop/i })).toBeNull();
 
     useAuthStore.setState({ isAuthenticated: false });
+  });
+});
+
+/**
+ * A refused purchase has to read in the reader's language.
+ *
+ * The server refuses a real product with an English sentence — correct for an
+ * API client, wrong for a child reading the shop in Uzbek. The response carries
+ * `external_url` and `merchant` so the page can say it properly instead of
+ * echoing our English back.
+ */
+describe('purchaseErrorMessage', () => {
+  const t = (_ns, key) => `t:${key}`;
+
+  it('says it in the reader language when the item is sold elsewhere', () => {
+    const message = purchaseErrorMessage(
+      {
+        detail: '"Cosmos" is a real product sold by Asaxiy for money.',
+        external_url: 'https://asaxiy.uz/product/carl-sagan-cosmos',
+        merchant: 'Asaxiy',
+      },
+      t,
+    );
+
+    expect(message).toBe('t:realProductNote (Asaxiy)');
+    expect(message).not.toContain('real product sold by');
+  });
+
+  it('leaves the shop out when the server did not name one', () => {
+    expect(
+      purchaseErrorMessage({ external_url: 'https://estesrockets.com/' }, t),
+    ).toBe('t:realProductNote');
+  });
+
+  it('still shows what the server said for every other refusal', () => {
+    expect(
+      purchaseErrorMessage({ detail: 'Not enough fuel. Need 500, have 20.' }, t),
+    ).toBe('Not enough fuel. Need 500, have 20.');
+  });
+
+  it('falls back when the request never reached the server', () => {
+    expect(purchaseErrorMessage(undefined, t)).toBe('t:purchaseFailed');
   });
 });

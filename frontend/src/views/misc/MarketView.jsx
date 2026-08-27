@@ -525,6 +525,27 @@ function ProductModal({ item, onClose, onBuy, buying }) {
  */
 const MAX_PAGES = 50;
 
+/**
+ * What to say when a purchase is refused.
+ *
+ * The server's refusal for a real product is an English sentence written for
+ * whoever is calling the API. Repeating it at a ten-year-old reading the page
+ * in Uzbek is how untranslated strings get in front of children, so the one
+ * refusal we can recognise gets said in their language instead — the response
+ * carries `external_url` and `merchant` for exactly this.
+ *
+ * The UI renders a link rather than a buy button for these products, so this is
+ * reached by a page that was already open when the item became real, or by a
+ * request nobody made from our own card. It still has to read properly.
+ */
+export function purchaseErrorMessage(data, t) {
+  if (data?.external_url) {
+    const note = t('market', 'realProductNote');
+    return data.merchant ? `${note} (${data.merchant})` : note;
+  }
+  return data?.detail || t('market', 'purchaseFailed');
+}
+
 export async function fetchAllPages(url) {
   const collected = [];
   let next = url;
@@ -593,7 +614,7 @@ export default function MarketView() {
       setInventory(prev => new Set([...prev, slug]));
       alert(t('market', 'purchaseSuccess'));
     } catch (err) {
-      alert(err.response?.data?.detail || t('market', 'purchaseFailed'));
+      alert(purchaseErrorMessage(err.response?.data, t));
     } finally {
       setBuying(null);
     }
