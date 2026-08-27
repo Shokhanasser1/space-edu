@@ -61,6 +61,9 @@ const VIEWS = [
   // Rebuilt on 28 Aug 2026 around astronomy-engine; fetches /data and
   // /api/v1/space on mount and must survive both being unreachable.
   { name: 'SolarSystemView', load: () => import('./explore/SolarSystemView') },
+  // Rewritten in PR #8/#9 around a coordinate catalogue; the 3D map and AR
+  // views are lazy and never mount here, the finder tab does.
+  { name: 'StarFinderView', load: () => import('./explore/StarFinderView') },
 ];
 
 let api;

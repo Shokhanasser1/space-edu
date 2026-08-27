@@ -1,121 +1,99 @@
-import React, { useEffect, useRef, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Stars as ThreeStars, Grid } from '@react-three/drei';
+import { Grid, Html, OrbitControls, Stars as ThreeStars } from '@react-three/drei';
 import * as THREE from 'three';
 
-function StarField({ stars, zoom }) {
-  const pointsRef = useRef();
-  const labelsRef = useRef([]);
+/**
+ * The local sky as a dome: the observer at the origin, the horizon as a grid
+ * through it, north away from the default camera, east to its right. Each
+ * catalogue star is placed from the azimuth and altitude the view computed
+ * for the current place and minute, so the dome turns as the night goes on.
+ */
+const DOME_RADIUS = 15;
+const MAX_STARS = 500;
 
-  const { positions, colors, sizes } = useMemo(() => {
-    const positions = new Float32Array(Math.min(stars.length, 500) * 3);
-    const colors = new Float32Array(Math.min(stars.length, 500) * 3);
-    const sizes = new Float32Array(Math.min(stars.length, 500));
+function positionOf({ azimuth, altitude }) {
+  const az = THREE.MathUtils.degToRad(azimuth);
+  const alt = THREE.MathUtils.degToRad(altitude);
+  const flat = Math.cos(alt) * DOME_RADIUS;
+  // +x east, +y up, −z north (the default camera looks down −z).
+  return [flat * Math.sin(az), Math.sin(alt) * DOME_RADIUS, -flat * Math.cos(az)];
+}
 
-    const visibleStars = stars.filter(s => s.altitude >= -5).slice(0, 500);
+function CatalogueStars({ stars }) {
+  const visible = useMemo(
+    () => stars
+      .filter((s) => Number.isFinite(s.altitude) && s.altitude >= -5)
+      .slice(0, MAX_STARS),
+    [stars],
+  );
 
-    visibleStars.forEach((star, i) => {
-      const azRad = (star.azimuth * Math.PI) / 180;
-      const altRad = (star.altitude * Math.PI) / 180;
-      const distance = Math.cos(altRad) * 15;
-
-      positions[i * 3] = distance * Math.cos(azRad);
-      positions[i * 3 + 1] = Math.sin(altRad) * 15;
-      positions[i * 3 + 2] = distance * Math.sin(azRad);
-
-      const brightness = Math.max(0.2, Math.min(1, (6 - star.magnitude) / 6));
-      colors[i * 3] = brightness;
-      colors[i * 3 + 1] = brightness * 0.9;
-      colors[i * 3 + 2] = Math.min(1, brightness * 1.4);
-
-      sizes[i] = Math.max(0.1, brightness * 0.5);
+  const { positions, colors } = useMemo(() => {
+    const positions = new Float32Array(visible.length * 3);
+    const colors = new Float32Array(visible.length * 3);
+    visible.forEach((star, i) => {
+      const [x, y, z] = positionOf(star);
+      positions.set([x, y, z], i * 3);
+      // Brighter (lower magnitude) → whiter and a little bluer.
+      const brightness = Math.max(0.35, Math.min(1, (6 - star.magnitude) / 6));
+      colors.set([brightness, brightness * 0.92, Math.min(1, brightness * 1.3)], i * 3);
     });
+    return { positions, colors };
+  }, [visible]);
 
-    return { positions, colors, sizes };
-  }, [stars, zoom]);
+  if (visible.length === 0) return null;
 
   return (
     <group>
-      <points ref={pointsRef}>
+      {/* `key` on the array length: a BufferAttribute is sized when it is
+          built, so a different number of stars needs a new geometry. */}
+      <points key={visible.length}>
         <bufferGeometry>
-          <bufferAttribute
-            attach="attributes-position"
-            array={positions}
-            count={positions.length / 3}
-            itemSize={3}
-          />
-          <bufferAttribute
-            attach="attributes-color"
-            array={colors}
-            count={colors.length / 3}
-            itemSize={3}
-          />
-          <bufferAttribute
-            attach="attributes-size"
-            array={sizes}
-            count={sizes.length}
-            itemSize={1}
-          />
+          <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+          <bufferAttribute attach="attributes-color" args={[colors, 3]} />
         </bufferGeometry>
-        <pointsMaterial
-          size={0.2}
-          sizeAttenuation
-          vertexColors
-          transparent
-          opacity={0.9}
-        />
+        <pointsMaterial size={0.45} sizeAttenuation vertexColors transparent opacity={0.95} />
       </points>
+      {visible.map((star) => (
+        <Html key={star.id} position={positionOf(star)} center zIndexRange={[10, 0]}>
+          <span className="pointer-events-none whitespace-nowrap text-[11px] font-semibold text-white/80 drop-shadow-[0_0_4px_rgba(0,0,0,0.9)] translate-y-3">
+            {star.name}
+          </span>
+        </Html>
+      ))}
+    </group>
+  );
+}
 
-      {/* Background cosmos */}
-      <ThreeStars radius={200} depth={150} count={10000} factor={8} saturation={0.3} />
-
-      {/* Grid */}
+export default function StarCanvas3D({ stars }) {
+  return (
+    <Canvas
+      camera={{ position: [0, 6, 22], fov: 55 }}
+      style={{ width: '100%', height: '500px' }}
+      dpr={[1, 1.5]}
+    >
+      <color attach="background" args={['#02030a']} />
+      <ThreeStars radius={120} depth={60} count={4000} factor={5} saturation={0.2} fade />
+      <CatalogueStars stars={stars} />
+      {/* The horizon. Stars below it sit under the grid. */}
       <Grid
         args={[40, 40]}
         cellSize={1}
         cellColor="#6366f1"
         sectionSize={5}
         sectionColor="#a855f7"
-        fadeStrength={0.2}
-        fadeDistance={100}
+        fadeStrength={0.4}
+        fadeDistance={60}
         infiniteGrid
-        position={[0, -15, 0]}
       />
-
-      {/* Hemisphere dome */}
-      <mesh position={[0, 0, 0]}>
-        <hemisphereGeometry args={[100, 32, 16]} />
-        <meshBasicMaterial
-          color="#000814"
-          emissive="#1a0033"
-          emissiveIntensity={0.2}
-          side={THREE.BackSide}
-          wireframe={false}
-        />
-      </mesh>
-    </group>
-  );
-}
-
-export default function StarCanvas3D({ stars, zoom = 1 }) {
-  return (
-    <Canvas
-      camera={{
-        position: [0, 5, 20 / Math.max(0.5, zoom)],
-        fov: 60,
-      }}
-      style={{ width: '100%', height: '500px' }}
-    >
-      <color attach="background" args={['#000000']} />
-      <ambientLight intensity={0.1} />
-      <StarField stars={stars} zoom={zoom} />
       <OrbitControls
         autoRotate
-        autoRotateSpeed={1}
+        autoRotateSpeed={0.6}
         enableZoom
-        enablePan
-        minDistance={5}
-        maxDistance={100}
+        enablePan={false}
+        minDistance={6}
+        maxDistance={60}
+        maxPolarAngle={Math.PI * 0.55}
       />
     </Canvas>
   );

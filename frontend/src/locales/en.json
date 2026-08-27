@@ -767,7 +767,21 @@
     "south": "South",
     "east": "East",
     "west": "West",
-    "up": "up"
+    "up": "up",
+    "tab3d": "3D Map",
+    "subtitle": "Real-time sky navigation • {{count}} stars",
+    "quickInfo": "Quick Info",
+    "selectedStar": "Selected Star",
+    "magnitude": "Magnitude",
+    "distance": "Distance",
+    "spectralType": "Spectral type",
+    "lightYears": "ly",
+    "currentPosition": "Current position",
+    "azimuth": "Azimuth",
+    "useMyLocation": "Use my location",
+    "locationDenied": "Location unavailable — showing the sky over Tashkent",
+    "defaultLocation": "Tashkent",
+    "belowHorizon": "Below the horizon right now. Best time: {{time}}"
   },
   "calendar": {
     "title": "Space",

@@ -767,7 +767,21 @@
     "south": "Janub",
     "east": "Sharq",
     "west": "G'arb",
-    "up": "yuqoriga"
+    "up": "yuqoriga",
+    "tab3d": "3D xarita",
+    "subtitle": "Real vaqtda osmon navigatsiyasi • {{count}} ta yulduz",
+    "quickInfo": "Qisqacha",
+    "selectedStar": "Tanlangan yulduz",
+    "magnitude": "Yulduz kattaligi",
+    "distance": "Masofa",
+    "spectralType": "Spektral sinf",
+    "lightYears": "yorug'lik yili",
+    "currentPosition": "Hozirgi holat",
+    "azimuth": "Azimut",
+    "useMyLocation": "Mening joylashuvim",
+    "locationDenied": "Geolokatsiya mavjud emas — Toshkent osmoni ko'rsatilmoqda",
+    "defaultLocation": "Toshkent",
+    "belowHorizon": "Hozir ufq ostida. Eng yaxshi vaqt: {{time}}"
   },
   "calendar": {
     "title": "Kosmik",
