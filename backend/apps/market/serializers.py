@@ -19,6 +19,9 @@ class MarketItemSerializer(serializers.ModelSerializer):
     is_discount_active = serializers.BooleanField(read_only=True)
     effective_price = serializers.IntegerField(read_only=True)
     in_stock = serializers.BooleanField(read_only=True)
+    # The client has to be able to tell a real product from a virtual one
+    # without guessing from a URL string.
+    is_external = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = MarketItem
@@ -29,6 +32,7 @@ class MarketItemSerializer(serializers.ModelSerializer):
             'price', 'original_price', 'discount_percent',
             'discount_start', 'discount_end', 'is_discount_active', 'effective_price',
             'cost_fuel', 'is_bestseller', 'is_new', 'is_featured', 'is_limited',
+            'external_url', 'merchant', 'external_price', 'currency', 'is_external',
             'stock', 'sold_count', 'in_stock',
             'rating_avg', 'rating_count',
             'tags', 'image_url', 'is_active', 'created_at',
@@ -49,6 +53,7 @@ class MarketItemWriteSerializer(serializers.ModelSerializer):
             'description_en', 'description_uz', 'description_ru',
             'item_type', 'price', 'original_price', 'discount_percent',
             'discount_start', 'discount_end',
+            'external_url', 'merchant', 'external_price', 'currency',
             'cost_fuel', 'is_bestseller', 'is_new', 'is_featured', 'is_limited',
             'stock', 'tags', 'image', 'is_active',
         )
