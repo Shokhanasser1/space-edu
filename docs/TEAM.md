@@ -414,6 +414,63 @@ against the Three.js code specifically before switching them on.
 
 ---
 
+## When the app breaks and your code did not change
+
+Two failures cost the team hours this week. Neither was a bug in the code, and
+both look like a bug in the code, so they are written down here.
+
+### "Invalid hook call" / `resolveDispatcher().useRef` is null
+
+The page dies with *Houston, we have a problem* and
+`null is not an object (evaluating 'resolveDispatcher().useRef')`, usually
+naming whichever component happened to call a hook first — `ParticleBackground`
+in our case. React says you have two copies of itself. You almost certainly do
+not.
+
+What actually happens: Vite pre-bundles dependencies into
+`frontend/node_modules/.vite/deps` and serves each one with a `?v=<hash>` tag.
+Every dependency in a healthy server carries **the same** hash. If
+`node_modules` is replaced — `npm ci`, `npm install`, a fresh clone into the
+same directory — **while the dev server is running**, the server keeps serving
+transforms that point at the previous generation, and the browser ends up with
+`react-dom` from one generation and `react` from another. Two Reacts, exactly as
+the message says.
+
+Check it in one command:
+
+```
+curl -s http://localhost:3000/src/main.jsx | grep -o 'deps/[^"]*\.js?v=[a-f0-9]*'
+```
+
+Three different hashes means this. Recover:
+
+1. Stop the dev server. Actually stop it — `lsof -ti:3000`.
+2. `rm -rf frontend/node_modules/.vite`
+3. Start it again and **wait for "optimizing dependencies" to finish before
+   loading a page**. Opening the browser mid-optimisation is how the mixed state
+   is created in the first place.
+4. Hard-reload the browser — plain reload keeps the old modules. Cmd+Shift+R.
+
+The rule that avoids all of it: **never reinstall `node_modules` while the dev
+server is running.**
+
+### A symlink that ate everyone's `node_modules`
+
+`.gitignore` listed `backend/venv/` and `frontend/node_modules/` **with a
+trailing slash**. A trailing slash matches a directory and nothing else, so when
+someone shared one environment between git worktrees by symlinking those two
+names, `git add -A` swept the *links* into a commit. They reached `main` as
+mode-120000 blobs holding an absolute path on one laptop. Anyone who pulled got
+a dead link, and checkout replaced their real directory with it.
+
+Fixed twice over: the trailing slashes are gone, and CI's **Repository hygiene**
+job now fails on any tracked symlink. If you are running worktrees and sharing
+one `node_modules`, that is fine — but commit by naming paths
+(`git add frontend/src backend/apps`), never `git add -A`, and read
+`git status` before every commit.
+
+---
+
 ## When something does go wrong on `main`
 
 Roll back first, diagnose second. `git revert <sha>` — the revert is an ordinary
