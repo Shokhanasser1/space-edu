@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Minus, Plus, RotateCcw, Sparkles, Waypoints } from 'lucide-react';
+import { Minus, Plus, RotateCcw, Sparkles, Waypoints, X } from 'lucide-react';
 
+import { constellationName } from '@/data/constellationNames';
 import { figures as catalogueFigures, stars as catalogueStars } from '@/data/skyCatalog';
 import { useTranslation } from '@/hooks/useTranslation';
-import { localSiderealTimeDeg } from '@/lib/skyPosition';
+import { compassKey, localSiderealTimeDeg } from '@/lib/skyPosition';
 import { drawSky, skyPositionsFor, starAt } from './skyRenderer';
 
 /**
@@ -48,6 +49,7 @@ export default function SkyView({
   const [viewport, setViewport] = useState({ width: 800, height: 520 });
   const [showFigures, setShowFigures] = useState(true);
   const [brightness, setBrightness] = useState('town');
+  const [inspected, setInspected] = useState(null);
 
   const limitingMagnitude =
     SKY_BRIGHTNESS.find((b) => b.id === brightness)?.limitingMagnitude ?? 4.5;
@@ -217,10 +219,14 @@ export default function SkyView({
     if (!drag || drag.id !== event.pointerId) return;
     // Under a few pixels of travel it was a tap, not a drag. A finger never
     // holds perfectly still, so zero would mean nothing is ever tappable.
-    if (drag.movedBy > 6 || !onSelectStar) return;
+    if (drag.movedBy > 6) return;
     const { x, y } = pointFor(event);
     const hit = starAt(x, y, positioned, view, viewport);
-    if (hit) onSelectStar(hit);
+    // Every star can be inspected; only the 25 with a written story mean
+    // anything to the page around this one, so it hears about all of them and
+    // decides for itself.
+    setInspected(hit ?? null);
+    if (hit) onSelectStar?.(hit);
   };
 
   const handleWheel = (event) => {
@@ -285,6 +291,68 @@ export default function SkyView({
         <p className="absolute bottom-3 left-4 right-4 text-[11px] text-gray-500 pointer-events-none">
           {t('skyView', 'dragHint')}
         </p>
+
+        {inspected && (
+          <div className="absolute top-3 right-3 w-64 max-w-[calc(100%-1.5rem)] rounded-2xl border border-neon-purple/30 bg-[#0c0518]/95 backdrop-blur-md p-4 shadow-2xl">
+            <button
+              type="button"
+              onClick={() => setInspected(null)}
+              aria-label={t('skyView', 'close')}
+              className="absolute top-3 right-3 text-gray-500 hover:text-white transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <h4 className="text-white font-bold text-lg pr-6 leading-tight">
+              {labelFor(inspected) ?? t('skyView', 'unnamedStar')}
+            </h4>
+            {inspected.greek && (
+              <p className="text-neon-purple text-sm">
+                {inspected.greek} {constellationName(inspected.constellation, t)}
+              </p>
+            )}
+
+            <dl className="mt-3 space-y-1.5 text-sm">
+              <div className="flex justify-between gap-3">
+                <dt className="text-gray-500">{t('skyView', 'inConstellation')}</dt>
+                <dd className="text-gray-200 text-right">
+                  {constellationName(inspected.constellation, t)}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-gray-500">{t('skyView', 'magnitude')}</dt>
+                <dd className="text-gray-200">{inspected.vmag.toFixed(2)}</dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-gray-500">{t('skyView', 'distance')}</dt>
+                {/* No number where the parallax could not carry one. The
+                    catalogue refuses to guess and so does this. */}
+                <dd className="text-gray-200 text-right">
+                  {inspected.distanceLy === null
+                    ? <span className="text-gray-500 text-xs">{t('skyView', 'distanceUnknown')}</span>
+                    : `${inspected.distanceLy} ${t('skyView', 'lightYears')}`}
+                </dd>
+              </div>
+              {inspected.spectralType && (
+                <div className="flex justify-between gap-3">
+                  <dt className="text-gray-500">{t('skyView', 'spectralType')}</dt>
+                  <dd className="text-gray-200">{inspected.spectralType}</dd>
+                </div>
+              )}
+              <div className="flex justify-between gap-3">
+                <dt className="text-gray-500">{t('skyView', 'altitude')}</dt>
+                <dd className="text-gray-200">{Math.round(inspected.altitudeDeg)}°</dd>
+              </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-gray-500">{t('skyView', 'direction')}</dt>
+                <dd className="text-gray-200">
+                  {t('skyView', `compass.${compassKey(inspected.azimuthDeg)}`)}
+                  {' '}{Math.round(inspected.azimuthDeg)}°
+                </dd>
+              </div>
+            </dl>
+          </div>
+        )}
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
