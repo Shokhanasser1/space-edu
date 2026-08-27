@@ -7,6 +7,7 @@ import importlib
 import os
 import sys
 
+from django.core.exceptions import ImproperlyConfigured
 from django.test import SimpleTestCase, TestCase
 from django.test.utils import override_settings
 
@@ -241,11 +242,12 @@ class PublicSurfaceTests(TestCase):
         )
 
 
-class OriginConfigTests(SimpleTestCase):
-    """The outage of 2026-08-23: the front end could not reach the API at all,
-    because every cross-origin request was refused before it started. Three
-    separate settings can produce that one browser message, and two of them look
-    nothing like a CORS problem, so each gets a test."""
+class SettingsReloadMixin:
+    """Re-import base.settings with some environment variables set.
+
+    Settings are read once at import, so override_settings cannot exercise the
+    code that reads them — which is where these bugs live.
+    """
 
     def _reload_settings(self, **env):
         original = {name: os.environ.get(name) for name in env}
@@ -263,6 +265,13 @@ class OriginConfigTests(SimpleTestCase):
             for name in [m for m in sys.modules if m.startswith('base.settings')]:
                 sys.modules.pop(name, None)
             importlib.import_module('base.settings')
+
+
+class OriginConfigTests(SettingsReloadMixin, SimpleTestCase):
+    """The outage of 2026-08-23: the front end could not reach the API at all,
+    because every cross-origin request was refused before it started. Three
+    separate settings can produce that one browser message, and two of them look
+    nothing like a CORS problem, so each gets a test."""
 
     def test_a_space_after_the_comma_does_not_silently_void_an_origin(self):
         """These lists are typed in by hand. Plain .split(',') kept the space,
@@ -299,3 +308,142 @@ class OriginConfigTests(SimpleTestCase):
         every other page hosted on the same domain. It stays opt-in."""
         settings = self._reload_settings(CORS_ALLOWED_ORIGINS='https://a.example')
         self.assertEqual(settings.CORS_ALLOWED_ORIGIN_REGEXES, [])
+
+
+class EmailConfigTests(SettingsReloadMixin, SimpleTestCase):
+    """E-mail used to be two hard-coded lines in settings/development.py — the
+    module that overrides everything else. Setting EMAIL_BACKEND in .env did
+    nothing at all, and nothing said so, which is the same shape as the
+    fail-open settings bug: a value you believe you set and never did.
+
+    Address confirmation and password reset are only worth having if the message
+    leaves the building, so how it leaves is configuration now, and a
+    half-configured mail server refuses to start rather than losing mail."""
+
+    SMTP = 'django.core.mail.backends.smtp.EmailBackend'
+
+    def test_nothing_configured_prints_to_the_console_and_delivers_nothing(self):
+        """The safe default, and the one a laptop wants. C-7: the permissive
+        branch is the one you have to ask for by name."""
+        settings = self._reload_settings(EMAIL_BACKEND='', EMAIL_HOST='')
+        self.assertIn('console', settings.EMAIL_BACKEND)
+
+    def test_a_blank_line_in_env_means_not_set_and_not_broken(self):
+        """Every template line in .env.example is `NAME=` with nothing after it,
+        so the variable exists and is empty. decouple returns '' for that, not
+        the default — which would leave EMAIL_BACKEND set to no backend at all
+        and EMAIL_PORT crashing int('') at import. A value whose right-hand side
+        somebody deleted has to land where one they never typed lands."""
+        settings = self._reload_settings(
+            EMAIL_BACKEND='', EMAIL_HOST='  ', EMAIL_PORT='',
+            EMAIL_USE_TLS='', DEFAULT_FROM_EMAIL='', FRONTEND_URL='',
+        )
+        self.assertIn('console', settings.EMAIL_BACKEND)
+        self.assertEqual(settings.EMAIL_PORT, 587)
+        self.assertTrue(settings.EMAIL_USE_TLS)
+        self.assertEqual(settings.DEFAULT_FROM_EMAIL, 'noreply@localhost')
+        self.assertEqual(settings.FRONTEND_URL, '')
+
+    def test_smtp_without_a_host_refuses_to_start(self):
+        """A mail backend with nowhere to send is not a safe default. It is a
+        silent failure for every code this system issues."""
+        with self.assertRaises(ImproperlyConfigured):
+            self._reload_settings(EMAIL_BACKEND=self.SMTP, EMAIL_HOST='')
+
+    def test_tls_and_ssl_together_refuse_to_start(self):
+        """Django raises deep inside the send otherwise, once, at the moment a
+        child is waiting for a code."""
+        with self.assertRaises(ImproperlyConfigured):
+            self._reload_settings(
+                EMAIL_BACKEND=self.SMTP, EMAIL_HOST='smtp.example',
+                EMAIL_USE_TLS='true', EMAIL_USE_SSL='true',
+            )
+
+    def test_an_account_with_no_password_prints_instead_of_losing_the_message(self):
+        """The state this repository is actually in: the mailbox is named in
+        .env.team, the app password is held by one person, and the other seven
+        have it blank. Left as SMTP that is the worst outcome available — the
+        server refuses every message, send_mail(fail_silently=True) swallows the
+        refusal, and a child waits for a code that was never going to arrive."""
+        settings = self._reload_settings(
+            EMAIL_BACKEND=self.SMTP,
+            EMAIL_HOST='smtp.gmail.com',
+            EMAIL_HOST_USER='someone@example.com',
+            EMAIL_HOST_PASSWORD='',
+        )
+        self.assertIn('console', settings.EMAIL_BACKEND)
+        self.assertIn('EMAIL_HOST_PASSWORD', settings.EMAIL_CONFIG_NOTE)
+
+    def test_a_complete_account_is_left_alone(self):
+        settings = self._reload_settings(
+            EMAIL_BACKEND=self.SMTP,
+            EMAIL_HOST='smtp.gmail.com',
+            EMAIL_HOST_USER='someone@example.com',
+            EMAIL_HOST_PASSWORD='sixteenletters00',
+        )
+        self.assertEqual(settings.EMAIL_BACKEND, self.SMTP)
+        self.assertEqual(settings.EMAIL_CONFIG_NOTE, '')
+
+    def test_a_real_mail_server_is_an_environment_change_and_nothing_else(self):
+        """The whole point of this commit: no code changes to start sending."""
+        settings = self._reload_settings(
+            EMAIL_BACKEND=self.SMTP,
+            EMAIL_HOST='smtp.example',
+            EMAIL_PORT='587',
+            EMAIL_HOST_USER='someone@example.com',
+            EMAIL_HOST_PASSWORD='not-a-real-password',
+            DEFAULT_FROM_EMAIL='UZ COSMOS <someone@example.com>',
+        )
+        self.assertEqual(settings.EMAIL_BACKEND, self.SMTP)
+        self.assertEqual(settings.EMAIL_HOST, 'smtp.example')
+        self.assertEqual(settings.EMAIL_PORT, 587)
+        self.assertEqual(settings.DEFAULT_FROM_EMAIL, 'UZ COSMOS <someone@example.com>')
+
+    def test_a_mail_server_that_stops_answering_releases_the_worker(self):
+        """send_mail runs inside the request that asked for the code. Without a
+        timeout, a server that accepts the connection and then goes quiet holds
+        a worker until the client gives up."""
+        settings = self._reload_settings(EMAIL_BACKEND='', EMAIL_HOST='')
+        self.assertIsNotNone(settings.EMAIL_TIMEOUT)
+        self.assertLessEqual(settings.EMAIL_TIMEOUT, 30)
+
+
+class FrontendLinkTests(SimpleTestCase):
+    """A link inside a message to a child is the one place a wrong URL is worst,
+    so frontend_link refuses more than it accepts and returns '' rather than
+    raising: the message still goes, carrying the code that proves anything.
+
+    FRONTEND_URL is typed by hand on every machine, which makes a typo a matter
+    of when. Each of these is a typo somebody will make."""
+
+    def test_unset_is_a_valid_answer_and_means_no_link(self):
+        from apps.links import frontend_link
+
+        with override_settings(FRONTEND_URL=''):
+            self.assertEqual(frontend_link('verify-email'), '')
+
+    def test_a_url_with_no_scheme_is_not_a_url(self):
+        """'localhost:3000' parses as scheme 'localhost'. Guessing http:// for
+        it is how a message ends up with a relative path in a mail client."""
+        from apps.links import frontend_link
+
+        with override_settings(FRONTEND_URL='localhost:3000',
+                               CORS_ALLOWED_ORIGINS=['http://localhost:3000']):
+            self.assertEqual(frontend_link('verify-email'), '')
+
+    def test_a_host_we_never_heard_of_is_refused(self):
+        """This is the rule that stops a hostile or mistyped value being mailed
+        out over our name."""
+        from apps.links import frontend_link
+
+        with override_settings(FRONTEND_URL='https://not-ours.example',
+                               CORS_ALLOWED_ORIGINS=['http://localhost:3000']):
+            self.assertEqual(frontend_link('verify-email'), '')
+
+    def test_one_of_our_own_front_ends_is_allowed(self):
+        from apps.links import frontend_link
+
+        with override_settings(FRONTEND_URL='http://localhost:3000/',
+                               CORS_ALLOWED_ORIGINS=['http://localhost:3000']):
+            self.assertEqual(frontend_link('/verify-email'), 'http://localhost:3000/verify-email')
+            self.assertEqual(frontend_link(), 'http://localhost:3000')
