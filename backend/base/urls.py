@@ -16,4 +16,5 @@ urlpatterns = [
     path('api/v1/challenges/',   include('apps.challenges.urls')),
     path('api/v1/admin-panel/',  include('apps.admin_api.urls')),
     path('api/v1/ai/',           include('apps.ai.urls')),
+    path('api/v1/space/',        include('apps.space.urls')),
 ] + static(settings.MEDIA_URL, document_root=getattr(settings, 'MEDIA_ROOT', ''))

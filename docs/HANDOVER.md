@@ -584,3 +584,31 @@ migrations against a real Postgres 16 as a separate step.
 - Team handbook — <https://claude.ai/code/artifact/4a85e840-04bb-4b32-a7bc-418c4b648eb3>
   (same content as `CONTRIBUTING.md`)
 - Ground comparison — <https://claude.ai/code/artifact/25974d1b-86cd-4426-af5f-0006126edc0c>
+
+---
+
+## 28 August 2026 — the Solar System is real
+
+`/3d-solar-system` was rebuilt from scratch; the review that drove it is
+`docs/SOLAR_SYSTEM_3D_RESEARCH.md`. What is where now:
+
+- `frontend/src/solar/` — the scene. `ephemeris.js` wraps `astronomy-engine`
+  (VSOP87; the tests in `ephemeris.test.js` hold the Earth and Mars within
+  0.02° of JPL Horizons). `clock.js` is the simulation time — a plain object
+  advanced in the render loop, mirrored to a zustand store at 10 Hz; nothing
+  re-renders per frame. `catalog.js` carries NASA Fact Sheet numbers and texture
+  candidate lists. `scene/` is one component per thing (planet, moon, rings,
+  belts on the GPU, real stars, satellites, probes, camera, labels).
+- `frontend/public/data/` — 9 096 real stars (Yale BSC5) and 3 619 real
+  asteroids/TNOs (JPL SBDB); provenance in `public/textures/ATTRIBUTION.md`.
+- `backend/apps/space/` — a caching proxy for CelesTrak, JPL Horizons, Launch
+  Library and APOD, so browsers never call those hosts (school IPs get
+  firewalled). `/live` and the APOD/launch widgets now go through it. Set
+  `NASA_API_KEY` in `.env` for APOD.
+- Data outside the ephemerides' comfort zone is refused, not guessed: the clock
+  stops at 1800/2200, satellites hide beyond ±30 days of their element sets,
+  probes hide outside the fetched Horizons window.
+
+Known gaps: the planet maps are still the old ones (see ATTRIBUTION.md for the
+drop-in upgrade), probes are markers rather than NASA's 3D models, and the
+three `ProfileView` tests were already red on `main` before this work.

@@ -3,8 +3,6 @@ import { motion } from 'motion/react';
 import { Camera, Calendar, ExternalLink } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 
-const NASA_KEY = 'DEMO_KEY';
-
 export default function NasaApod() {
   const [apod, setApod] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -26,9 +24,13 @@ export default function NasaApod() {
 
     const fetchApod = async () => {
       try {
-        const res = await fetch(`https://api.nasa.gov/planetary/apod?api_key=${NASA_KEY}`);
+        // Through our backend: the NASA key stays on the server and one
+        // fetch a day serves the whole school (api.nasa.gov's DEMO_KEY allows
+        // 30 requests an hour per IP).
+        const res = await fetch('/api/v1/space/apod/');
         if (res.ok) {
-          const data = await res.json();
+          const data = (await res.json()).data;
+          if (!data?.url) throw new Error('API error');
           const translatedTitle = await translateText(data.title, language);
           const translatedExpl = await translateText(data.explanation, language);
           setApod({ ...data, title: translatedTitle, explanation: translatedExpl });

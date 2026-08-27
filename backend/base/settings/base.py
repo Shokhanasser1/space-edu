@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     'apps.challenges',
     'apps.admin_api',
     'apps.ai',
+    'apps.space',
 ]
 
 MIDDLEWARE = [

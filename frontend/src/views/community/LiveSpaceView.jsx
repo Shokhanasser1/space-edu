@@ -6,6 +6,7 @@ import { OrbitControls, Stars, Line } from '@react-three/drei';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import { twoline2satrec, propagate, gstime, eciToEcf, eciToGeodetic } from 'satellite.js';
+import { ommToSatrec } from '@/solar/omm';
 import UpcomingLaunches from '@/components/live/UpcomingLaunches';
 import NasaApod from '@/components/live/NasaApod';
 
@@ -18,42 +19,45 @@ const TLE_SOURCES = [
   { group: 'active', type: 'LEO', limit: 15000 },
 ];
 
-function parseTleGroup(raw, cfg) {
-  const lines = raw.split('\n').map((line) => line.trim()).filter(Boolean);
+function parseGpGroup(records, cfg) {
   const satellites = [];
-  for (let i = 0; i + 2 < lines.length && satellites.length < cfg.limit; i += 3) {
-    const name = lines[i].replace(/^0\s*/, '');
-    const l1 = lines[i + 1];
-    const l2 = lines[i + 2];
-    if (!l1?.startsWith('1 ') || !l2?.startsWith('2 ')) continue;
+  for (const omm of records) {
+    if (satellites.length >= cfg.limit) break;
     try {
-      const satrec = twoline2satrec(l1, l2);
-      const satnum = String(satrec.satnum || `${cfg.group}-${i}`);
+      const satrec = ommToSatrec(omm);
+      if (satrec.error) continue;
+      const name = String(omm.OBJECT_NAME || '').replace(/^0\s*/, '');
       const low = name.toLowerCase();
       const type = cfg.type === 'LEO'
         ? (low.includes('geo') ? 'GEO' : low.includes('meo') ? 'MEO' : 'LEO')
         : cfg.type;
       satellites.push({
-        id: satnum,
+        id: String(omm.NORAD_CAT_ID),
         name,
         type,
         satrec,
         color: new THREE.Color('#ff2d6a'),
       });
     } catch {
-      // ignore broken tle rows
+      // ignore broken records
     }
   }
   return satellites;
 }
 
+/**
+ * Element sets come from our own backend (`apps.space`), which fetches each
+ * CelesTrak group at most once per update and serves it from cache. Thirty
+ * browsers in one classroom asking CelesTrak directly is exactly what their
+ * usage policy firewalls.
+ */
 async function loadRealSatellites() {
   const jobs = TLE_SOURCES.map(async (cfg) => {
-    const url = `https://celestrak.org/NORAD/elements/gp.php?GROUP=${cfg.group}&FORMAT=tle`;
+    const url = `/api/v1/space/gp/?group=${cfg.group}&limit=${cfg.limit}`;
     const response = await fetch(url);
     if (!response.ok) throw new Error(`failed ${cfg.group}`);
-    const text = await response.text();
-    return parseTleGroup(text, cfg);
+    const body = await response.json();
+    return parseGpGroup(body.satellites || [], cfg);
   });
 
   const settled = await Promise.allSettled(jobs);
@@ -76,8 +80,8 @@ function fallbackSatellites() {
     type: 'ISS',
     color: new THREE.Color('#ff2d6a'),
     satrec: twoline2satrec(
-      '1 25544U 98067A   26122.47509931  .00014920  00000+0  26616-3 0  9994',
-      '2 25544  51.6380  69.2367 0003320  65.4491  48.5744 15.50352232508944',
+      '1 25544U 98067A   08264.51782528 -.00002182  00000-0 -11606-4 0  2927',
+      '2 25544  51.6416 247.4627 0006703 130.5360 325.0288 15.72125391563537',
     ),
   }];
 }

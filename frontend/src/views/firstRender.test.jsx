@@ -38,6 +38,7 @@ vi.mock('@react-three/drei', () => ({
   Environment: () => null,
   Line: () => null,
   useTexture: () => ({}),
+  useProgress: () => ({ active: false, progress: 100 }),
   Html: ({ children }) => <div>{children}</div>,
 }));
 vi.mock('@react-three/postprocessing', () => ({
@@ -46,6 +47,7 @@ vi.mock('@react-three/postprocessing', () => ({
   Vignette: () => null,
   Noise: () => null,
   ChromaticAberration: () => null,
+  ToneMapping: () => null,
 }));
 
 const VIEWS = [
@@ -56,6 +58,9 @@ const VIEWS = [
   { name: 'ProfileView', load: () => import('./profile/ProfileView') },
   { name: 'MarketView', load: () => import('./misc/MarketView') },
   { name: 'LiveSpaceView', load: () => import('./community/LiveSpaceView') },
+  // Rebuilt on 28 Aug 2026 around astronomy-engine; fetches /data and
+  // /api/v1/space on mount and must survive both being unreachable.
+  { name: 'SolarSystemView', load: () => import('./explore/SolarSystemView') },
 ];
 
 let api;
