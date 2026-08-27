@@ -7,6 +7,7 @@ import {
   Flame,
   Globe2,
   Loader2,
+  Medal,
   Orbit,
   Package,
   RefreshCw,
@@ -339,13 +340,16 @@ export default function ProfileView() {
   const displayName = [user?.first_name, user?.last_name].filter(Boolean).join(' ') || user?.username || 'Cadet';
   const title = t('profilePage', 'levelExplorer').replace('{level}', level);
 
-  const rankLabel = leaderboardRank != null
-    ? `#${leaderboardRank}${leaderboardTotal ? ` of ${leaderboardTotal}` : ''}`
-    : leaderboardTotal ? '100+' : '—';
-
-  const percentile = leaderboardRank != null && leaderboardTotal > 0
-    ? `Top ${Math.max(1, Math.round((leaderboardRank / leaderboardTotal) * 100))}%`
-    : '—';
+  // `rank` is null only for a child who has not scored yet — the server ranks
+  // every player, however far down. The old `'100+'` guess belonged to a board
+  // that stopped counting at a hundred, and the English `of` / `Top %` next to
+  // it were never translated. Both strings already exist in the leaderboard
+  // namespace, said the way the board itself says them.
+  const isRanked = leaderboardRank != null;
+  const rankLabel = isRanked ? `#${leaderboardRank.toLocaleString()}` : null;
+  const rankOf = isRanked && leaderboardTotal > 0
+    ? t('leaderboard', 'ofPlayers').replace('{count}', leaderboardTotal.toLocaleString())
+    : null;
 
   const apiLessons = progress?.lessons ?? [];
   
@@ -499,6 +503,24 @@ export default function ProfileView() {
                   <p className="text-violet-300 flex items-center gap-2 font-medium bg-violet-500/10 border border-violet-400/20 px-4 py-1.5 rounded-full text-sm">
                     <Trophy className="w-4 h-4" /> {title}
                   </p>
+                  {/* The place was computed here and never shown, so a child
+                      could only find it by opening the board. It is the same
+                      number the board prints — one function answers both. */}
+                  <Link
+                    to="/leaderboard"
+                    className="text-amber-200 flex items-center gap-2 font-medium bg-amber-500/10 border border-amber-400/20 px-4 py-1.5 rounded-full text-sm hover:bg-amber-500/20 hover:border-amber-400/40 transition-colors"
+                    title={t('leaderboard', 'yourPlace')}
+                  >
+                    <Medal className="w-4 h-4" />
+                    {isRanked ? (
+                      <span>
+                        {rankLabel}
+                        {rankOf && <span className="text-amber-200/60"> · {rankOf}</span>}
+                      </span>
+                    ) : (
+                      <span className="text-amber-200/70">{t('leaderboard', 'notRankedYet')}</span>
+                    )}
+                  </Link>
                 </div>
                 {!isEditing && user?.astronaut_name && (
                   <p className="text-sm text-white/50 mt-3 flex items-center gap-1.5 font-medium">
