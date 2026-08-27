@@ -1,0 +1,62 @@
+```python
+# settings.py - ADD THIS TO INSTALLED_APPS
+
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    
+    # DRF
+    'rest_framework',
+    'corsheaders',
+    
+    # Our apps
+    'apps.accounts',
+    'apps.challenges',
+    'apps.chat',
+    'apps.courses',
+    'apps.events',
+    'apps.gamification',
+    'apps.market',
+    'apps.news',
+    'apps.progress',
+    'apps.ai',
+    'apps.admin_api',
+    
+    'apps.stars',  # ← ADD THIS LINE
+]
+```
+
+```python
+# urls.py - ADD THIS TO urlpatterns
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('api/auth/', include('apps.accounts.urls')),
+    path('api/challenges/', include('apps.challenges.urls')),
+    path('api/chat/', include('apps.chat.urls')),
+    path('api/courses/', include('apps.courses.urls')),
+    path('api/events/', include('apps.events.urls')),
+    path('api/gamification/', include('apps.gamification.urls')),
+    path('api/market/', include('apps.market.urls')),
+    path('api/news/', include('apps.news.urls')),
+    path('api/progress/', include('apps.progress.urls')),
+    path('api/admin/', include('apps.admin_api.urls')),
+    
+    path('api/stars/', include('apps.stars.urls')),  # ← ADD THIS LINE
+]
+```
+
+```bash
+# Commands to run:
+
+python manage.py makemigrations stars
+python manage.py migrate
+python manage.py load_stars
+
+# Test:
+curl http://localhost:8000/api/stars/visible_now/?lat=41.2995&lon=69.2401
+```
