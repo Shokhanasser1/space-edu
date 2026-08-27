@@ -4,6 +4,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import api from '@/lib/api';
 import { Users, BookOpen, ShoppingBag, MessageCircle, Newspaper, Calendar, HelpCircle, Search, Plus, Trash2, Edit, X, Shield, Sun, Moon, ArrowLeft } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useFormat } from '@/hooks/useFormat';
 
 const MENU_GROUPS = [
   {
@@ -109,6 +110,7 @@ function Field({ label, value, onChange, type = 'text', options }) {
 }
 
 function DashboardTab({ stats }) {
+  const fmt = useFormat();
   const { t, i18n } = useTranslation();
   if (!stats) return <p className="text-slate-400">Loading...</p>;
   return (
@@ -134,7 +136,7 @@ function DashboardTab({ stats }) {
             </div>
             <div className="flex items-center gap-2">
               {u.is_staff && <span className="text-[9px] font-bold bg-violet/20 text-violet-light px-2 py-0.5 rounded-full">STAFF</span>}
-              <span className="text-[10px] text-slate-400">{new Date(u.date_joined).toLocaleDateString()}</span>
+              <span className="text-[10px] text-slate-400">{fmt.date(u.date_joined)}</span>
             </div>
           </div>
         ))}

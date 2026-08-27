@@ -6,6 +6,7 @@ import GlassCard from '@/components/ui/GlassCard';
 import { useUserStore } from '@/store/useUserStore';
 import { useTranslation } from '@/hooks/useTranslation';
 import { newsData } from '@/data/mockData';
+import { localeTag } from '@/lib/format';
 
 const SPACE_FACTS = [
   'A day on Venus is longer than its year.',
@@ -34,7 +35,7 @@ function NewsCard({ article, index }) {
   const langSuffix = language === 'UZB' ? 'uz' : language === 'RUS' ? 'ru' : 'en';
 
   const color = CATEGORY_COLORS[article.category] || CATEGORY_COLORS.science;
-  const date = new Date(article.published_at || article.date).toLocaleDateString(language === 'UZB' ? 'uz-UZ' : language === 'RUS' ? 'ru-RU' : 'en-US', {
+  const date = new Date(article.published_at || article.date).toLocaleDateString(localeTag(language), {
     month: 'short', day: 'numeric', year: 'numeric',
   });
 

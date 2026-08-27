@@ -3,8 +3,10 @@ import { useGamificationStore } from '@/store/useGamificationStore';
 import { FolderGit2, Calendar, Target, ExternalLink, Plus, BookOpen, Shield } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useFormat } from '@/hooks/useFormat';
 
 export default function PortfolioView() {
+  const fmt = useFormat();
   const { portfolio, careerTrack } = useGamificationStore();
   const { t, i18n } = useTranslation();
 
@@ -118,7 +120,7 @@ export default function PortfolioView() {
                     <Target className="w-4 h-4" /> {project.careerTrack}
                   </span>
                   <span className="flex items-center gap-1">
-                    <Calendar className="w-4 h-4" /> {new Date(project.dateCompleted).toLocaleDateString()}
+                    <Calendar className="w-4 h-4" /> {fmt.date(project.dateCompleted)}
                   </span>
                 </div>
               </div>

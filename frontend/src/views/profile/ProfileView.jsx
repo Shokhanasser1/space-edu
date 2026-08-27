@@ -33,6 +33,7 @@ import { useLikesStore } from '@/store/useLikesStore';
 import { useLearningStore } from '@/store/useLearningStore';
 import { useTranslation } from '@/hooks/useTranslation';
 import SecurityPanel from '@/components/profile/SecurityPanel';
+import { useFormat } from '@/hooks/useFormat';
 
 const CLAIMS_KEY = 'space-edu-profile-mission-claims';
 const STREAK_CLAIM_DAY_KEY = 'space-edu-profile-streak-claim-day';
@@ -121,6 +122,7 @@ function pickInventoryIcon(item) {
 }
 
 export default function ProfileView() {
+  const fmt = useFormat();
   const { user, updateUser } = useAuthStore();
   const syncFromAPI = useGamificationStore((s) => s.syncFromAPI);
   const { likedLessons } = useLikesStore();
@@ -347,9 +349,9 @@ export default function ProfileView() {
   // it were never translated. Both strings already exist in the leaderboard
   // namespace, said the way the board itself says them.
   const isRanked = leaderboardRank != null;
-  const rankLabel = isRanked ? `#${leaderboardRank.toLocaleString()}` : null;
+  const rankLabel = isRanked ? `#${fmt.number(leaderboardRank)}` : null;
   const rankOf = isRanked && leaderboardTotal > 0
-    ? t('leaderboard', 'ofPlayers').replace('{count}', leaderboardTotal.toLocaleString())
+    ? t('leaderboard', 'ofPlayers').replace('{count}', fmt.number(leaderboardTotal))
     : null;
 
   const apiLessons = progress?.lessons ?? [];

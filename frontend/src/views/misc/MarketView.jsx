@@ -5,6 +5,7 @@ import api from '@/lib/api';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useGamificationStore } from '@/store/useGamificationStore';
 import { useTranslation } from '@/hooks/useTranslation';
+import { formatMoney } from '@/lib/format';
 
 // ── MOCK DATA ───────────────────────────────────────────────────────────────
 const MOCK_ITEMS = [
@@ -216,7 +217,7 @@ const MOCK_ITEMS = [
 
 const formatPrice = (price, t) => {
   if (price == null) return '—';
-  const formatted = Number(price).toLocaleString('uz-UZ').replace(/,/g, ' ');
+  const formatted = formatMoney(price);
   return `${formatted} ${t('market', 'sum')}`;
 };
 
@@ -245,7 +246,7 @@ const formatShopPrice = (item, t) => {
   const amount = Number(item.external_price);
   if (!Number.isFinite(amount)) return null;
   const shown = Number.isInteger(amount)
-    ? amount.toLocaleString('uz-UZ').replace(/,/g, ' ')
+    ? formatMoney(amount)
     : amount.toFixed(2);
   if (item.currency === 'UZS') return `${shown} ${t('market', 'sum')}`;
   const sign = CURRENCY_SIGN[item.currency];

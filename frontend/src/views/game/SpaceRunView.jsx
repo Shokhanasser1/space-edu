@@ -21,8 +21,10 @@ import { closeAudio, resumeAudio, startEngineHum, startSpaceMusic, stopEngineHum
 import MiniSolarSystem from "@/components/layout/MiniSolarSystem";
 import { useStarfield } from "./useStarfield";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useFormat } from '@/hooks/useFormat';
 
 export default function SpaceRunView() {
+  const fmt = useFormat();
   const { t, language } = useTranslation();
   const [gameKey, setGameKey] = useState(0);
   const [started, setStarted] = useState(false);
@@ -175,7 +177,7 @@ export default function SpaceRunView() {
     inputRef.current.boost = false;
   };
 
-  const scoreDisplay = started ? Math.floor(score).toLocaleString() : "—";
+  const scoreDisplay = started ? fmt.number(Math.floor(score)) : "—";
   const timeDisplay = started && !gameOver ? survivalSec.toFixed(0) + "s" : null;
 
   return (

@@ -4,6 +4,7 @@ import { Calendar, Star, Sun, Moon, Rocket, Globe, Flame, Eye, Trophy, X, Bell, 
 import api from '@/lib/api';
 import { useGamificationStore } from '@/store/useGamificationStore';
 import { useTranslation } from '@/hooks/useTranslation';
+import { localeTag } from '@/lib/format';
 
 const ICON_MAP = {
   launch:        Rocket,
@@ -129,7 +130,7 @@ export default function CalendarView() {
                 <h3 className="text-2xl font-[900] text-white mb-2">{nextEvent.title}</h3>
                 <p className="text-white/40 text-sm flex items-center gap-2">
                   <Calendar className="w-4 h-4" />
-                  {new Date(nextEvent.event_date).toLocaleDateString(language === 'UZB' ? 'uz-UZ' : language === 'RUS' ? 'ru-RU' : 'en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                  {new Date(nextEvent.event_date).toLocaleDateString(localeTag(language), { month: 'long', day: 'numeric', year: 'numeric' })}
                 </p>
               </div>
               <div className="flex gap-3 text-center shrink-0">
@@ -187,7 +188,7 @@ export default function CalendarView() {
                         <p className="text-white/30 text-[12px] flex items-center gap-4 font-[600]">
                           <span className="flex items-center gap-1.5">
                             <Calendar className="w-3.5 h-3.5" />
-                            {new Date(event.event_date).toLocaleDateString(language === 'UZB' ? 'uz-UZ' : language === 'RUS' ? 'ru-RU' : 'en-US', { month: 'short', day: 'numeric' })}
+                            {new Date(event.event_date).toLocaleDateString(localeTag(language), { month: 'short', day: 'numeric' })}
                           </span>
                           {event.visibility && (
                             <span className="flex items-center gap-1.5 hidden md:flex">
@@ -268,7 +269,7 @@ export default function CalendarView() {
                   <div>
                     <p className="text-[10px] text-white/30 font-[700] uppercase tracking-wider mb-1">{t('calendar', 'date')}</p>
                     <p className="text-white text-sm font-[700]">
-                      {new Date(selected.event_date).toLocaleDateString(language === 'UZB' ? 'uz-UZ' : language === 'RUS' ? 'ru-RU' : 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                      {new Date(selected.event_date).toLocaleDateString(localeTag(language), { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                     </p>
                   </div>
                 </div>

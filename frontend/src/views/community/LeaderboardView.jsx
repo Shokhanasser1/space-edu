@@ -5,6 +5,7 @@ import api from '@/lib/api';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useTranslation } from '@/hooks/useTranslation';
 import GlassCard from '@/components/ui/GlassCard';
+import { useFormat } from '@/hooks/useFormat';
 
 const RANK_STYLES = {
   0: { bg: 'from-amber-500/20 to-amber-400/5',  text: 'text-amber-400',  glow: 'shadow-[0_0_30px_rgba(251,191,36,0.2)]',   icon: <Crown className="w-6 h-6 text-amber-400" /> },
@@ -16,6 +17,7 @@ const RANK_STYLES = {
 const DEFAULT_POLL_SECONDS = 30;
 
 export default function LeaderboardView() {
+  const fmt = useFormat();
   const { user } = useAuthStore();
   const { t } = useTranslation();
   const [board, setBoard] = useState(null);
@@ -142,7 +144,7 @@ export default function LeaderboardView() {
                       {/* The server's place, not the plinth's. Players level on
                           XP share one, and their profile pages say the same. */}
                       <span className={`text-sm font-[900] ${style.text}`}>#{u.rank}</span>
-                      <span className="text-[9px] font-[700] text-white/40 uppercase tracking-widest mt-1">{u.xp.toLocaleString()} {t('leaderboard', 'xpPoints')}</span>
+                      <span className="text-[9px] font-[700] text-white/40 uppercase tracking-widest mt-1">{fmt.number(u.xp)} {t('leaderboard', 'xpPoints')}</span>
                     </div>
                   </div>
                 );
@@ -179,7 +181,7 @@ export default function LeaderboardView() {
                       </span>
                     </div>
                     <div className="col-span-3 text-right">
-                      <p className="text-sm font-[900] text-white tracking-tight">{u.xp.toLocaleString()}</p>
+                      <p className="text-sm font-[900] text-white tracking-tight">{fmt.number(u.xp)}</p>
                       <p className="text-[9px] font-[800] text-white/20 uppercase tracking-widest">{t('leaderboard', 'xpPoints')}</p>
                     </div>
                   </motion.div>
@@ -205,13 +207,13 @@ export default function LeaderboardView() {
                 </span>
                 {myRank != null ? (
                   <div className="flex items-baseline gap-3">
-                    <span className="text-2xl font-[900] text-violet-light tracking-tight">#{myRank.toLocaleString()}</span>
+                    <span className="text-2xl font-[900] text-violet-light tracking-tight">#{fmt.number(myRank)}</span>
                     <span className="text-[11px] font-[700] text-white/30">
-                      {t('leaderboard', 'ofPlayers').replace('{count}', totalPlayers.toLocaleString())}
+                      {t('leaderboard', 'ofPlayers').replace('{count}', fmt.number(totalPlayers))}
                     </span>
                     {myXp != null && (
                       <span className="text-[11px] font-[700] text-white/30">
-                        {myXp.toLocaleString()} {t('leaderboard', 'xpPoints')}
+                        {fmt.number(myXp)} {t('leaderboard', 'xpPoints')}
                       </span>
                     )}
                   </div>

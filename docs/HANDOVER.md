@@ -724,9 +724,10 @@ mistake later.
 - **A Google account has no date of birth.** Registration requires one and Google
   does not give one, so those accounts carry `profile_complete: false` and
   nothing yet asks them to fill it in.
-- **Numbers are formatted with the machine's locale.** Thirteen calls to
-  `toLocaleString()` with no argument, so a Russian-language page on an English
-  machine reads `4,951` and the same page elsewhere reads `4 951`. Three tests in
-  `ProfileView.test.jsx` fail on any machine whose locale is not English —
-  including every developer here — and pass in CI. `src/lib/utils.js` already has
-  the helper this belongs in.
+- ~~Numbers formatted with the machine's locale.~~ **Fixed, 28 August 2026.**
+  Twenty-odd calls to `toLocaleString()` with no argument went through
+  `src/lib/format.js` and the `useFormat()` hook, which format in the language
+  the page is in. Four call sites had already worked the mapping out and written
+  the same ternary inline; it lives in one place now. The three
+  `ProfileView.test.jsx` failures that only appeared on non-English machines are
+  gone with it — 416 frontend tests, all passing, on a Russian-locale laptop.

@@ -402,13 +402,12 @@ cd frontend && npm run check:locales
 cd frontend && npm run content:check
 ```
 
-**Three frontend tests fail on a machine whose locale is not English**, and pass
-in CI. `ProfileView.test.jsx` expects `#4,951`; the code calls
-`toLocaleString()` with no argument, so on a Russian-locale machine it renders
-`4 951`. Thirteen places do that, which also means a page in Russian shows
-English number formatting to anyone whose computer is set to English. It belongs
-in the helper that is already in `src/lib/utils.js`, and it is nobody's ticket
-yet.
+**Numbers and dates go through `src/lib/format.js`**, never through
+`toLocaleString()` with no argument — that formats with the machine's locale, so
+a page in Russian shows English grouping to a reader whose computer is in
+English, and a test that asserts one of them passes in CI and fails on every
+laptop here. In a component, `useFormat()` gives you the formatters already
+bound to the current language.
 
 Build **before** you test: `src/bundleSecrets.test.js` reads `dist/` to check
 that no answer key or credential reached the browser, and has nothing to read

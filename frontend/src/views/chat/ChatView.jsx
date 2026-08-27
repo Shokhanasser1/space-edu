@@ -6,6 +6,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import GlassCard from '@/components/ui/GlassCard';
 import { useTranslation } from '@/hooks/useTranslation';
 import EmailVerificationBanner from '@/components/auth/EmailVerificationBanner';
+import { useFormat } from '@/hooks/useFormat';
 
 function Avatar({ url, username }) {
   return url
@@ -16,6 +17,7 @@ function Avatar({ url, username }) {
 }
 
 function Message({ msg, isMe, onReport, onBlock }) {
+  const fmt = useFormat();
   return (
     <motion.div 
       initial={{ opacity: 0, x: isMe ? 20 : -20 }}
@@ -37,7 +39,7 @@ function Message({ msg, isMe, onReport, onBlock }) {
         </div>
         <div className={`flex items-center gap-2 px-2 ${isMe ? 'flex-row-reverse' : ''}`}>
           <span className="text-[9px] font-[700] text-white/20 tracking-tighter">
-            {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            {fmt.time(msg.created_at)}
           </span>
           {/* There was no way to report or block anyone at all — ticket B1. */}
           {!isMe && (
@@ -57,6 +59,7 @@ function Message({ msg, isMe, onReport, onBlock }) {
 }
 
 export default function ChatView() {
+  const fmt = useFormat();
   const { user } = useAuthStore();
   const { t, i18n } = useTranslation();
   const [rooms, setRooms] = useState([]);
@@ -264,7 +267,7 @@ export default function ChatView() {
                 broken rather than that they were moderated. */}
             {suspension && (
               <p className="mb-3 px-2 text-xs text-amber-200/90 leading-snug">
-                {t('chat', 'suspended')} {new Date(suspension.until).toLocaleString()}
+                {t('chat', 'suspended')} {fmt.dateTime(suspension.until)}
                 {suspension.reason ? ` — ${suspension.reason}` : ''}
               </p>
             )}

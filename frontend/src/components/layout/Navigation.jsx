@@ -13,6 +13,7 @@ import { useUserStore } from "@/store/useUserStore";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useGamificationStore } from "@/store/useGamificationStore";
+import { useFormat } from '@/hooks/useFormat';
 
 const LANG_META = {
   ENG: { flag: '🇬🇧', label: 'English' },
@@ -171,6 +172,7 @@ function LangDropdown() {
 
 // ── Navigation ────────────────────────────────────────────────────────────────
 export default function Navigation() {
+  const fmt = useFormat();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [mobileSection, setMobileSection] = useState(null);
   const location = useLocation();
@@ -267,7 +269,7 @@ export default function Navigation() {
               <div className="flex flex-col items-end justify-center w-28">
                 <div className="flex items-center justify-between w-full gap-2">
                   <span className="text-[10px] font-black text-violet-300 uppercase tracking-widest leading-none">Lvl {currentLevel}</span>
-                  <span className="text-[10px] font-bold text-white/50 leading-none">{(xp || 0).toLocaleString()} XP</span>
+                  <span className="text-[10px] font-bold text-white/50 leading-none">{fmt.number(xp || 0)} XP</span>
                 </div>
                 <div className="w-full h-1.5 mt-1.5 bg-black/60 rounded-full overflow-hidden border border-white/10 shadow-inner">
                   <div className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 shadow-[0_0_10px_rgba(167,139,250,0.5)] transition-all duration-1000" style={{ width: `${xpProgress}%` }} />
@@ -278,7 +280,7 @@ export default function Navigation() {
               
               {/* Fuel */}
               <div className="flex items-center gap-1.5">
-                <span className="text-sm font-black text-yellow-400 drop-shadow-sm tracking-wide">{(fuel || 0).toLocaleString()}</span>
+                <span className="text-sm font-black text-yellow-400 drop-shadow-sm tracking-wide">{fmt.number(fuel || 0)}</span>
                 <Coins className="w-4 h-4 text-yellow-400 drop-shadow-md" />
               </div>
             </div>

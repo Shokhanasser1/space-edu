@@ -9,6 +9,7 @@ import { useAIStore } from "@/store/useAIStore";
 import { useAuthStore } from "@/store/useAuthStore";
 import api, { slowApi } from '@/lib/api';
 import { getMockAIResponse } from "@/lib/mockAI";
+import { useFormat } from '@/hooks/useFormat';
 
 function UzbekDoppiMark({ className }) {
   const uid = useId().replace(/:/g, "");
@@ -46,6 +47,7 @@ function messagesToContents(msgs) {
 }
 
 export default function ChatSystem() {
+  const fmt = useFormat();
   const { context, isSupportOpen, setIsSupportOpen } = useAIStore();
   const { user } = useAuthStore();
   const [activeWindow, setActiveWindow] = useState(null);
@@ -362,7 +364,7 @@ export default function ChatSystem() {
                       <div className="hidden md:block flex-1 text-left min-w-0">
                         <div className="flex justify-between items-start mb-1">
                           <h4 className="font-bold text-sm truncate">{name}</h4>
-                          {convo.last_message && <span className="text-[9px] text-white/20 whitespace-nowrap">{new Date(convo.last_message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>}
+                          {convo.last_message && <span className="text-[9px] text-white/20 whitespace-nowrap">{fmt.time(convo.last_message.created_at)}</span>}
                         </div>
                         {convo.last_message && <p className="text-[10px] text-white/30 truncate">{convo.last_message.is_mine ? 'You: ' : ''}{convo.last_message.content}</p>}
                       </div>
@@ -447,7 +449,7 @@ export default function ChatSystem() {
                       <div className="max-w-[70%]">
                         <div className={`p-3 md:p-4 rounded-2xl text-sm leading-relaxed shadow-xl ${isMe ? 'bg-indigo text-white rounded-br-none shadow-indigo/20' : 'bg-white/5 border border-white/10 text-white/90 rounded-bl-none'}`}>{msg.content}</div>
                         <div className={`mt-1 flex items-center gap-2 ${isMe ? 'justify-end' : 'justify-start'}`}>
-                          <span className="text-[9px] font-bold text-white/15 tracking-tighter">{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          <span className="text-[9px] font-bold text-white/15 tracking-tighter">{fmt.time(msg.created_at)}</span>
                           {!isMe && (
                             <button
                               onClick={() => setReportTarget(msg)}
