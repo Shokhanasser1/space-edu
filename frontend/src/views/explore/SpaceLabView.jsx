@@ -1,14 +1,21 @@
 import { useState, useRef, useMemo, useEffect, Suspense } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Rocket, Flame, Globe2, Sparkles, Info, Settings2, Play, Pause, RotateCcw, Satellite } from 'lucide-react';
+import { Rocket, Flame, Globe2, Sparkles, Satellite } from 'lucide-react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Stars, Environment, useTexture } from '@react-three/drei';
-import { EffectComposer, Bloom, Vignette, Noise, ChromaticAberration } from '@react-three/postprocessing';
-import { BlendFunction } from 'postprocessing';
+import { OrbitControls, Stars } from '@react-three/drei';
+import { EffectComposer, Bloom, Vignette, Noise } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useGamificationStore } from '@/store/useGamificationStore';
 import { useTextures } from '@/hooks/useTextures';
+import { ApolloHologramModule } from './lab/ApolloModule';
+import { ApolloLaunchSimulator } from './lab/LaunchModule';
+import {
+  HOLO,
+  HologramStage,
+  ReleaseContextOnUnmount,
+} from './lab/Hologram';
+import { Spacecraft } from './lab/Spacecraft';
 
 /*
  * Eight textures, served from this site.
@@ -82,539 +89,6 @@ const RealisticEarth = ({ radius = 5, position = [0, 0, 0] }) => {
 };
 
 // --- Sub-modules ---
-
-const RocketEngineeringLab = () => {
-  const { t, i18n } = useTranslation();
-  const trackEvent = useGamificationStore((s) => s.trackEvent);
-  const [activePart, setActivePart] = useState(null);
-  const [showInternals, setShowInternals] = useState(false);
-  const [payloadType, setPayloadType] = useState('fairing');
-  const [stage1Type, setStage1Type] = useState('standard');
-
-  useEffect(() => {
-    if (activePart) trackEvent('lab_rocket_engineering');
-  }, [activePart, trackEvent]);
-
-  const parts = [
-    { id: 'payload', name: t('lab', 'payload'), desc: t('lab', 'payloadDesc'), color: '#ffffff' },
-    { id: 'stage2', name: t('lab', 'stage2'), desc: t('lab', 'stage2Desc'), color: '#dddddd' },
-    { id: 'stage1', name: t('lab', 'stage1'), desc: t('lab', 'stage1Desc'), color: '#eeeeee' },
-    { id: 'engine', name: t('lab', 'engine'), desc: t('lab', 'engineDesc'), color: '#555555' }
-  ];
-
-  return (
-    <div className="flex flex-col md:flex-row h-full gap-6">
-      <div className="w-full md:w-1/3 space-y-6">
-        <div className="glass p-6 rounded-2xl">
-          <h3 className="text-xl font-bold mb-4 flex items-center gap-2"><Settings2 className="text-neon-blue" /> {t('lab', 'controls')}</h3>
-
-          <div className="space-y-4 mb-6">
-            <div>
-              <label className="text-xs text-gray-400 uppercase tracking-wider mb-2 block">{t('lab', 'payloadType')}</label>
-              <div className="flex gap-2">
-                <button onClick={() => setPayloadType('fairing')} className={`flex-1 py-2 rounded-lg text-sm transition-colors ${payloadType === 'fairing' ? 'bg-neon-blue text-space-900 font-bold' : 'bg-space-800 text-gray-400 hover:bg-space-700'}`}>{t('lab', 'fairing')}</button>
-                <button onClick={() => setPayloadType('capsule')} className={`flex-1 py-2 rounded-lg text-sm transition-colors ${payloadType === 'capsule' ? 'bg-neon-blue text-space-900 font-bold' : 'bg-space-800 text-gray-400 hover:bg-space-700'}`}>{t('lab', 'capsule')}</button>
-              </div>
-            </div>
-            <div>
-              <label className="text-xs text-gray-400 uppercase tracking-wider mb-2 block">{t('lab', 'boosterType')}</label>
-              <div className="flex gap-2">
-                <button onClick={() => setStage1Type('standard')} className={`flex-1 py-2 rounded-lg text-sm transition-colors ${stage1Type === 'standard' ? 'bg-neon-blue text-space-900 font-bold' : 'bg-space-800 text-gray-400 hover:bg-space-700'}`}>{t('lab', 'standard')}</button>
-                <button onClick={() => setStage1Type('heavy')} className={`flex-1 py-2 rounded-lg text-sm transition-colors ${stage1Type === 'heavy' ? 'bg-neon-blue text-space-900 font-bold' : 'bg-space-800 text-gray-400 hover:bg-space-700'}`}>{t('lab', 'heavy')}</button>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between mb-4 pt-4 border-t border-white/10">
-            <span className="text-gray-300">{t('lab', 'showInternals')}</span>
-            <button
-              onClick={() => setShowInternals(!showInternals)}
-              className={`w-12 h-6 rounded-full transition-colors relative ${showInternals ? 'bg-neon-blue' : 'bg-space-700'}`}
-            >
-              <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-transform ${showInternals ? 'translate-x-7' : 'translate-x-1'}`} />
-            </button>
-          </div>
-          <div className="space-y-2">
-            {parts.map(part => (
-              <button
-                key={part.id}
-                onClick={() => setActivePart(part.id)}
-                className={`w-full text-left p-3 rounded-xl border transition-all ${activePart === part.id ? 'border-neon-blue bg-neon-blue/20' : 'border-white/10 hover:bg-white/5'}`}
-              >
-                {part.name}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <AnimatePresence>
-          {activePart && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              className="glass p-6 rounded-2xl border border-neon-blue/30"
-            >
-              <h4 className="text-lg font-bold text-neon-blue mb-2">{parts.find(p => p.id === activePart)?.name}</h4>
-              <p className="text-gray-300 text-sm">{parts.find(p => p.id === activePart)?.desc}</p>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      <div className="w-full md:w-2/3 bg-space-900/50 rounded-3xl border border-white/10 overflow-hidden relative min-h-[400px]">
-        <Canvas shadows camera={{ position: [0, 2, 12], fov: 45 }} gl={{ antialias: false, toneMapping: THREE.ACESFilmicToneMapping }}>
-          <ambientLight intensity={0.2} />
-          <directionalLight position={[10, 10, 10]} intensity={2} castShadow />
-          <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
-
-          <group position={[0, -4, 0]}>
-            {/* Payload */}
-            {payloadType === 'fairing' ? (
-              <group position={[0, 5.5, 0]} onClick={() => setActivePart('payload')}>
-                <mesh position={[0, 2, 0]} castShadow receiveShadow>
-                  <coneGeometry args={[1.2, 3, 32]} />
-                  <meshPhysicalMaterial color={activePart === 'payload' ? '#00f0ff' : '#ffffff'} metalness={0.8} roughness={0.2} clearcoat={1} wireframe={showInternals} />
-                </mesh>
-                <mesh castShadow receiveShadow>
-                  <cylinderGeometry args={[1.2, 1.2, 1, 32]} />
-                  <meshPhysicalMaterial color={activePart === 'payload' ? '#00f0ff' : '#ffffff'} metalness={0.8} roughness={0.2} clearcoat={1} wireframe={showInternals} />
-                </mesh>
-              </group>
-            ) : (
-              <group position={[0, 5.5, 0]} onClick={() => setActivePart('payload')}>
-                <mesh position={[0, 1.5, 0]} castShadow receiveShadow>
-                  <coneGeometry args={[0.8, 2, 32]} />
-                  <meshPhysicalMaterial color={activePart === 'payload' ? '#00f0ff' : '#222222'} metalness={0.5} roughness={0.5} clearcoat={0.5} wireframe={showInternals} />
-                </mesh>
-                <mesh castShadow receiveShadow>
-                  <cylinderGeometry args={[1.2, 1.2, 1, 32]} />
-                  <meshPhysicalMaterial color={activePart === 'payload' ? '#00f0ff' : '#ffffff'} metalness={0.8} roughness={0.2} clearcoat={1} wireframe={showInternals} />
-                </mesh>
-              </group>
-            )}
-
-            {/* Stage 2 */}
-            <mesh position={[0, 4, 0]} onClick={() => setActivePart('stage2')} castShadow receiveShadow>
-              <cylinderGeometry args={[1.2, 1.2, 2, 32]} />
-              <meshPhysicalMaterial color={activePart === 'stage2' ? '#00f0ff' : '#cccccc'} metalness={0.9} roughness={0.3} clearcoat={0.5} wireframe={showInternals} />
-            </mesh>
-
-            {/* Stage 1 */}
-            <group position={[0, 0.5, 0]} onClick={() => setActivePart('stage1')}>
-              <mesh castShadow receiveShadow>
-                <cylinderGeometry args={[1.2, 1.2, 5, 32]} />
-                <meshPhysicalMaterial color={activePart === 'stage1' ? '#00f0ff' : '#dddddd'} metalness={0.7} roughness={0.4} clearcoat={0.2} wireframe={showInternals} />
-              </mesh>
-
-              {stage1Type === 'heavy' && (
-                <>
-                  {/* Side Boosters */}
-                  <mesh position={[2.5, 0, 0]} castShadow receiveShadow>
-                    <cylinderGeometry args={[1.2, 1.2, 5, 32]} />
-                    <meshPhysicalMaterial color={activePart === 'stage1' ? '#00f0ff' : '#dddddd'} metalness={0.7} roughness={0.4} clearcoat={0.2} wireframe={showInternals} />
-                  </mesh>
-                  <mesh position={[2.5, 3.5, 0]} castShadow receiveShadow>
-                    <coneGeometry args={[1.2, 2, 32]} />
-                    <meshPhysicalMaterial color={activePart === 'stage1' ? '#00f0ff' : '#dddddd'} metalness={0.7} roughness={0.4} clearcoat={0.2} wireframe={showInternals} />
-                  </mesh>
-
-                  <mesh position={[-2.5, 0, 0]} castShadow receiveShadow>
-                    <cylinderGeometry args={[1.2, 1.2, 5, 32]} />
-                    <meshPhysicalMaterial color={activePart === 'stage1' ? '#00f0ff' : '#dddddd'} metalness={0.7} roughness={0.4} clearcoat={0.2} wireframe={showInternals} />
-                  </mesh>
-                  <mesh position={[-2.5, 3.5, 0]} castShadow receiveShadow>
-                    <coneGeometry args={[1.2, 2, 32]} />
-                    <meshPhysicalMaterial color={activePart === 'stage1' ? '#00f0ff' : '#dddddd'} metalness={0.7} roughness={0.4} clearcoat={0.2} wireframe={showInternals} />
-                  </mesh>
-                </>
-              )}
-
-              {/* Grid Fins */}
-              <mesh position={[1.3, 2.0, 0]} castShadow>
-                <boxGeometry args={[0.4, 0.1, 0.8]} />
-                <meshPhysicalMaterial color="#333" metalness={0.8} roughness={0.5} wireframe={showInternals} />
-              </mesh>
-              <mesh position={[-1.3, 2.0, 0]} castShadow>
-                <boxGeometry args={[0.4, 0.1, 0.8]} />
-                <meshPhysicalMaterial color="#333" metalness={0.8} roughness={0.5} wireframe={showInternals} />
-              </mesh>
-            </group>
-
-            {/* Engine */}
-            <group position={[0, -2.2, 0]} onClick={() => setActivePart('engine')}>
-              <mesh castShadow receiveShadow>
-                <cylinderGeometry args={[1.2, 0.8, 0.5, 32]} />
-                <meshPhysicalMaterial color={activePart === 'engine' ? '#00f0ff' : '#444444'} metalness={0.9} roughness={0.6} wireframe={showInternals} />
-              </mesh>
-              <mesh position={[0, -0.5, 0]} castShadow receiveShadow>
-                <cylinderGeometry args={[0.6, 1, 0.8, 32]} />
-                <meshPhysicalMaterial color={activePart === 'engine' ? '#00f0ff' : '#222222'} metalness={0.9} roughness={0.7} wireframe={showInternals} />
-              </mesh>
-
-              {stage1Type === 'heavy' && (
-                <>
-                  <mesh position={[2.5, 0, 0]} castShadow receiveShadow>
-                    <cylinderGeometry args={[1.2, 0.8, 0.5, 32]} />
-                    <meshPhysicalMaterial color={activePart === 'engine' ? '#00f0ff' : '#444444'} metalness={0.9} roughness={0.6} wireframe={showInternals} />
-                  </mesh>
-                  <mesh position={[2.5, -0.5, 0]} castShadow receiveShadow>
-                    <cylinderGeometry args={[0.6, 1, 0.8, 32]} />
-                    <meshPhysicalMaterial color={activePart === 'engine' ? '#00f0ff' : '#222222'} metalness={0.9} roughness={0.7} wireframe={showInternals} />
-                  </mesh>
-
-                  <mesh position={[-2.5, 0, 0]} castShadow receiveShadow>
-                    <cylinderGeometry args={[1.2, 0.8, 0.5, 32]} />
-                    <meshPhysicalMaterial color={activePart === 'engine' ? '#00f0ff' : '#444444'} metalness={0.9} roughness={0.6} wireframe={showInternals} />
-                  </mesh>
-                  <mesh position={[-2.5, -0.5, 0]} castShadow receiveShadow>
-                    <cylinderGeometry args={[0.6, 1, 0.8, 32]} />
-                    <meshPhysicalMaterial color={activePart === 'engine' ? '#00f0ff' : '#222222'} metalness={0.9} roughness={0.7} wireframe={showInternals} />
-                  </mesh>
-                </>
-              )}
-            </group>
-          </group>
-
-          <OrbitControls enablePan={false} maxPolarAngle={Math.PI / 1.5} minPolarAngle={Math.PI / 4} />
-          <EffectComposer>
-            <Bloom luminanceThreshold={1} mipmapBlur intensity={1.5} />
-            <Vignette eskil={false} offset={0.1} darkness={1.1} />
-            <ChromaticAberration offset={new THREE.Vector2(0.001, 0.001)} />
-            <Noise opacity={0.05} />
-          </EffectComposer>
-        </Canvas>
-        <div className="absolute bottom-4 left-4 text-xs text-gray-400 bg-black/50 px-3 py-1 rounded-full backdrop-blur-md">
-          {t('lab', 'hintDrag')} — {t('lab', 'hintScroll')} — {t('lab', 'hintClick')}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const SmokeParticles = ({ active }) => {
-  const groupRef = useRef(null);
-  const particles = useMemo(() => Array.from({ length: 60 }).map(() => ({
-    position: new THREE.Vector3((Math.random() - 0.5) * 2, Math.random() * 2, (Math.random() - 0.5) * 2),
-    scale: Math.random() * 2 + 1,
-    velocity: new THREE.Vector3((Math.random() - 0.5) * 0.1, Math.random() * 0.2, (Math.random() - 0.5) * 0.1),
-    life: Math.random()
-  })), []);
-
-  useFrame(() => {
-    if (!groupRef.current) return;
-    groupRef.current.children.forEach((child, i) => {
-      const p = particles[i];
-      const mesh = child;
-      const material = mesh.material;
-      if (active) {
-        p.life += 0.02;
-        if (p.life > 1) {
-          p.life = 0;
-          mesh.position.set((Math.random() - 0.5) * 2, 0, (Math.random() - 0.5) * 2);
-        }
-        mesh.position.add(p.velocity);
-        mesh.scale.setScalar(p.scale * (1 - p.life));
-        material.opacity = (1 - p.life) * 0.5;
-      } else {
-        material.opacity = Math.max(0, material.opacity - 0.05);
-      }
-    });
-  });
-
-  return (
-    <group ref={groupRef}>
-      {particles.map((p, i) => (
-        <mesh key={i} position={p.position}>
-          <sphereGeometry args={[1, 16, 16]} />
-          <meshBasicMaterial color="#dddddd" transparent opacity={0} depthWrite={false} blending={THREE.AdditiveBlending} />
-        </mesh>
-      ))}
-    </group>
-  );
-};
-
-const LaunchAnimator = ({ launchState, rocketRef, stage1Ref, armRef, speed }) => {
-  useFrame((state) => {
-    if (launchState === 'launched') {
-      const altitude = rocketRef.current?.position.y || 0;
-      const shakeIntensity = Math.max(0, 0.08 - altitude * 0.0016);
-
-      // Camera shake + follow
-      state.camera.position.x = Math.sin(state.clock.elapsedTime * 42) * shakeIntensity;
-      state.camera.position.y = 5.5 + Math.cos(state.clock.elapsedTime * 38) * shakeIntensity + altitude * 0.06;
-
-      if (rocketRef.current) {
-        rocketRef.current.position.y += (0.06 + Math.min(0.22, altitude * 0.006)) * speed;
-        rocketRef.current.position.x += 0.004 * speed; // slight gravity turn feel
-
-        // Stage separation
-        if (rocketRef.current.position.y > 14 && stage1Ref.current) {
-          stage1Ref.current.position.y -= 0.17 * speed;
-          stage1Ref.current.position.x -= 0.06 * speed;
-          stage1Ref.current.rotation.z += 0.014 * speed;
-          stage1Ref.current.rotation.x += 0.008 * speed;
-        }
-      }
-
-      if (armRef.current) {
-        armRef.current.rotation.z = Math.max(-1.25, armRef.current.rotation.z - 0.06 * speed);
-      }
-
-      state.camera.position.z = 16 + altitude * 0.16;
-      state.camera.lookAt((rocketRef.current?.position.x || 0), altitude, 0);
-    } else {
-      state.camera.position.lerp(new THREE.Vector3(0, 5, 15), 0.1);
-      if (launchState === 'idle' && rocketRef.current) {
-        rocketRef.current.position.y = 0;
-        rocketRef.current.position.x = 0;
-        if (stage1Ref.current) {
-          stage1Ref.current.position.y = 2.5;
-          stage1Ref.current.position.x = 0;
-          stage1Ref.current.rotation.z = 0;
-          stage1Ref.current.rotation.x = 0;
-        }
-        if (armRef.current) {
-          armRef.current.rotation.z = 0;
-        }
-      }
-    }
-  });
-  return null;
-};
-
-const RocketLaunchSimulator = () => {
-  const { t, i18n } = useTranslation();
-  const trackEvent = useGamificationStore((s) => s.trackEvent);
-  const [launchState, setLaunchState] = useState('idle');
-  const [countdown, setCountdown] = useState(3);
-  const [speed, setSpeed] = useState(1);
-  const rocketRef = useRef(null);
-  const stage1Ref = useRef(null);
-  const armRef = useRef(null);
-
-  const handleLaunch = () => {
-    if (launchState === 'idle') {
-      trackEvent('lab_rocket_launch');
-      setLaunchState('countdown');
-      let count = 3;
-      setCountdown(count);
-      const interval = setInterval(() => {
-        count -= 1;
-        setCountdown(count);
-        if (count === 0) {
-          clearInterval(interval);
-          setLaunchState('launched');
-        }
-      }, 1000);
-    } else {
-      setLaunchState('idle');
-      setCountdown(3);
-    }
-  };
-
-  const launchStatusText = launchState === 'idle'
-    ? t('lab', 'statusHolding')
-    : launchState === 'countdown'
-      ? `T-MINUS 00:00:0${countdown}`
-      : t('lab', 'statusLiftoff');
-
-  return (
-    <div className="flex flex-col md:flex-row h-full gap-6">
-      <div className="w-full md:w-1/3 space-y-6">
-        <div className="glass p-6 rounded-2xl border border-orange-500/20 shadow-[0_0_30px_rgba(255,125,0,0.12)]">
-          <h3 className="text-xl font-bold mb-4 flex items-center gap-2"><Flame className="text-orange-500" /> {t('lab', 'launchControl')}</h3>
-
-          <div className="flex justify-center mb-8 mt-4">
-            <button
-              onClick={handleLaunch}
-              disabled={launchState === 'countdown'}
-              className={`w-32 h-32 rounded-full font-bold text-2xl border-4 flex items-center justify-center transition-all shadow-[0_0_30px_rgba(255,0,0,0.3)] ${
-                launchState === 'idle'
-                  ? 'bg-red-500/20 border-red-500 text-red-500 hover:bg-red-500 hover:text-white'
-                  : launchState === 'countdown'
-                    ? 'bg-yellow-500/20 border-yellow-500 text-yellow-500'
-                    : 'bg-space-700 border-space-600 text-gray-400 hover:bg-space-600'
-              }`}
-            >
-              {launchState === 'idle' ? t('lab', 'launch') : launchState === 'countdown' ? countdown : t('lab', 'reset')}
-            </button>
-          </div>
-
-          <div className="space-y-4">
-            <div className="bg-space-800 p-4 rounded-xl border border-white/5">
-              <div className="text-xs text-gray-400 mb-1">{t('lab', 'status')}</div>
-              <div className="font-mono text-neon-blue font-bold">
-                {launchStatusText}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex justify-between text-xs text-gray-400">
-                <span>{t('lab', 'launchSpeed')}</span>
-                <span>{speed.toFixed(1)}x</span>
-              </div>
-              <input
-                type="range"
-                min="0.5"
-                max="3"
-                step="0.1"
-                value={speed}
-                onChange={(e) => setSpeed(parseFloat(e.target.value))}
-                className="w-full accent-orange-500"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 pt-2">
-              <div className="rounded-xl border border-white/10 bg-black/30 p-2.5">
-                <div className="text-[10px] text-gray-500 uppercase tracking-wider">Fuel</div>
-                <div className="font-mono text-sm text-cyan-300">
-                  {launchState === 'launched' ? `${Math.max(12, Math.round(100 - speed * 22))}%` : '100%'}
-                </div>
-              </div>
-              <div className="rounded-xl border border-white/10 bg-black/30 p-2.5">
-                <div className="text-[10px] text-gray-500 uppercase tracking-wider">Thrust</div>
-                <div className="font-mono text-sm text-orange-300">
-                  {launchState === 'launched' ? `${(7600 * speed).toFixed(0)} kN` : 'Standby'}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="w-full md:w-2/3 rounded-3xl border border-white/10 overflow-hidden relative min-h-[400px] bg-gradient-to-b from-[#03050b] via-[#060912] to-[#0f1118]">
-        <Canvas shadows camera={{ position: [0, 5, 15], fov: 45 }} gl={{ antialias: false, toneMapping: THREE.ACESFilmicToneMapping }}>
-          <LaunchAnimator launchState={launchState} rocketRef={rocketRef} stage1Ref={stage1Ref} armRef={armRef} speed={speed} />
-          <ambientLight intensity={0.18} />
-          <hemisphereLight skyColor="#9dc1ff" groundColor="#2e2a25" intensity={0.3} />
-          <directionalLight position={[7, 12, 9]} intensity={2.1} castShadow />
-          <Stars radius={100} depth={50} count={6000} factor={4} saturation={0} fade speed={1} />
-
-          <group ref={rocketRef} position={[0, 0, 0]}>
-            {/* Falcon 9 first stage */}
-            <group ref={stage1Ref} position={[0, 2.5, 0]}>
-              <mesh castShadow receiveShadow>
-                <cylinderGeometry args={[0.5, 0.5, 5, 36]} />
-                <meshPhysicalMaterial color="#f4f4f4" metalness={0.78} roughness={0.24} />
-              </mesh>
-              <mesh position={[0, 2.48, 0]} castShadow receiveShadow>
-                <cylinderGeometry args={[0.53, 0.53, 0.16, 36]} />
-                <meshStandardMaterial color="#1f2631" metalness={0.7} roughness={0.45} />
-              </mesh>
-              <mesh position={[0, -2.6, 0]} castShadow>
-                <cylinderGeometry args={[0.3, 0.5, 0.45, 36, 1, true]} />
-                <meshPhysicalMaterial color="#2f353f" metalness={0.9} roughness={0.5} side={THREE.DoubleSide} />
-              </mesh>
-              {launchState === 'launched' && (
-                <group position={[0, -3.45, 0]}>
-                  <mesh>
-                    <coneGeometry args={[0.95, 5.7, 32]} />
-                    <meshBasicMaterial color="#ff6b00" transparent opacity={0.92} blending={THREE.AdditiveBlending} />
-                  </mesh>
-                  <mesh position={[0, -1.4, 0]}>
-                    <coneGeometry args={[1.6, 8.2, 32]} />
-                    <meshBasicMaterial color="#ffd77a" transparent opacity={0.5} blending={THREE.AdditiveBlending} />
-                  </mesh>
-                  <pointLight intensity={8} distance={30} color="#ffb766" />
-                </group>
-              )}
-            </group>
-
-            {/* Falcon 9 second stage + fairing */}
-            <group position={[0, 5.55, 0]}>
-              <mesh position={[0, -0.55, 0]} castShadow receiveShadow>
-                <cylinderGeometry args={[0.5, 0.5, 1.15, 36]} />
-                <meshPhysicalMaterial color="#ececec" metalness={0.75} roughness={0.28} />
-              </mesh>
-              <mesh castShadow receiveShadow>
-                <coneGeometry args={[0.5, 1.2, 36]} />
-                <meshPhysicalMaterial color="#ffffff" metalness={0.8} roughness={0.2} />
-              </mesh>
-            </group>
-          </group>
-
-          {/* Ground and launch pad */}
-          <group position={[0, -0.5, 0]}>
-            <mesh position={[0, -0.55, 0]} receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
-              <planeGeometry args={[90, 90]} />
-              <meshStandardMaterial color="#1a1d24" roughness={1} />
-            </mesh>
-            <mesh receiveShadow>
-              <boxGeometry args={[8, 1, 8]} />
-              <meshStandardMaterial color="#353a44" roughness={0.9} />
-            </mesh>
-            <mesh position={[0, 0.52, 0]} receiveShadow>
-              <boxGeometry args={[2.1, 0.03, 2.1]} />
-              <meshStandardMaterial color="#15171c" roughness={1} />
-            </mesh>
-
-            {/* Hold-down clamps */}
-            <group position={[0, 0.78, 0]}>
-              <mesh position={[0.75, 0, 0]} castShadow receiveShadow>
-                <boxGeometry args={[0.55, 0.16, 0.4]} />
-                <meshStandardMaterial color="#4f5865" metalness={0.64} roughness={0.5} />
-              </mesh>
-              <mesh position={[-0.75, 0, 0]} castShadow receiveShadow>
-                <boxGeometry args={[0.55, 0.16, 0.4]} />
-                <meshStandardMaterial color="#4f5865" metalness={0.64} roughness={0.5} />
-              </mesh>
-              <mesh position={[0, 0, 0.75]} castShadow receiveShadow>
-                <boxGeometry args={[0.4, 0.16, 0.55]} />
-                <meshStandardMaterial color="#4f5865" metalness={0.64} roughness={0.5} />
-              </mesh>
-              <mesh position={[0, 0, -0.75]} castShadow receiveShadow>
-                <boxGeometry args={[0.4, 0.16, 0.55]} />
-                <meshStandardMaterial color="#4f5865" metalness={0.64} roughness={0.5} />
-              </mesh>
-            </group>
-
-            {/* Service tower + arm */}
-            <group position={[-2, 5, 0]}>
-              <mesh castShadow receiveShadow>
-                <boxGeometry args={[0.8, 10, 0.8]} />
-                <meshStandardMaterial color="#7b2f2f" roughness={0.72} metalness={0.48} />
-              </mesh>
-              <group ref={armRef} position={[0.45, 2.1, 0]}>
-                <mesh position={[1.1, 0, 0]} castShadow>
-                  <boxGeometry args={[2.2, 0.18, 0.28]} />
-                  <meshStandardMaterial color="#6d7786" metalness={0.6} roughness={0.45} />
-                </mesh>
-              </group>
-            </group>
-          </group>
-
-          <group position={[0, 0, 0]}>
-            <SmokeParticles active={launchState === 'launched' && (rocketRef.current?.position.y || 0) < 16} />
-          </group>
-
-          <OrbitControls enablePan={false} maxPolarAngle={Math.PI / 2 - 0.1} />
-          <EffectComposer>
-            <Bloom luminanceThreshold={1} mipmapBlur intensity={2.2} />
-            <Vignette eskil={false} offset={0.1} darkness={1.1} />
-            <ChromaticAberration offset={new THREE.Vector2(0.001, 0.001)} />
-            <Noise opacity={0.05} />
-          </EffectComposer>
-        </Canvas>
-
-        <div className="absolute bottom-4 left-4 right-4 z-20 grid grid-cols-1 md:grid-cols-3 gap-2">
-          <div className="rounded-xl border border-cyan-400/25 bg-black/45 backdrop-blur-md p-2.5">
-            <div className="text-[10px] text-gray-500 uppercase tracking-wider">Vehicle</div>
-            <div className="text-sm font-semibold text-cyan-300">Falcon 9</div>
-          </div>
-          <div className="rounded-xl border border-orange-400/25 bg-black/45 backdrop-blur-md p-2.5">
-            <div className="text-[10px] text-gray-500 uppercase tracking-wider">Launch State</div>
-            <div className="text-sm font-semibold text-orange-300">{launchStatusText}</div>
-          </div>
-          <div className="rounded-xl border border-white/20 bg-black/45 backdrop-blur-md p-2.5">
-            <div className="text-[10px] text-gray-500 uppercase tracking-wider">Simulation Gain</div>
-            <div className="text-sm font-semibold text-white">{speed.toFixed(1)}x</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const MeteorShower = ({ intensity }) => {
   const meteors = useMemo(() => {
@@ -697,19 +171,19 @@ const PlanetaryProcessesLab = () => {
               onClick={() => setActiveEvent('meteor')}
               className={`w-full text-left p-3 rounded-xl border transition-all ${activeEvent === 'meteor' ? 'border-red-500 bg-red-500/20' : 'border-white/10 hover:bg-white/5'}`}
             >
-              {t('lab', 'meteorShower')} в„пёЏ
+              {t('lab', 'meteorShower')}
             </button>
             <button
               onClick={() => setActiveEvent('volcano')}
               className={`w-full text-left p-3 rounded-xl border transition-all ${activeEvent === 'volcano' ? 'border-orange-500 bg-orange-500/20' : 'border-white/10 hover:bg-white/5'}`}
             >
-              {t('lab', 'volcanicEruption')} рџЊ‹
+              {t('lab', 'volcanicEruption')}
             </button>
             <button
               onClick={() => setActiveEvent('dust')}
               className={`w-full text-left p-3 rounded-xl border transition-all ${activeEvent === 'dust' ? 'border-yellow-500 bg-yellow-500/20' : 'border-white/10 hover:bg-white/5'}`}
             >
-              {t('lab', 'dustStorm')} рџЊЄпёЏ
+              {t('lab', 'dustStorm')}
             </button>
           </div>
 
@@ -743,17 +217,36 @@ const PlanetaryProcessesLab = () => {
         </div>
       </div>
 
-      <div className="w-full md:w-2/3 bg-space-900/50 rounded-3xl border border-white/10 overflow-hidden relative min-h-[400px]">
+      <div className="w-full md:w-2/3 bg-space-900/50 rounded-3xl border border-white/10 overflow-hidden relative h-[62vh] min-h-[360px] lg:h-full lg:min-h-[400px]">
         <Canvas shadows camera={{ position: [0, 0, 6], fov: 45 }} gl={{ antialias: false, toneMapping: THREE.ACESFilmicToneMapping }}>
+          <ReleaseContextOnUnmount />
           <ambientLight intensity={0.05} />
+          {/* Noon used to be midnight. The angle was `timeOfDay / 24`, so at the
+              default 12:00 the sun sat at z = -10, directly behind the planet
+              from a camera at z = +6, and the module opened on a flat black
+              disc - the first thing anybody saw in it. Offsetting by 12 puts
+              the sun on the camera's side at noon and behind at midnight. */}
           <directionalLight
-            position={[Math.sin((timeOfDay / 24) * Math.PI * 2) * 10, 3, Math.cos((timeOfDay / 24) * Math.PI * 2) * 10]}
+            position={[
+              Math.sin(((timeOfDay - 12) / 24) * Math.PI * 2) * 10,
+              3,
+              Math.cos(((timeOfDay - 12) / 24) * Math.PI * 2) * 10,
+            ]}
             intensity={2}
             castShadow
           />
           <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
 
           <Suspense fallback={null}>
+            <HologramStage
+              height={4.6}
+              radius={2.2}
+              accent={HOLO.accent}
+              spin={0}
+              float={false}
+              plinth={false}
+              lighting={false}
+            >
             {activeEvent === 'none' ? (
               <RealisticEarth radius={2} position={[0, 0, 0]} />
             ) : (
@@ -782,6 +275,7 @@ const PlanetaryProcessesLab = () => {
                 </mesh>
               </group>
             )}
+            </HologramStage>
           </Suspense>
 
           {/* Meteor Shower */}
@@ -879,11 +373,21 @@ const UniverseChangesSimulator = () => {
         </div>
       </div>
 
-      <div className="w-full md:w-2/3 bg-space-900/50 rounded-3xl border border-white/10 overflow-hidden relative min-h-[400px]">
+      <div className="w-full md:w-2/3 bg-space-900/50 rounded-3xl border border-white/10 overflow-hidden relative h-[62vh] min-h-[360px] lg:h-full lg:min-h-[400px]">
         <Canvas camera={{ position: [0, 0, 12], fov: 45 }} gl={{ antialias: false, toneMapping: THREE.ACESFilmicToneMapping }}>
+          <ReleaseContextOnUnmount />
           <ambientLight intensity={0.05} />
           <Stars radius={100} depth={50} count={10000} factor={4} saturation={0.5} fade speed={1} />
 
+          <HologramStage
+            height={9}
+            radius={4.4}
+            accent={HOLO.accent}
+            spin={0}
+            float={false}
+            plinth={false}
+            lighting={false}
+          >
           {stage === 'nebula' && (
             <group>
               <ParticleSystem count={10000} color="#b026ff" size={0.05} radius={5} />
@@ -931,6 +435,7 @@ const UniverseChangesSimulator = () => {
               </mesh>
             </group>
           )}
+          </HologramStage>
 
           <OrbitControls enablePan={false} autoRotate autoRotateSpeed={1} />
           <EffectComposer>
@@ -1006,93 +511,7 @@ const OrbitalEarthAndVehicle = ({ altitude, inclination, solarPanelsDeployed, sa
       </mesh>
 
       <group ref={satelliteRef}>
-        {satelliteType === 'iss' && (
-          <group scale={0.55}>
-            <mesh castShadow receiveShadow>
-              <boxGeometry args={[4.4, 0.16, 0.18]} />
-              <meshPhysicalMaterial color="#cfd6df" metalness={0.86} roughness={0.18} />
-            </mesh>
-            <mesh position={[0, 0, 0.55]} rotation={[Math.PI / 2, 0, 0]} castShadow receiveShadow>
-              <cylinderGeometry args={[0.32, 0.32, 1.8, 28]} />
-              <meshPhysicalMaterial color="#f8fafc" metalness={0.55} roughness={0.4} />
-            </mesh>
-            <group position={[1.65, 0, 0]} rotation={[0, 0, solarPanelsDeployed ? 0 : Math.PI / 2]}>
-              <mesh castShadow receiveShadow position={[0, 0, 0.95]}>
-                <boxGeometry args={[1.0, 0.04, 2.3]} />
-                <meshPhysicalMaterial color="#123d74" metalness={0.94} roughness={0.1} />
-              </mesh>
-              <mesh castShadow receiveShadow position={[0, 0, -0.95]}>
-                <boxGeometry args={[1.0, 0.04, 2.3]} />
-                <meshPhysicalMaterial color="#123d74" metalness={0.94} roughness={0.1} />
-              </mesh>
-            </group>
-            <group position={[-1.65, 0, 0]} rotation={[0, 0, solarPanelsDeployed ? 0 : -Math.PI / 2]}>
-              <mesh castShadow receiveShadow position={[0, 0, 0.95]}>
-                <boxGeometry args={[1.0, 0.04, 2.3]} />
-                <meshPhysicalMaterial color="#123d74" metalness={0.94} roughness={0.1} />
-              </mesh>
-              <mesh castShadow receiveShadow position={[0, 0, -0.95]}>
-                <boxGeometry args={[1.0, 0.04, 2.3]} />
-                <meshPhysicalMaterial color="#123d74" metalness={0.94} roughness={0.1} />
-              </mesh>
-            </group>
-          </group>
-        )}
-
-        {satelliteType === 'tiangong' && (
-          <group scale={0.72}>
-            <mesh rotation={[0, 0, Math.PI / 2]} castShadow receiveShadow>
-              <cylinderGeometry args={[0.44, 0.44, 2.2, 32]} />
-              <meshPhysicalMaterial color="#ececec" metalness={0.65} roughness={0.32} />
-            </mesh>
-            <group rotation={[solarPanelsDeployed ? 0 : Math.PI / 2, 0, 0]}>
-              <mesh castShadow receiveShadow position={[0, 0, 1.35]}>
-                <boxGeometry args={[1.75, 0.05, 0.9]} />
-                <meshPhysicalMaterial color="#1a4b8c" metalness={0.92} roughness={0.12} />
-              </mesh>
-              <mesh castShadow receiveShadow position={[0, 0, -1.35]}>
-                <boxGeometry args={[1.75, 0.05, 0.9]} />
-                <meshPhysicalMaterial color="#1a4b8c" metalness={0.92} roughness={0.12} />
-              </mesh>
-            </group>
-          </group>
-        )}
-
-        {satelliteType === 'dragon' && (
-          <group scale={0.85}>
-            <mesh castShadow receiveShadow position={[0, 0.2, 0]}>
-              <coneGeometry args={[0.6, 1.2, 36]} />
-              <meshPhysicalMaterial color="#ffffff" metalness={0.35} roughness={0.2} />
-            </mesh>
-            <mesh castShadow receiveShadow position={[0, -0.62, 0]}>
-              <cylinderGeometry args={[0.6, 0.6, 1.05, 32]} />
-              <meshPhysicalMaterial color="#22272f" metalness={0.8} roughness={0.5} />
-            </mesh>
-            {solarPanelsDeployed && (
-              <mesh position={[0, -0.62, 0.66]}>
-                <planeGeometry args={[0.9, 0.9]} />
-                <meshPhysicalMaterial color="#143e75" metalness={0.92} roughness={0.1} />
-              </mesh>
-            )}
-          </group>
-        )}
-
-        {satelliteType === 'soyuz' && (
-          <group scale={0.85}>
-            <mesh castShadow receiveShadow position={[0, 1, 0]}>
-              <sphereGeometry args={[0.42, 30, 30]} />
-              <meshPhysicalMaterial color="#e1e1e1" metalness={0.55} roughness={0.45} />
-            </mesh>
-            <mesh castShadow receiveShadow position={[0, 0.4, 0]}>
-              <cylinderGeometry args={[0.3, 0.5, 0.65, 32]} />
-              <meshPhysicalMaterial color="#b2b2b2" metalness={0.65} roughness={0.52} />
-            </mesh>
-            <mesh castShadow receiveShadow position={[0, -0.45, 0]}>
-              <cylinderGeometry args={[0.5, 0.5, 1.1, 32]} />
-              <meshPhysicalMaterial color="#cecece" metalness={0.72} roughness={0.35} />
-            </mesh>
-          </group>
-        )}
+        <Spacecraft type={satelliteType} deployed={solarPanelsDeployed} />
       </group>
     </group>
   );
@@ -1160,7 +579,7 @@ const SatelliteControlSimulator = () => {
             <div className="space-y-2">
               <div className="flex justify-between text-sm text-gray-400">
                 <span>{t('lab', 'orbitalInclination')}</span>
-                <span>{inclination}В°</span>
+                <span>{inclination}°</span>
               </div>
               <input
                 type="range"
@@ -1198,20 +617,31 @@ const SatelliteControlSimulator = () => {
         </div>
       </div>
 
-      <div className="w-full md:w-2/3 bg-space-900/50 rounded-3xl border border-white/10 overflow-hidden relative min-h-[400px]">
+      <div className="w-full md:w-2/3 bg-space-900/50 rounded-3xl border border-white/10 overflow-hidden relative h-[62vh] min-h-[360px] lg:h-full lg:min-h-[400px]">
         <Canvas shadows camera={{ position: [0, 2.1, 8.4], fov: 44 }} gl={{ antialias: false, toneMapping: THREE.ACESFilmicToneMapping }}>
+          <ReleaseContextOnUnmount />
           <ambientLight intensity={0.16} />
           <hemisphereLight skyColor="#9dc1ff" groundColor="#2c2621" intensity={0.33} />
           <directionalLight position={[9, 8, 8]} intensity={2.25} castShadow />
           <Stars radius={120} depth={60} count={7000} factor={3.2} saturation={0} fade speed={0.8} />
 
           <Suspense fallback={null}>
-            <OrbitalEarthAndVehicle
-              altitude={altitude}
-              inclination={inclination}
-              solarPanelsDeployed={solarPanelsDeployed}
-              satelliteType={satelliteType}
-            />
+            <HologramStage
+              height={6.4}
+              radius={3.1}
+              accent={HOLO.accent}
+              spin={0}
+              float={false}
+              plinth={false}
+              lighting={false}
+            >
+              <OrbitalEarthAndVehicle
+                altitude={altitude}
+                inclination={inclination}
+                solarPanelsDeployed={solarPanelsDeployed}
+                satelliteType={satelliteType}
+              />
+            </HologramStage>
           </Suspense>
 
           <OrbitControls enablePan={false} autoRotate autoRotateSpeed={0.35} />
@@ -1246,19 +676,24 @@ const FalconTrackerLab = () => {
 
 export default function SpaceLabView() {
   const { t, i18n } = useTranslation();
-  const [activeModule, setActiveModule] = useState('falcon');
+  const [activeModule, setActiveModule] = useState('apollo');
 
   const modules = [
-    { id: 'falcon', name: 'Falcon 9 AI Tracker', icon: Satellite, color: 'text-cyan-400', bg: 'bg-cyan-400/10' },
+    { id: 'apollo', name: t('lab', 'apolloTitle'), icon: Rocket, color: 'text-neon-blue', bg: 'bg-neon-blue/10' },
     { id: 'launch', name: t('lab', 'launchSimulator'), icon: Flame, color: 'text-orange-500', bg: 'bg-orange-500/10' },
     { id: 'satellite', name: t('lab', 'satelliteControl'), icon: Globe2, color: 'text-blue-400', bg: 'bg-blue-400/10' },
     { id: 'planet', name: t('lab', 'planetaryProcesses'), icon: Globe2, color: 'text-green-400', bg: 'bg-green-400/10' },
     { id: 'universe', name: t('lab', 'universeChanges'), icon: Sparkles, color: 'text-neon-purple', bg: 'bg-neon-purple/10' },
+    { id: 'falcon', name: t('lab', 'satelliteTracker'), icon: Satellite, color: 'text-cyan-400', bg: 'bg-cyan-400/10' },
   ];
 
   return (
     <div className="min-h-screen pt-24 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-      <div className="flex flex-col lg:flex-row gap-8 h-[calc(100vh-140px)] min-h-[600px]">
+      {/* The height is pinned to the viewport only where the panel and the
+          viewer sit side by side. Stacked on a phone they are taller than
+          that, and a fixed height made the Apollo panel overflow the
+          container and land on top of the footer. */}
+      <div className="flex flex-col lg:flex-row gap-8 lg:h-[calc(100vh-140px)] lg:min-h-[600px]">
         {/* Sidebar */}
         <div className="w-full lg:w-64 shrink-0 flex flex-row lg:flex-col gap-3 overflow-x-auto lg:overflow-visible pb-4 lg:pb-0">
           {modules.map(mod => (
@@ -1292,11 +727,12 @@ export default function SpaceLabView() {
               transition={{ duration: 0.3 }}
               className="h-full"
             >
-              {activeModule === 'falcon' && <FalconTrackerLab />}
-              {activeModule === 'launch' && <RocketLaunchSimulator />}
+              {activeModule === 'apollo' && <ApolloHologramModule />}
+              {activeModule === 'launch' && <ApolloLaunchSimulator />}
               {activeModule === 'satellite' && <SatelliteControlSimulator />}
               {activeModule === 'planet' && <PlanetaryProcessesLab />}
               {activeModule === 'universe' && <UniverseChangesSimulator />}
+              {activeModule === 'falcon' && <FalconTrackerLab />}
             </motion.div>
           </AnimatePresence>
         </div>
