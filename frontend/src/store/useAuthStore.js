@@ -135,3 +135,19 @@ function _setupAuth() {
 // three arguments here, leaving the token-refresh callback as a no-op — so
 // after any reload the rotated tokens were thrown away.
 _setupAuth();
+
+// And ask the server who this is, once.
+//
+// Everything about the account — whether the address is confirmed, what role it
+// has, whether it is staff — is read out of localStorage on a reload, where it
+// can be up to seven days old. Two things read it and act: the chat composer,
+// and StaffRoute. `fetchMe` existed for this and nothing called it, so a child
+// who confirmed their address on one tab kept being told to confirm it on
+// another until something happened to 401.
+//
+// One request, only when there is a session to check, and a failure that is not
+// a 401 leaves the persisted copy alone — a flaky connection is not a reason to
+// sign anybody out.
+if (useAuthStore.getState().isAuthenticated) {
+  useAuthStore.getState().fetchMe();
+}

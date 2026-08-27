@@ -32,6 +32,7 @@ import { useGamificationStore } from '@/store/useGamificationStore';
 import { useLikesStore } from '@/store/useLikesStore';
 import { useLearningStore } from '@/store/useLearningStore';
 import { useTranslation } from '@/hooks/useTranslation';
+import SecurityPanel from '@/components/profile/SecurityPanel';
 
 const CLAIMS_KEY = 'space-edu-profile-mission-claims';
 const STREAK_CLAIM_DAY_KEY = 'space-edu-profile-streak-claim-day';
@@ -1109,6 +1110,11 @@ export default function ProfileView() {
           </div>
         </div>
       )}
+
+      {/* Password and e-mail. Its own component: this file is already past the
+          800-line ceiling in CONTRIBUTING.md and adding two forms to it would
+          make that worse rather than better. */}
+      <SecurityPanel />
     </div>
   );
 }

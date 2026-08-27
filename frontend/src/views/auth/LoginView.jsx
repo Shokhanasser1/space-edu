@@ -9,6 +9,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useGamificationStore } from '@/store/useGamificationStore';
 import { useTranslation } from '@/hooks/useTranslation';
 import GlassCard from '@/components/ui/GlassCard';
+import GoogleSignInButton from '@/components/auth/GoogleSignInButton';
 
 export default function LoginView() {
   const navigate = useNavigate();
@@ -16,6 +17,9 @@ export default function LoginView() {
   const login = useAuthStore((s) => s.login);
   const syncFromAPI = useGamificationStore((s) => s.syncFromAPI);
   const from = location.state?.from?.pathname || '/';
+  // Set by the password-reset screen on its way here, so somebody who just
+  // changed their password is told it worked rather than left guessing.
+  const notice = location.state?.notice || '';
   const { t, i18n } = useTranslation();
 
   const [form, setForm] = useState({ email: '', password: '' });
@@ -127,6 +131,12 @@ export default function LoginView() {
               </div>
             </div>
 
+            {notice && !error && (
+              <div className="bg-violet/10 border border-violet/20 rounded-xl px-4 py-3 text-violet-pale text-xs font-[700] text-center">
+                {notice}
+              </div>
+            )}
+
             {error && (
               <motion.div 
                 initial={{ opacity: 0, height: 0 }} 
@@ -154,6 +164,20 @@ export default function LoginView() {
                 )}
               </span>
             </button>
+
+            <div className="text-center -mt-2">
+              <Link
+                to="/forgot-password"
+                className="text-white/30 hover:text-violet-light text-xs font-[700] transition-colors"
+              >
+                {t('loginPage', 'forgotPasswordLink')}
+              </Link>
+            </div>
+
+            <GoogleSignInButton
+              text="signin_with"
+              onDone={() => navigate(from, { replace: true })}
+            />
 
             <div className="mt-4 pt-6 border-t border-white/5 text-center">
               <p className="text-white/30 text-xs font-[600]">

@@ -5,6 +5,7 @@ import api from '@/lib/api';
 import { useAuthStore } from '@/store/useAuthStore';
 import GlassCard from '@/components/ui/GlassCard';
 import { useTranslation } from '@/hooks/useTranslation';
+import EmailVerificationBanner from '@/components/auth/EmailVerificationBanner';
 
 function Avatar({ url, username }) {
   return url
@@ -66,6 +67,9 @@ export default function ChatView() {
   const [reportTarget, setReportTarget] = useState(null);
   const [reportReasons, setReportReasons] = useState([]);
   const [suspension, setSuspension] = useState(null);
+  // The server refuses a post from an unconfirmed address. This is so the
+  // composer can say why instead of the child watching a button do nothing.
+  const [canPost, setCanPost] = useState(true);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -99,6 +103,7 @@ export default function ChatView() {
       .then(({ data }) => {
         setReportReasons(data.report_reasons ?? []);
         setSuspension(data.suspension ?? null);
+        setCanPost(data.can_post !== false);
       })
       .catch(() => setReportReasons([]));
   }, []);
@@ -263,6 +268,9 @@ export default function ChatView() {
                 {suspension.reason ? ` — ${suspension.reason}` : ''}
               </p>
             )}
+            {!canPost && !suspension && (
+              <EmailVerificationBanner className="mb-3" />
+            )}
             {sendError && <p className="mb-3 px-2 text-xs text-rose-300/90 leading-snug">{sendError}</p>}
             <form onSubmit={send} className="flex gap-3">
               <input
@@ -274,7 +282,7 @@ export default function ChatView() {
               />
               <button 
                 type="submit" 
-                disabled={!text.trim() || sending || Boolean(suspension)}
+                disabled={!text.trim() || sending || Boolean(suspension) || !canPost}
                 className="w-14 h-14 rounded-2xl bg-violet hover:bg-violet-dark disabled:opacity-30 disabled:grayscale flex items-center justify-center shadow-lg shadow-violet/20 transition-all active:scale-[0.95]"
               >
                 {sending ? <Loader className="w-5 h-5 animate-spin text-white" /> : <Send className="w-5 h-5 text-white" />}
