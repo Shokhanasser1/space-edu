@@ -348,7 +348,11 @@ EMAIL_BACKEND = _text('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailB
 EMAIL_HOST = _text('EMAIL_HOST')
 EMAIL_PORT = _int('EMAIL_PORT', 587)
 EMAIL_HOST_USER = _text('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+# Stripped, unlike a password normally would be: this one is copied out of a
+# Google dialog that prints it as four groups of four, so a stray space or
+# newline on the end is the likeliest thing in the file. Gmail accepts the
+# spaces between the groups, so those are left exactly as pasted.
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='').strip()
 EMAIL_USE_TLS = _flag('EMAIL_USE_TLS', True)
 EMAIL_USE_SSL = _flag('EMAIL_USE_SSL', False)
 DEFAULT_FROM_EMAIL = _text('DEFAULT_FROM_EMAIL', 'noreply@localhost')
