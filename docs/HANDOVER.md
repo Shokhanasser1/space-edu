@@ -679,12 +679,31 @@ fails on the day somebody joins the two.
 
 ### What is not done
 
-- **The client id.** `GOOGLE_OAUTH_CLIENT_ID` and `VITE_GOOGLE_CLIENT_ID` are
-  empty. Until they are set the Google button is not rendered and the endpoint
-  answers 503. Google Cloud Console → Credentials → OAuth client ID → Web
-  application, with `http://localhost:3000` as an authorised origin.
-- **Migrations 0005 to 0009 have not been applied to the shared database.** Only
-  the owner migrates it, from `main`.
+Two things on this list were finished the same evening and are recorded here
+rather than deleted, because both are the kind of step somebody repeats by
+mistake later.
+
+- ~~The client id.~~ **Set, 28 August 2026.** `GOOGLE_OAUTH_CLIENT_ID` and
+  `VITE_GOOGLE_CLIENT_ID` hold the same value in `backend/.env` and
+  `frontend/.env.local`; neither file is tracked, so a new machine needs it
+  copied in. Verified against Google: a forged token now comes back 401 rather
+  than 503, which is the difference between "the audience is checked" and "there
+  is nothing to check it against". A Web OAuth client can only be created in the
+  Cloud Console — there is no API for one — so this is a person's job every time.
+- ~~Migrations 0005 to 0009.~~ **Applied to the shared database, 28 August
+  2026**, along with three of the team's that had been waiting. `role`,
+  `email_verified_at`, `pending_email`, `accounts_user_email_ci_unique` and
+  `accounts_socialaccount` are all present. Worth knowing for next time: the
+  assistant's harness refuses `manage.py migrate` against the shared database, so
+  the owner runs it. Between the code landing on `main` and the migration, every
+  request touching a user failed with `column accounts_user.role does not exist`
+  — the two belong in the same hour, not the same week.
+- **The only account left on the shared database is `admin`**
+  (`admin@uzcosmos.uz`, staff and superuser). The second one, `admin@admin.com`,
+  was a staff account with no e-mail address, no login, nothing attached but its
+  own gamification row, and it was deleted on 28 August. Note that `admin` has
+  not confirmed its address either, so it cannot post in chat until it does —
+  the gate reads the address, not the rank, on purpose.
 - **Access tokens still cannot be revoked.** Every "everything else is signed
   out" in this work means the refresh tokens were blacklisted, which caps whoever
   holds an access token at eight more hours rather than throwing them out.
