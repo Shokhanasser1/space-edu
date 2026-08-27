@@ -618,8 +618,14 @@ the screenshots showed: bodies never drop below 4.5 px on screen (`scene/sizing.
 textures load in two tiers (2k for all, 4k for the selected body), ACES tone
 mapping instead of AgX (which bleached the new maps), and drei's
 `PerformanceMonitor` drops to a light preset — dpr 1, no bloom, 2k sky — on a
-GPU that cannot hold 50 fps. WebGL 2 is checked before the Canvas mounts. The
-three `ProfileView` tests were already red on `main` before this work.
+GPU that cannot hold 50 fps. WebGL 2 is checked before the Canvas mounts. There is also an 8k texture
+tier that never enters git: `frontend/scripts/convert-textures.py` makes the
+files from the Solar System Scope originals, the deploy serves them from
+`textures/` or from `VITE_ASSET_BASE`, and the scene uses them only for the
+selected body on a GPU with `maxTextureSize ≥ 8192` (see
+`public/textures/ATTRIBUTION.md`). `frontend/scripts/shrink-models.py` is the
+matching pipeline for NASA glb files. The three `ProfileView` tests were
+already red on `main` before this work.
 
 ---
 

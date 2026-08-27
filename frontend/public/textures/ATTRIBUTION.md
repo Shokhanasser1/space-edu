@@ -90,6 +90,16 @@ decodes to 45 MB of GPU memory whatever its file size, so the scene loads the
 2k tier for everything and swaps in the 4k file only for the selected body
 (`src/solar/textures.js`); the 4k sky is used only in the high-quality preset.
 
+**The 8k tier is not in git.** `scripts/convert-textures.py <dir with the SSS
+originals>` writes `8k_{sun,mercury,earth_daymap,earth_nightmap,mars,jupiter,
+saturn,moon}.webp` (0.2–8 MB each) next to the others; `.gitignore` keeps them
+out of the repository. On the server, put them in the same static `textures/`
+directory, or on a CDN/S3 and point `VITE_ASSET_BASE` at it (with CORS). The
+scene loads an 8k map only for the selected body, only on the high-quality
+preset, and only when the GPU reports `maxTextureSize ≥ 8192` (a decoded 8k
+map is 180 MB); otherwise it takes the 4k file, so a deploy without the 8k
+files loses nothing but the last step of sharpness.
+
 ## `public/models/probes/`
 
 `voyager.glb`, `new_horizons.glb`, `parker.glb`, `juno.glb` — NASA

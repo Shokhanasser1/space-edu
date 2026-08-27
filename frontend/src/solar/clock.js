@@ -71,6 +71,8 @@ export const useSolarStore = create((set, get) => ({
   craftStatus: 'idle',
   /** 'high' = bloom, MSAA, dpr 1.5, 4k sky; 'low' = what a weak GPU can hold at 60 fps. */
   quality: 'high',
+  /** `?quality=high|low` in the URL pins the preset — for projectors and for QA. */
+  qualityPinned: false,
   layers: {
     orbits: true,
     labels: true,
@@ -115,7 +117,10 @@ export const useSolarStore = create((set, get) => ({
   requestHome: () => set({ selectedId: null, homeRequest: get().homeRequest + 1 }),
   setSatStatus: (satStatus) => set({ satStatus }),
   setCraftStatus: (craftStatus) => set({ craftStatus }),
-  setQuality: (quality) => set({ quality }),
+  setQuality: (quality) => {
+    if (!get().qualityPinned) set({ quality });
+  },
+  pinQuality: (quality) => set({ quality, qualityPinned: true }),
   setScaleMode: (scaleMode) => set({ scaleMode }),
   setLayer: (name, on) => set({ layers: { ...get().layers, [name]: on } }),
 }));

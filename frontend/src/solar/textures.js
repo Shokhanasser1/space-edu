@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import * as THREE from 'three';
+import { useSolarStore } from './clock';
 
 /**
  * Texture loading that cannot take the page down, in two tiers.
@@ -19,7 +20,32 @@ import * as THREE from 'three';
 const cache = new Map();
 const loader = new THREE.TextureLoader();
 
-export const isHiRes = (url) => /\/4k_/.test(url);
+/** Filled in by SceneBridge once the renderer exists. */
+export const gpuCaps = { maxTextureSize: 4096 };
+
+/** 8, 4 or 0 (the always-loaded base tier) from the file name. */
+export function tierOf(url) {
+  const m = /\/(8|4)k_/.exec(url);
+  return m ? Number(m[1]) : 0;
+}
+
+export const isHiRes = (url) => tierOf(url) > 0;
+
+/**
+ * The highest tier a body may load right now: 8k needs a selected body,
+ * the high-quality preset and a GPU that accepts 8192-pixel textures (a
+ * decoded 8k map is 180 MB); 4k needs only the selection.
+ */
+export function maxTier({ hiRes, quality, maxTextureSize }) {
+  if (!hiRes) return 0;
+  if (quality === 'high' && maxTextureSize >= 8192) return 8;
+  return 4;
+}
+
+/** Candidates allowed at `tier`, best first, in catalogue order. */
+export function pickTier(candidates, tier) {
+  return (candidates || []).filter((c) => tierOf(c) <= tier);
+}
 
 function loadOne(url, srgb) {
   const key = `${url}|${srgb ? 's' : 'l'}`;
@@ -70,6 +96,8 @@ const SRGB_SLOTS = new Set(['map', 'clouds', 'night', 'ring']);
  */
 export function useSolarTextures(spec, { hiRes = false } = {}) {
   const [textures, setTextures] = useState({});
+  const quality = useSolarStore((s) => s.quality);
+  const tier = maxTier({ hiRes, quality, maxTextureSize: gpuCaps.maxTextureSize });
   const signature = JSON.stringify(spec || {});
 
   // Base tier: everything except 4k files, kept for the life of the page.
@@ -89,14 +117,16 @@ export function useSolarTextures(spec, { hiRes = false } = {}) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signature]);
 
-  // Hi-res tier: only while asked for, released afterwards.
+  // Hi-res tier: only while asked for, released afterwards. The list is
+  // best-first, so on an 8k-capable GPU the 8k file is tried and the 4k one
+  // is the fallback when the deploy did not ship it.
   useEffect(() => {
-    if (!hiRes) return undefined;
+    if (tier === 0) return undefined;
     let cancelled = false;
     const loaded = [];
     const entries = Object.entries(spec || {});
     entries.forEach(([slot, candidates]) => {
-      const hi = candidates.filter(isHiRes);
+      const hi = pickTier(candidates, tier).filter(isHiRes);
       if (!hi.length) return;
       const srgb = SRGB_SLOTS.has(slot);
       loadFirst(hi, srgb).then((hit) => {
@@ -130,7 +160,7 @@ export function useSolarTextures(spec, { hiRes = false } = {}) {
       });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [signature, hiRes]);
+  }, [signature, tier]);
 
   return textures;
 }

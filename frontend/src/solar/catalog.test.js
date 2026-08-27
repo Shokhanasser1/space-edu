@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { BODIES, MOONS, SKY_TEXTURE, SPACECRAFT } from './catalog';
+import { tierOf } from './textures';
 
 /**
  * Every texture and model the catalogue names first must be a file in
@@ -18,8 +19,17 @@ function firstCandidates() {
   }
   SKY_TEXTURE.forEach((c) => out.push(['sky', c]));
   for (const craft of SPACECRAFT) if (craft.model) out.push([`probe ${craft.name}`, craft.model]);
-  return out;
+  // The 8k tier is generated and deployed, never committed (see .gitignore).
+  return out.filter(([, url]) => tierOf(url) !== 8);
 }
+
+const eightK = () => {
+  const out = [];
+  for (const body of [...BODIES, ...MOONS]) {
+    for (const candidates of Object.values(body.textures || {})) candidates.filter((c) => tierOf(c) === 8).forEach((c) => out.push(c));
+  }
+  return out;
+};
 
 describe('catalogue assets', () => {
   it.each(firstCandidates())('%s → %s exists', (_label, url) => {
@@ -31,6 +41,15 @@ describe('catalogue assets', () => {
     for (const [, url] of firstCandidates()) {
       const size = statSync(resolve(PUBLIC, `.${url}`)).size;
       expect(size, url).toBeLessThan(2 * 1024 * 1024);
+    }
+  });
+
+  it('names every 8k map after its 4k twin, under the textures path', () => {
+    const all = eightK();
+    expect(all.length).toBeGreaterThan(0);
+    for (const url of all) {
+      expect(url).toMatch(/\/textures\/8k_[a-z_]+\.webp$/);
+      expect(existsSync(resolve(PUBLIC, `./textures/${url.split('/').pop().replace('8k_', '4k_')}`)), url).toBe(true);
     }
   });
 

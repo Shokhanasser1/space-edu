@@ -71,6 +71,12 @@ export default function SolarSystemView() {
   }, [setSelected]);
 
   useEffect(() => {
+    // A projector in a classroom is a known machine: pin the preset by URL.
+    const wanted = new URLSearchParams(window.location.search).get('quality');
+    if (wanted === 'high' || wanted === 'low') useSolarStore.getState().pinQuality(wanted);
+  }, []);
+
+  useEffect(() => {
     const onKey = (e) => {
       if (e.key !== 'Escape') return;
       if (selectedSat) setSelectedSat(null);
