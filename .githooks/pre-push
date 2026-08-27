@@ -1,0 +1,128 @@
+#!/usr/bin/env bash
+#
+# Refuse a push that would break `main` for everybody else.
+#
+# Nothing stands between a commit and `main` any more — that is the flow, and it
+# is the right one for a team learning as it goes. It has cost us twice in one
+# day, both times in the same shape: something that a single command on the
+# author's own machine would have caught in ten seconds.
+#
+#   298ec2f  committed `backend/venv` and `frontend/node_modules` as symlinks
+#            pointing at /Users/<somebody>/dev/space-edu. Everyone else got a
+#            dead link where their dependencies should be, and checkout replaced
+#            a real directory with it.
+#
+#   5b8e088  committed App.jsx while three files it imports were still untracked.
+#            `npm run build` failed on main for forty minutes, for everyone.
+#
+# So this runs the two cheapest checks that would have caught both, and only for
+# the half of the repository you actually touched. Five seconds for a frontend
+# change, one for a backend one.
+#
+# It is not a gate and cannot be: `git push --no-verify` skips it. That is on
+# purpose — there is a real reason to skip it now and then, and a check people
+# cannot skip is a check people work around. Skipping is a decision, though, not
+# a shortcut, and `main` being red stops everybody rather than you.
+#
+# Install once per clone:
+#
+#     git config core.hooksPath .githooks
+#
+set -u
+
+repo_root=$(git rev-parse --show-toplevel)
+cd "$repo_root" || exit 0
+
+ZERO=$(git hash-object --stdin </dev/null | tr '[0-9a-f]' '0')
+failed=0
+
+say()  { printf '\n\033[1m%s\033[0m\n' "$*" >&2; }
+fail() { printf '\033[31m  %s\033[0m\n' "$*" >&2; failed=1; }
+ok()   { printf '\033[32m  %s\033[0m\n' "$*" >&2; }
+
+# ── what is being pushed ─────────────────────────────────────────────────────
+# stdin gives "<local ref> <local sha> <remote ref> <remote sha>" per ref. A
+# remote sha of all zeroes means the branch is new over there, so compare
+# against main instead of against nothing.
+range=""
+while read -r _local_ref local_sha _remote_ref remote_sha; do
+    [ "$local_sha" = "$ZERO" ] && continue          # a deletion; nothing to check
+    if [ "$remote_sha" = "$ZERO" ]; then
+        base=$(git merge-base "$local_sha" origin/main 2>/dev/null || echo "")
+    else
+        base="$remote_sha"
+    fi
+    if [ -n "$base" ]; then
+        range="$base..$local_sha"
+    else
+        range="$local_sha"
+    fi
+done
+
+[ -z "$range" ] && exit 0
+
+changed=$(git diff --name-only "$range" 2>/dev/null)
+[ -z "$changed" ] && exit 0
+
+# ── 1. no symlinks, ever ─────────────────────────────────────────────────────
+# A symlink in this repository has never once been intentional, and the one time
+# it happened it pointed at somebody's home directory on another machine.
+links=$(git diff --diff-filter=AM --raw "$range" 2>/dev/null | awk '$2 == "120000" { print $NF }')
+if [ -n "$links" ]; then
+    say "A symlink is about to be committed:"
+    printf '%s\n' "$links" | while read -r l; do fail "$l"; done
+    fail "If you meant a directory, it is missing from .gitignore. If you did not,"
+    fail "run: git rm --cached <path>"
+fi
+
+# ── 2. the front end still builds ────────────────────────────────────────────
+# This is the one that catches a file importing something you did not commit.
+if printf '%s\n' "$changed" | grep -q '^frontend/'; then
+    say "Front end changed — building it"
+    if [ ! -d frontend/node_modules ]; then
+        ok "skipped: no node_modules here"
+    elif (cd frontend && VITE_API_URL="${VITE_API_URL:-https://example.invalid/api/v1}" \
+            npm run build --silent >/dev/null 2>&1); then
+        # `npm run`, not `npx vite`: npm puts node_modules/.bin on PATH, and npx
+        # on Windows does not find the local binary from inside a hook's shell.
+        ok "builds"
+    else
+        fail "npm run build fails. Run it and read the error — most often it is a"
+        fail "file that imports something still untracked."
+    fi
+
+    if printf '%s\n' "$changed" | grep -q '^frontend/src/locales/'; then
+        if (cd frontend && node scripts/check-locales.mjs >/dev/null 2>&1); then
+            ok "en, uz and ru agree"
+        else
+            fail "the three locale files have drifted apart: npm run check:locales"
+        fi
+    fi
+fi
+
+# ── 3. the back end loads, and its models match its migrations ───────────────
+if printf '%s\n' "$changed" | grep -q '^backend/'; then
+    say "Back end changed — checking it"
+    if [ ! -f backend/.env ]; then
+        ok "skipped: no backend/.env here"
+    elif (cd backend && python manage.py check >/dev/null 2>&1); then
+        ok "loads"
+        if (cd backend && python manage.py makemigrations --check --dry-run >/dev/null 2>&1); then
+            ok "models and migrations agree"
+        else
+            fail "a model changed without a migration: python manage.py makemigrations"
+            fail "Remember the migration has to reach the shared database too, in the"
+            fail "same hour — see docs/TEAM.md."
+        fi
+    else
+        fail "python manage.py check fails. Run it and read the error."
+    fi
+fi
+
+if [ "$failed" -ne 0 ]; then
+    printf '\n\033[31m\033[1mPush refused.\033[0m Fix the above, or push with --no-verify if you have\n' >&2
+    printf 'a reason and are willing to be the one who explains it.\n\n' >&2
+    exit 1
+fi
+
+exit 0

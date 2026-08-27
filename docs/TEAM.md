@@ -65,6 +65,29 @@ exchange for nobody standing between you and everyone else's work:
 7. **Say it in the daily message** when you push something big — and *before*
    you generate a migration, always.
 
+### One command that does most of this for you
+
+```bash
+git config core.hooksPath .githooks
+```
+
+Once per clone. After it, `git push` builds the front end and runs
+`manage.py check` first — but only for the half of the repository you touched,
+so it costs about five seconds — and refuses the push if either fails or if a
+symlink is about to go in.
+
+It exists because `main` broke twice in one day, both times in the same shape:
+something a single command on the author's own machine would have caught in ten
+seconds. One commit added `backend/venv` and `frontend/node_modules` as symlinks
+pointing at a path on somebody's own laptop. Another committed `App.jsx` while
+three of the files it imports were still untracked, and the build was red on
+`main` for forty minutes, for everybody.
+
+It is not a gate: `git push --no-verify` skips it, deliberately. A check nobody
+can skip is a check people find ways around, and there is a real reason to skip
+it now and then. Skipping is a decision, though — `main` being red stops all of
+us, not just you.
+
 ---
 
 ## What is protected, and what it means for you
@@ -326,7 +349,12 @@ wrong with what you are reading.
 ```bash
 git clone https://github.com/Shokhanasser1/space-edu.git
 cd space-edu
+git config core.hooksPath .githooks
 ```
+
+That last line is the pre-push check described under "Before you push". It lives
+in the repository, but git will not use hooks from a clone without being told
+to — which is the right default, and means every clone has to say so once.
 
 Backend:
 

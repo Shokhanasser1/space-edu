@@ -376,6 +376,11 @@ by someone who assumes it works.
 5. **Run the checks below** — all of them, on your machine.
 6. **Push it to `main`:** `git pull --rebase origin main`, then `git push`.
 
+Run `git config core.hooksPath .githooks` once per clone and step 5 stops being
+something to remember: the push builds the front end and loads the back end
+first, and refuses if either is broken. It is the cheap half of the list below,
+not a replacement for it.
+
 There is nothing to open and nobody to wait for. The lead reads what lands and
 fixes or reverts anything wrong, so the worst case is a short conversation. The
 full sequence, and the short list to go through before every push, are in
