@@ -121,10 +121,13 @@ export const RING_FRAGMENT = /* glsl */ `
       alpha *= 1.0 - inGap * 0.92;
     }
     if (thin > 0.5) {
-      // Narrow dark rings: a few bright hairlines on a faint band.
-      float bands = smoothstep(0.98, 1.0, abs(sin(t * 60.0)));
-      alpha = 0.06 + bands * 0.5;
-      c = tint;
+      // Uranus: thirteen narrow, dark rings. A faint dust band with a few
+      // hairlines, the outermost (epsilon) the brightest; dark grey, not the
+      // planet's colour.
+      float hair = smoothstep(0.985, 1.0, abs(sin(t * 34.0))) * 0.22;
+      float epsilon = smoothstep(0.955, 0.975, t) * (1.0 - smoothstep(0.985, 1.0, t)) * 0.55;
+      alpha = 0.012 + hair + epsilon;
+      c = vec3(0.42, 0.44, 0.46);
     }
     // Planet shadow: does the ray from here towards the sun cross the planet?
     vec3 p = vLocal;

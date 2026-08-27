@@ -6,6 +6,7 @@ import { bodyOrientation, helioPositionAU } from '../ephemeris';
 import { setWorld } from '../positions';
 import { AU_UNITS, displayRadius, eclipticToScene } from '../scale';
 import { useSolarTextures } from '../textures';
+import { PLANET_MIN_PX, minSizeScale } from './sizing';
 import {
   ATMOSPHERE_FRAGMENT, ATMOSPHERE_VERTEX, EARTH_FRAGMENT, EARTH_VERTEX, RING_FRAGMENT, RING_VERTEX,
 } from './shaders';
@@ -152,17 +153,18 @@ function Rings({ entry, planetRadius, scale }) {
 
 export default function Planet({ entry, onSelect, selected }) {
   const groupRef = useRef();
+  const bodyRef = useRef();
   const tiltRef = useRef();
   const cloudRef = useRef();
   const scaleMode = useSolarStore((s) => s.scaleMode);
-  const textures = useSolarTextures(entry.textures);
+  const textures = useSolarTextures(entry.textures, { hiRes: selected });
 
   const radius = displayRadius(entry.radiusKm, scaleMode);
   const kmScale = radius / entry.radiusKm;
   const segments = radius > 1 ? 96 : 48;
   const isEarth = entry.id === 'earth';
 
-  useFrame(() => {
+  useFrame(({ camera, size }) => {
     const group = groupRef.current;
     if (!group) return;
     const ms = simClock.ms;
@@ -171,7 +173,9 @@ export default function Planet({ entry, onSelect, selected }) {
     group.position.set(tmpScene[0], tmpScene[1], tmpScene[2]);
     if (tiltRef.current) applyOrientation(tiltRef.current, bodyOrientation(entry, ms));
     if (cloudRef.current) cloudRef.current.rotation.y = (ms / 3_600_000 / 90) * Math.PI * 2;
-    setWorld(entry.id, group.position, radius);
+    const k = minSizeScale(radius, camera.position.distanceTo(group.position), camera, size.height, PLANET_MIN_PX);
+    if (bodyRef.current) bodyRef.current.scale.setScalar(k);
+    setWorld(entry.id, group.position, radius * k);
   });
 
   const handleClick = (e) => {
@@ -181,6 +185,7 @@ export default function Planet({ entry, onSelect, selected }) {
 
   return (
     <group ref={groupRef}>
+      <group ref={bodyRef}>
       <group ref={tiltRef}>
         {isEarth ? (
           <EarthSurface radius={radius} textures={textures} segments={segments} />
@@ -213,6 +218,7 @@ export default function Planet({ entry, onSelect, selected }) {
         <sphereGeometry args={[Math.max(radius * 1.6, 0.9), 12, 12]} />
         <meshBasicMaterial />
       </mesh>
+      </group>
     </group>
   );
 }

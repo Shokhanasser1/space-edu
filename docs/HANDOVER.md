@@ -613,8 +613,13 @@ Juno (`public/models/probes/`, Draco + 512 px WebP, 0.1–0.3 MB each), and a
 "check yourself" quiz (`src/solar/quiz.js`) whose five questions are generated
 from the sky at the simulation's date. KTX2 was judged and skipped: UASTC at
 4k is ~5 MB a file against the 2 MB budget, and WebP already cuts JPEG 4–5×.
-JWST has no NASA model and stays a marker. The three `ProfileView` tests were
-already red on `main` before this work.
+JWST has no NASA model and stays a marker. A live review afterwards fixed what
+the screenshots showed: bodies never drop below 4.5 px on screen (`scene/sizing.js`),
+textures load in two tiers (2k for all, 4k for the selected body), ACES tone
+mapping instead of AgX (which bleached the new maps), and drei's
+`PerformanceMonitor` drops to a light preset — dpr 1, no bloom, 2k sky — on a
+GPU that cannot hold 50 fps. WebGL 2 is checked before the Canvas mounts. The
+three `ProfileView` tests were already red on `main` before this work.
 
 ---
 

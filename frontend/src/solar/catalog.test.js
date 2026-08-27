@@ -13,10 +13,10 @@ const PUBLIC = resolve(__dirname, '../../public');
 function firstCandidates() {
   const out = [];
   for (const body of [...BODIES, ...MOONS]) {
-    for (const [slot, candidates] of Object.entries(body.textures || {})) out.push([`${body.id}.${slot}`, candidates[0]]);
-    for (const [slot, candidates] of Object.entries(body.rings?.textures || {})) out.push([`${body.id}.rings.${slot}`, candidates[0]]);
+    for (const [slot, candidates] of Object.entries(body.textures || {})) candidates.forEach((c) => out.push([`${body.id}.${slot}`, c]));
+    for (const [slot, candidates] of Object.entries(body.rings?.textures || {})) candidates.forEach((c) => out.push([`${body.id}.rings.${slot}`, c]));
   }
-  out.push(['sky', SKY_TEXTURE[0]]);
+  SKY_TEXTURE.forEach((c) => out.push(['sky', c]));
   for (const craft of SPACECRAFT) if (craft.model) out.push([`probe ${craft.name}`, craft.model]);
   return out;
 }

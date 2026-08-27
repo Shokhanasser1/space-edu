@@ -299,6 +299,7 @@
         },
         "satStatus": {
           "loading": "Loading element sets…",
+          "noWebGL": "This page needs WebGL 2, which this browser or graphics driver does not provide. Try Chrome or Firefox on a computer with a working graphics driver.",
           "ready": "{n} satellites",
           "error": "Satellite data unavailable (server offline)",
           "outOfRange": "Satellite orbits are only known within ±30 days of today"

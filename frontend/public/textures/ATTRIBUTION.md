@@ -85,6 +85,11 @@ strip was resized to 2048 wide. The four dwarf-planet maps are the artist's
 The Milky Way panorama is in galactic coordinates (centre at the middle of
 the image, longitude increasing to the left), which `SkyDome.jsx` relies on.
 
+Every `4k_*` map also exists as `2k_*` (same source, 2048×1024). A 4k map
+decodes to 45 MB of GPU memory whatever its file size, so the scene loads the
+2k tier for everything and swaps in the 4k file only for the selected body
+(`src/solar/textures.js`); the 4k sky is used only in the high-quality preset.
+
 ## `public/models/probes/`
 
 `voyager.glb`, `new_horizons.glb`, `parker.glb`, `juno.glb` — NASA

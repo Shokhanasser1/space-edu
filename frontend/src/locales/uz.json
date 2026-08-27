@@ -299,6 +299,7 @@
         },
         "satStatus": {
           "loading": "Orbital elementlar yuklanmoqda…",
+          "noWebGL": "Bu sahifaga WebGL 2 kerak, bu brauzer yoki video-drayver esa uni bermaydi. Ishlaydigan video-drayverli kompyuterda Chrome yoki Firefox'ni sinab ko'ring.",
           "ready": "Sun'iy yo'ldoshlar: {n}",
           "error": "Sun'iy yo'ldosh ma'lumotlari mavjud emas (server o'chiq)",
           "outOfRange": "Sun'iy yo'ldosh orbitalari faqat bugundan ±30 kun oralig'ida ma'lum"

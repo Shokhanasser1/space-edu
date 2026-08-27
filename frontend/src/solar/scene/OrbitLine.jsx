@@ -1,5 +1,7 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { Line } from '@react-three/drei';
+import { useFrame } from '@react-three/fiber';
+import { getRadius, getWorld } from '../positions';
 import { helioPositionAU } from '../ephemeris';
 import { periodDays } from '../kepler';
 import { AU_UNITS, eclipticToScene } from '../scale';
@@ -23,6 +25,18 @@ export function orbitPeriodDays(entry) {
 }
 
 export default function OrbitLine({ entry, centreMs, color, selected }) {
+  const ref = useRef();
+  // Up close the body's own orbit is a line stabbing through it; fade it out
+  // once the planet is bigger than a coin on screen.
+  useFrame(({ camera, size }) => {
+    const line = ref.current;
+    if (!line) return;
+    const p = getWorld(entry.id);
+    if (!p) return;
+    const focal = size.height / 2 / Math.tan((camera.fov * Math.PI) / 360);
+    const px = getRadius(entry.id) * (focal / Math.max(camera.position.distanceTo(p), 1e-6));
+    line.visible = px < 90;
+  });
   const points = useMemo(() => {
     const period = orbitPeriodDays(entry) * 86_400_000;
     const n = 256;
@@ -40,6 +54,7 @@ export default function OrbitLine({ entry, centreMs, color, selected }) {
 
   return (
     <Line
+      ref={ref}
       points={points}
       color={color}
       lineWidth={selected ? 1.6 : 1}
