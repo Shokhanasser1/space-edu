@@ -108,6 +108,45 @@ describe('the live panels', () => {
     }
   });
 
+  it('make no automatic request to any third-party host', async () => {
+    // Swept across the whole section on 28 August 2026. What used to be here:
+    // celestrak.org (twice), ll.thespacedevs.com, api.nasa.gov with DEMO_KEY,
+    // translate.googleapis.com in two components, and a YouTube iframe with
+    // autoplay=1 that opened on page load. All of them now go through
+    // apps.space or are gone.
+    //
+    // Two absolute URLs remain and neither is a request the page makes on its
+    // own: the NASA TV link a reader can click, and the YouTube embed, which
+    // is rendered only after somebody presses play.
+    const files = [
+      './UpcomingLaunches.jsx?raw',
+      './NasaApod.jsx?raw',
+      './FeaturedSatellites.jsx?raw',
+      './OrbitGlobe.jsx?raw',
+      '@/views/community/LiveSpaceView.jsx?raw',
+    ];
+    for (const file of files) {
+      const code = await readSource(file);
+      // No fetch, axios call or asset load may name an outside host.
+      expect(code).not.toMatch(/fetch\(\s*[`'"]https?:\/\//);
+      expect(code).not.toMatch(/api\.get\(\s*[`'"]https?:\/\//);
+      expect(code).not.toMatch(/translate\.googleapis\.com/);
+      expect(code).not.toMatch(/celestrak\.org/);
+      expect(code).not.toMatch(/api\.nasa\.gov/);
+      expect(code).not.toMatch(/thespacedevs\.com/);
+      expect(code).not.toMatch(/DEMO_KEY/);
+    }
+  });
+
+  it('load the video embed only when somebody asks for it', async () => {
+    // It carried `autoplay=1` and rendered unconditionally, so arriving on the
+    // page opened a connection to YouTube and set its cookies for every child.
+    const code = await readSource('@/views/community/LiveSpaceView.jsx?raw');
+    expect(code).toMatch(/streamOpen \?/);
+    expect(code).toMatch(/youtube-nocookie\.com/);
+    expect(code).not.toMatch(/www\.youtube\.com\/embed/);
+  });
+
   it('ask our own server, not a third-party host', async () => {
     // Same rule commit b8d1ac2 applied to the home page's Earth. A key in the
     // bundle is a public key, and a rate limit shared with every other reader
@@ -128,6 +167,16 @@ describe('the satellite tracker', () => {
     // the source is a fixed orbit that starts going wrong the day it lands.
     expect(code).not.toMatch(/'1 \d{5}[UCS]/);
     expect(code).not.toMatch(/'2 \d{5}\s/);
+  });
+
+  it('asks our own server for elements, never CelesTrak directly', async () => {
+    // The page made two direct calls to celestrak.org from the browser: the
+    // element groups, and a per-satellite SATCAT lookup. Thirty browsers in
+    // one classroom doing that is what CelesTrak's usage policy firewalls an
+    // address for, which is why apps.space exists.
+    const code = await readSource('@/views/community/LiveSpaceView.jsx?raw');
+    expect(code).not.toMatch(/celestrak\.org/);
+    expect(code).toMatch(/\/api\/v1\/space\/gp\//);
   });
 
   it('reads the field names CelesTrak actually sends', async () => {

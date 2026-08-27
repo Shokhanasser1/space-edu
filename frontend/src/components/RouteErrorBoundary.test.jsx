@@ -152,19 +152,30 @@ describe('textures', () => {
   });
 
   it('nor does any other Earth on the site', async () => {
-    // The home page's Earth3D and LiveSpaceView's RealEarth were fetching the
+    // The home page's Earth3D and the Live page's RealEarth were fetching the
     // same five files from raw.githubusercontent.com until 26 Aug 2026 — the
-    // home page one on top of Three.js itself from cdnjs. LiveSpaceView keeps
-    // its Celestrak and NASA URLs; those are the point of the page.
+    // home page one on top of Three.js itself from cdnjs.
+    //
+    // The Live page's Earth moved from LiveSpaceView into OrbitGlobe when that
+    // file reached the 800-line ceiling and was split; this follows it there.
+    // LiveSpaceView no longer holds an Earth, and no longer names Celestrak or
+    // NASA either — its data comes through apps.space now — so it is checked
+    // below for the absence rather than for the texture paths.
     const files = {
       Earth3D: () => import('@/components/3d/Earth3D.jsx?raw'),
-      LiveSpaceView: () => import('@/views/community/LiveSpaceView.jsx?raw'),
+      OrbitGlobe: () => import('@/components/live/OrbitGlobe.jsx?raw'),
     };
     for (const [name, load] of Object.entries(files)) {
       const source = await load().then((m) => m.default);
       const code = source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
-      expect(code, name).not.toMatch(/raw\.githubusercontent\.com|unpkg\.com|cdnjs\.cloudflare\.com/);
+      expect(code, name).not.toMatch(/https?:\/\//);
       expect(code, name).toMatch(/'\/textures\//);
     }
+
+    const view = await import('@/views/community/LiveSpaceView.jsx?raw')
+      .then((m) => m.default)
+      .then((src) => src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, ''));
+    expect(view).not.toMatch(/raw\.githubusercontent\.com|unpkg\.com|cdnjs\.cloudflare\.com/);
+    expect(view).not.toMatch(/celestrak\.org/);
   });
 });

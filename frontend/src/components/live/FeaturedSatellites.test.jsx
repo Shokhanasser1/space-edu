@@ -122,6 +122,36 @@ describe('a satellite we do track', () => {
   });
 });
 
+describe('the difference between "unannounced" and "unsourced"', () => {
+  it('does not claim a 1990 launch was never announced', async () => {
+    // "Not announced yet" is a claim about the world. Printing it against a
+    // satellite that flew decades ago would be false — a blank there means we
+    // have not sourced it for this page, which is our gap, not the world's.
+    const hubble = {
+      ...iss,
+      slug: 'hubble',
+      name_en: 'Hubble Space Telescope',
+      launch_date: '1990-04-24',
+      launch_vehicle: '',
+    };
+    api.get.mockResolvedValue({ data: [hubble] });
+    render(<FeaturedSatellites />);
+
+    expect(await screen.findByText('1990-04-24')).toBeInTheDocument();
+    expect(screen.queryByText(/Not announced yet/i)).not.toBeInTheDocument();
+    // The row is left out entirely rather than filled with a false statement.
+    expect(screen.queryByText(/Launch vehicle/i)).not.toBeInTheDocument();
+  });
+
+  it('still says "not announced" where nobody has announced it', async () => {
+    api.get.mockResolvedValue({ data: [samarkand] });
+    render(<FeaturedSatellites />);
+
+    expect(await screen.findByText(/Launch vehicle/i)).toBeInTheDocument();
+    expect(screen.getByText(/Not announced yet/i)).toBeInTheDocument();
+  });
+});
+
 describe('language', () => {
   it('shows the Uzbek name and description to an Uzbek reader', async () => {
     useUserStore.setState({ language: 'UZB' });

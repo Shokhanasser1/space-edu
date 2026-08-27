@@ -18,14 +18,23 @@ from django.core.management.base import BaseCommand
 
 from apps.satellites.models import TrackedSatellite
 
-# `launch_date`, `launch_site` and `launch_vehicle` are left out of the
-# catalogued rows on purpose. CelesTrak's SATCAT is the authority for those and
-# the page already shows them from its live catalogue lookup; a hand-typed copy
-# here would be a second version to drift. These rows carry only what SATCAT
-# does not hold — what the thing is *for*, in three languages.
+# `launch_date` and `launch_site` on the catalogued rows are transcribed from
+# CelesTrak's SATCAT bulk file (satcat.csv, fetched 28 August 2026), with the
+# site codes expanded using CelesTrak's own launch-site table: TYMSC is
+# Baikonur, AFETR Cape Canaveral, AFWTR Vandenberg, FRGUI Kourou, WSC
+# Wenchang.
+#
+# `launch_vehicle` is empty on every row because SATCAT does not carry it and
+# nothing here may be filled in from memory. On a catalogued satellite that
+# blank means "nobody has sourced it for this page" — which is a different
+# statement from Samarkand-2028's, where no source exists to find — so the card
+# omits the row rather than printing "not announced yet" over the launch of a
+# satellite that flew in 1990.
 SATELLITES = [
     dict(
         slug='iss', catalog_name='ISS (ZARYA)', norad_id=25544,
+        launch_date='1998-11-20',
+        launch_site='Baikonur Cosmodrome, Kazakhstan',
         mission_type='station', operator='NASA / Roscosmos / ESA / JAXA / CSA',
         country='International', is_featured=True,
         name_en='International Space Station',
@@ -45,6 +54,8 @@ SATELLITES = [
     ),
     dict(
         slug='css-tianhe', catalog_name='CSS (TIANHE)', norad_id=48274,
+        launch_date='2021-04-29',
+        launch_site='Wenchang Satellite Launch Site, China',
         mission_type='station', operator='CMSA',
         country='China', is_featured=True,
         name_en='Tiangong space station (Tianhe core module)',
@@ -64,6 +75,8 @@ SATELLITES = [
     ),
     dict(
         slug='hubble', catalog_name='HST', norad_id=20580,
+        launch_date='1990-04-24',
+        launch_site='Cape Canaveral, Florida, USA',
         mission_type='science', operator='NASA / ESA',
         country='United States', is_featured=True,
         name_en='Hubble Space Telescope',
@@ -84,6 +97,8 @@ SATELLITES = [
     ),
     dict(
         slug='landsat-9', catalog_name='LANDSAT 9', norad_id=49260,
+        launch_date='2021-09-27',
+        launch_site='Vandenberg, California, USA',
         mission_type='earth_obs', operator='NASA / USGS',
         country='United States',
         name_en='Landsat 9',
@@ -103,6 +118,8 @@ SATELLITES = [
     ),
     dict(
         slug='sentinel-2a', catalog_name='SENTINEL-2A', norad_id=40697,
+        launch_date='2015-06-23',
+        launch_site='Kourou, French Guiana',
         mission_type='earth_obs', operator='ESA',
         country='European Union',
         name_en='Sentinel-2A',
@@ -124,6 +141,8 @@ SATELLITES = [
     ),
     dict(
         slug='sentinel-1a', catalog_name='SENTINEL-1A', norad_id=39634,
+        launch_date='2014-04-03',
+        launch_site='Kourou, French Guiana',
         mission_type='earth_obs', operator='ESA',
         country='European Union',
         name_en='Sentinel-1A',
@@ -143,6 +162,8 @@ SATELLITES = [
     ),
     dict(
         slug='terra', catalog_name='TERRA', norad_id=25994,
+        launch_date='1999-12-18',
+        launch_site='Vandenberg, California, USA',
         mission_type='earth_obs', operator='NASA',
         country='United States',
         name_en='Terra',
@@ -161,6 +182,8 @@ SATELLITES = [
     ),
     dict(
         slug='noaa-20', catalog_name='NOAA 20 (JPSS-1)', norad_id=43013,
+        launch_date='2017-11-18',
+        launch_site='Vandenberg, California, USA',
         mission_type='weather', operator='NOAA / NASA',
         country='United States',
         name_en='NOAA-20 (JPSS-1)',
@@ -180,6 +203,8 @@ SATELLITES = [
     ),
     dict(
         slug='goes-19', catalog_name='GOES 19', norad_id=60133,
+        launch_date='2024-06-25',
+        launch_site='Cape Canaveral, Florida, USA',
         mission_type='weather', operator='NOAA / NASA',
         country='United States',
         name_en='GOES-19',

@@ -39,8 +39,20 @@ const MISSION_LABEL_KEYS = {
   communication: 'missionCommunication',
 };
 
+/**
+ * One sourced fact, or an honest note that we do not have it.
+ *
+ * `missingLabel` of `null` means "leave this row out when it is empty". That
+ * is not the same as hiding an inconvenient gap: "not announced yet" is a
+ * claim about the world, and printing it against the launch of a satellite
+ * that flew in 1990 would be false. A blank on a decades-old catalogued
+ * satellite means nobody has sourced it *for this page*; a blank on
+ * Samarkand-2028 means there is no source to find. Only the second one gets
+ * the sentence.
+ */
 function Fact({ icon: Icon, label, value, missingLabel }) {
   const missing = !value;
+  if (missing && !missingLabel) return null;
   return (
     <div className="flex items-start gap-2">
       <Icon className="mt-[3px] h-3 w-3 shrink-0 text-white/25" />
@@ -166,19 +178,19 @@ export default function FeaturedSatellites() {
                 icon={Calendar}
                 label={t('liveSpace', 'launchDate')}
                 value={sat.launch_date}
-                missingLabel={notAnnounced}
+                missingLabel={tracked ? null : notAnnounced}
               />
               <Fact
                 icon={Rocket}
                 label={t('liveSpace', 'launchVehicle')}
                 value={sat.launch_vehicle}
-                missingLabel={notAnnounced}
+                missingLabel={tracked ? null : notAnnounced}
               />
               <Fact
                 icon={MapPin}
                 label={t('liveSpace', 'launchSite')}
                 value={sat.launch_site}
-                missingLabel={notAnnounced}
+                missingLabel={tracked ? null : notAnnounced}
               />
               <Fact
                 icon={Building2}
