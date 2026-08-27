@@ -1,9 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
-import { Trophy, Star, Crown, Flame, Shield, Target } from 'lucide-react';
+import { Trophy, Star, Crown, Shield } from 'lucide-react';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/useAuthStore';
-import { useGamificationStore } from '@/store/useGamificationStore';
 import { useTranslation } from '@/hooks/useTranslation';
 import GlassCard from '@/components/ui/GlassCard';
 
@@ -13,50 +12,71 @@ const RANK_STYLES = {
   2: { bg: 'from-amber-700/15 to-amber-600/4',  text: 'text-amber-600',  glow: 'shadow-[0_0_20px_rgba(180,83,9,0.15)]',    icon: <Trophy className="w-6 h-6 text-amber-600" /> },
 };
 
+// Only until the first response arrives carrying the server's own number.
+const DEFAULT_POLL_SECONDS = 30;
+
 export default function LeaderboardView() {
   const { user } = useAuthStore();
-  const { xp, level } = useGamificationStore();
-  const { t, i18n } = useTranslation();
-  const [entries, setEntries] = useState([]);
+  const { t } = useTranslation();
+  const [board, setBoard] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+  const [pollSeconds, setPollSeconds] = useState(DEFAULT_POLL_SECONDS);
 
-  useEffect(() => {
-    api.get('/gamification/leaderboard/')
+  const load = useCallback(() => {
+    return api.get('/gamification/leaderboard/')
       .then(({ data }) => {
-        setEntries(Array.isArray(data) ? data : (data.results || data.leaderboard || []));
+        setBoard(data);
+        setFailed(false);
+        // How often it is worth asking is the server's decision — it is the
+        // lifetime of the board it caches. Reading it here means the rate can
+        // be turned down under load without shipping a new front end.
+        if (Number.isFinite(data?.poll_after_seconds)) setPollSeconds(data.poll_after_seconds);
       })
-      .catch(() => {})
+      // Not an empty catch (C-10). A board that silently stays blank reads as
+      // "nobody is playing", which is what this page said after one 502.
+      .catch(() => setFailed(true))
       .finally(() => setLoading(false));
   }, []);
 
-  // The leaderboard endpoint deliberately sends `display_name`, `xp` and
-  // `level` and nothing else — no username, no real name, no avatar URL. That
-  // is the fix for "the public leaderboard published children's real names and
-  // photos"; see docs/HANDOVER.md. This view still read `username`,
-  // `first_name` and `avatar_url`, so every row came out with an undefined
-  // name, an undefined React key, and `isCurrentUser` permanently false —
-  // which then pushed a duplicate row for the signed-in user on every render.
-  // Read what the server actually sends, and do not reintroduce the fields it
-  // is withholding on purpose.
-  const myDisplayName = (user?.astronaut_name || '').trim() || user?.username;
+  useEffect(() => { load(); }, [load]);
 
-  const all = (Array.isArray(entries) ? entries : []).map((e) => ({
-    id: e.display_name,
-    name: e.display_name,
-    xp: e.xp,
-    level: e.level,
-    // Two players may choose the same astronaut name, and the server sends
-    // nothing else to tell them apart. The highlight is best-effort.
-    isCurrentUser: Boolean(myDisplayName) && e.display_name === myDisplayName,
-  }));
+  // A few seconds of this client's own, so ten thousand browsers do not all
+  // arrive on the tick the cached board expires on.
+  const jitterMs = useMemo(() => Math.floor(Math.random() * 4000), []);
 
-  if (user && !all.find((e) => e.isCurrentUser)) {
-    all.push({ id: myDisplayName || 'me', name: myDisplayName, xp, level, isCurrentUser: true });
-    all.sort((a, b) => b.xp - a.xp);
-  }
+  useEffect(() => {
+    const tick = () => {
+      // A page left open in a background tab is not being read. Browsers slow
+      // these timers down by themselves; this stops them.
+      if (document.visibilityState === 'hidden') return;
+      load();
+    };
+    const timer = setInterval(tick, pollSeconds * 1000 + jitterMs);
+    return () => clearInterval(timer);
+  }, [load, pollSeconds, jitterMs]);
 
-  const top3 = all.slice(0, 3);
-  const rest = all.slice(3);
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') load();
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+  }, [load]);
+
+  // Everything below is the server's answer. This view used to append a row
+  // built out of the browser's own persisted XP whenever it could not find
+  // itself in the list, sort it in, and print the array index beside it — so a
+  // player ranked five thousandth appeared just under the last visible name,
+  // carrying whatever number localStorage happened to hold. `my_rank` and
+  // `my_xp` were in the response the whole time.
+  const rows = Array.isArray(board?.leaderboard) ? board.leaderboard : [];
+  const top3 = rows.slice(0, 3);
+  const rest = rows.slice(3);
+
+  const myRank = board?.my_rank ?? null;
+  const myXp = board?.my_xp ?? null;
+  const totalPlayers = board?.total_players ?? 0;
 
   return (
     <div className="relative min-h-screen pt-32 pb-24 px-4 overflow-hidden">
@@ -67,7 +87,7 @@ export default function LeaderboardView() {
         style={{ background: 'radial-gradient(circle, rgba(0,229,255,0.03) 0%, transparent 70%)' }} />
 
       <div className="max-w-3xl mx-auto relative z-10">
-        
+
         <div className="text-center mb-16">
           <motion.div initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 200, damping: 18 }}
             className="w-20 h-20 mx-auto rounded-3xl flex items-center justify-center mb-8 relative"
@@ -89,7 +109,9 @@ export default function LeaderboardView() {
             <div className="w-8 h-8 border-2 border-violet/30 border-t-violet rounded-full animate-spin" />
             <p className="text-[10px] font-[800] uppercase tracking-widest text-white/20">{t('leaderboard', 'syncing')}</p>
           </div>
-        ) : all.length === 0 ? (
+        ) : failed && rows.length === 0 ? (
+          <div className="text-center text-white/30 py-20 font-[700] italic">{t('leaderboard', 'loadFailed')}</div>
+        ) : rows.length === 0 ? (
           // This was `all.length < 3`, and it only ever passed because the
           // duplicate row for the signed-in user padded the count. With that
           // gone, two real players fell under the threshold and everyone was
@@ -103,20 +125,23 @@ export default function LeaderboardView() {
               className="grid grid-cols-3 gap-4 mb-12 items-end">
               {[top3[1], top3[0], top3[2]].map((u, podiumIdx) => {
                 if (!u) return <div key={podiumIdx} />;
-                const rank = podiumIdx === 1 ? 0 : podiumIdx === 0 ? 1 : 2;
-                const style = RANK_STYLES[rank];
+                const place = podiumIdx === 1 ? 0 : podiumIdx === 0 ? 1 : 2;
+                const style = RANK_STYLES[place];
                 const heights = ['h-32', 'h-44', 'h-28'];
                 return (
-                  <div key={`${u.id}-${podiumIdx}`} className="flex flex-col items-center gap-4 group">
+                  <div key={`${u.display_name}-${podiumIdx}`} aria-current={u.is_you ? 'true' : undefined}
+                    className="flex flex-col items-center gap-4 group">
                     <div className="relative">
-                      <img src={`https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(u.name || '')}`}
-                        className="w-14 h-14 rounded-2xl border-2 border-white/10 shadow-2xl relative z-10 object-cover" alt={u.name} />
+                      <img src={`https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(u.display_name || '')}`}
+                        className="w-14 h-14 rounded-2xl border-2 border-white/10 shadow-2xl relative z-10 object-cover" alt={u.display_name} />
                       <div className="absolute inset-0 rounded-2xl bg-violet/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
-                    <span className={`text-[11px] font-[800] truncate max-w-full text-center uppercase tracking-wider ${style.text}`}>{u.name}</span>
+                    <span className={`text-[11px] font-[800] truncate max-w-full text-center uppercase tracking-wider ${style.text}`}>{u.display_name}</span>
                     <div className={`w-full rounded-2xl bg-gradient-to-b ${style.bg} border border-white/5 flex flex-col items-center justify-end pb-4 transition-all hover:scale-[1.02] ${heights[podiumIdx]} ${style.glow}`}>
                       <div className="mb-auto pt-4">{style.icon}</div>
-                      <span className={`text-sm font-[900] ${style.text}`}>#{rank + 1}</span>
+                      {/* The server's place, not the plinth's. Players level on
+                          XP share one, and their profile pages say the same. */}
+                      <span className={`text-sm font-[900] ${style.text}`}>#{u.rank}</span>
                       <span className="text-[9px] font-[700] text-white/40 uppercase tracking-widest mt-1">{u.xp.toLocaleString()} {t('leaderboard', 'xpPoints')}</span>
                     </div>
                   </div>
@@ -137,14 +162,15 @@ export default function LeaderboardView() {
               </div>
               <div className="divide-y divide-white/5">
                 {rest.map((u, i) => (
-                  <motion.div key={`${u.id}-${i}`} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.05 * i + 0.4 }}
-                    className={`grid grid-cols-12 gap-2 px-8 py-5 items-center transition-all ${u.isCurrentUser ? 'bg-violet/10 border-l-4 border-violet shadow-inner' : 'hover:bg-white/[0.02]'}`}>
-                    <div className="col-span-1 text-center text-xs font-[800] text-white/20">{i + 4}</div>
+                  <motion.div key={`${u.display_name}-${i}`} initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.05 * i + 0.4 }}
+                    aria-current={u.is_you ? 'true' : undefined}
+                    className={`grid grid-cols-12 gap-2 px-8 py-5 items-center transition-all ${u.is_you ? 'bg-violet/10 border-l-4 border-violet shadow-inner' : 'hover:bg-white/[0.02]'}`}>
+                    <div className="col-span-1 text-center text-xs font-[800] text-white/20">{u.rank}</div>
                     <div className="col-span-6 flex items-center gap-4">
-                      <img src={`https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(u.name || '')}`}
-                        className="w-10 h-10 rounded-xl border border-white/5 shadow-lg shrink-0" alt={u.name} />
+                      <img src={`https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(u.display_name || '')}`}
+                        className="w-10 h-10 rounded-xl border border-white/5 shadow-lg shrink-0" alt={u.display_name} />
                       <div>
-                        <p className={`text-sm font-[800] ${u.isCurrentUser ? 'text-violet-light' : 'text-white'}`}>{u.name}</p>
+                        <p className={`text-sm font-[800] ${u.is_you ? 'text-violet-light' : 'text-white'}`}>{u.display_name}</p>
                       </div>
                     </div>
                     <div className="col-span-2 text-center">
@@ -159,8 +185,7 @@ export default function LeaderboardView() {
                   </motion.div>
                 ))}
               </div>
-              
-              {/* User Self-Rank Footer if not in list */}
+
               <div className="p-4 bg-black/40 border-t border-white/5 flex items-center justify-center gap-6">
                 <div className="flex items-center gap-2">
                   <Shield className="w-4 h-4 text-violet-light/40" />
@@ -168,6 +193,34 @@ export default function LeaderboardView() {
                 </div>
               </div>
             </GlassCard>
+            )}
+
+            {/* Your own place. The board is the first hundred; almost every
+                player is below it, and what they were shown down there was an
+                array index attached to a row this page had invented. */}
+            {user && (
+              <GlassCard delay={0.4} className="mt-6 flex flex-wrap items-center justify-between gap-4">
+                <span className="text-[10px] font-[800] text-white/30 uppercase tracking-[0.25em]">
+                  {t('leaderboard', 'yourPlace')}
+                </span>
+                {myRank != null ? (
+                  <div className="flex items-baseline gap-3">
+                    <span className="text-2xl font-[900] text-violet-light tracking-tight">#{myRank.toLocaleString()}</span>
+                    <span className="text-[11px] font-[700] text-white/30">
+                      {t('leaderboard', 'ofPlayers').replace('{count}', totalPlayers.toLocaleString())}
+                    </span>
+                    {myXp != null && (
+                      <span className="text-[11px] font-[700] text-white/30">
+                        {myXp.toLocaleString()} {t('leaderboard', 'xpPoints')}
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <span className="text-[11px] font-[700] text-white/40 italic">
+                    {t('leaderboard', 'notRankedYet')}
+                  </span>
+                )}
+              </GlassCard>
             )}
           </>
         )}
