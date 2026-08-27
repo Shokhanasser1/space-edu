@@ -7,6 +7,7 @@ import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import { twoline2satrec, propagate, gstime, eciToEcf, eciToGeodetic } from 'satellite.js';
 import { ommToSatrec } from '@/solar/omm';
+import { useTranslation } from '@/hooks/useTranslation';
 import UpcomingLaunches from '@/components/live/UpcomingLaunches';
 import NasaApod from '@/components/live/NasaApod';
 
@@ -73,18 +74,18 @@ async function loadRealSatellites() {
   return Array.from(uniq.values());
 }
 
-function fallbackSatellites() {
-  return [{
-    id: '25544',
-    name: 'ISS (ZARYA)',
-    type: 'ISS',
-    color: new THREE.Color('#ff2d6a'),
-    satrec: twoline2satrec(
-      '1 25544U 98067A   08264.51782528 -.00002182  00000-0 -11606-4 0  2927',
-      '2 25544  51.6416 247.4627 0006703 130.5360 325.0288 15.72125391563537',
-    ),
-  }];
-}
+// There is deliberately no hard-coded element set to fall back on.
+//
+// There used to be. Most recently it was the ISS sample TLE that ships in
+// satellite.js's own documentation, epoch 20 September 2008 — 6 551 days
+// before this was written. Propagated to today it puts the station 13 006 km
+// from where it is, which is very nearly the far side of the planet, while
+// the panel reported altitude to a tenth of a kilometre and latitude to a
+// hundredth of a degree, refreshed every 700 ms, under a badge reading
+// "Fallback TLE mode" in English only.
+//
+// An orbit we cannot fetch is an orbit we do not know. The page now says
+// that, in the reader's own language, and draws nothing.
 
 function RealEarth() {
   const earthRef = useRef(null);
@@ -440,11 +441,12 @@ export default function LiveSpaceView() {
   // for the page rendering, once per visit, unbounded. Ticket R2 asked whether
   // to give it a server endpoint; there is nothing to verify server-side, so
   // the award went instead.
+  const { t } = useTranslation();
   const [satellites, setSatellites] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSatId, setSelectedSatId] = useState(null);
   const [metrics, setMetrics] = useState(null);
-  const [isRealData, setIsRealData] = useState(true);
+  const [feedState, setFeedState] = useState('loading');
   const [satCatalog, setSatCatalog] = useState(null);
   const [catalogLoading, setCatalogLoading] = useState(false);
 
@@ -456,14 +458,16 @@ export default function LiveSpaceView() {
         setSatellites(data);
         const iss = data.find((sat) => sat.type === 'ISS');
         setSelectedSatId(iss?.id || data[0]?.id || null);
-        setIsRealData(true);
+        setFeedState('ok');
       })
-      .catch(() => {
+      .catch((err) => {
         if (!mounted) return;
-        const fallback = fallbackSatellites();
-        setSatellites(fallback);
-        setSelectedSatId(fallback[0]?.id || null);
-        setIsRealData(false);
+        // Rule C-10: handled, not swallowed. The badge reports it to the
+        // reader; this is for whoever is looking at a console.
+        console.warn('Could not load orbital elements', err);
+        setSatellites([]);
+        setSelectedSatId(null);
+        setFeedState('failed');
       });
     return () => {
       mounted = false;
@@ -531,7 +535,9 @@ export default function LiveSpaceView() {
           <div className="flex justify-between items-end flex-1 my-4 gap-4">
             <div className="w-full max-w-sm pointer-events-auto flex flex-col gap-4">
               <div className="rounded-xl border border-white/10 bg-black/45 px-3 py-2 text-[10px] uppercase tracking-widest text-cyan-300 backdrop-blur-md">
-                {isRealData ? 'Live TLE tracking' : 'Fallback TLE mode'}
+                {feedState === 'ok' ? t('liveSpace', 'liveTle')
+                  : feedState === 'failed' ? t('liveSpace', 'elementsUnavailable')
+                    : t('liveSpace', 'loadingElements')}
               </div>
 
               <AnimatePresence mode="popLayout">
@@ -641,7 +647,7 @@ export default function LiveSpaceView() {
                         <span className="text-gray-500">NORAD</span><span className="text-right">{selectedSat.id}</span>
                         <span className="text-gray-500">Type</span><span className="text-right">{selectedSat.type}</span>
                         <span className="text-gray-500">Object</span><span className="text-right">{satCatalog?.OBJECT_TYPE || 'Unknown'}</span>
-                        <span className="text-gray-500">Country</span><span className="text-right">{satCatalog?.COUNTRY || 'Unknown'}</span>
+                        <span className="text-gray-500">Country</span><span className="text-right">{satCatalog?.OWNER || 'Unknown'}</span>
                       </div>
                     </div>
 
@@ -661,13 +667,12 @@ export default function LiveSpaceView() {
                     <div className="rounded-xl border border-white/10 bg-black/40 p-3">
                       <div className="text-[10px] text-gray-400 uppercase tracking-widest mb-2">Launch + Mission</div>
                       <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-gray-300">
-                        <span className="text-gray-500">Intl Desig.</span><span className="text-right">{satCatalog?.INTLDES || 'Unknown'}</span>
-                        <span className="text-gray-500">Launch Date</span><span className="text-right">{satCatalog?.LAUNCH || 'Unknown'}</span>
-                        <span className="text-gray-500">Launch Site</span><span className="text-right">{satCatalog?.SITE || 'Unknown'}</span>
-                        <span className="text-gray-500">Launch Piece</span><span className="text-right">{satCatalog?.LAUNCH_PIECE || 'Unknown'}</span>
-                        <span className="text-gray-500">Status</span><span className="text-right">{satCatalog?.OPS_STATUS || 'Unknown'}</span>
-                        <span className="text-gray-500">Crew Onboard</span><span className="text-right">{selectedSat.type === 'ISS' ? 'Crewed (live count N/A)' : 'Uncrewed'}</span>
-                        <span className="text-gray-500">Launch Vehicle</span><span className="text-right">{satCatalog?.LAUNCH_VEHICLE || 'Not published in SATCAT'}</span>
+                        <span className="text-gray-500">Intl Desig.</span><span className="text-right">{satCatalog?.OBJECT_ID || 'Unknown'}</span>
+                        <span className="text-gray-500">Launch Date</span><span className="text-right">{satCatalog?.LAUNCH_DATE || 'Unknown'}</span>
+                        <span className="text-gray-500">Launch Site</span><span className="text-right">{satCatalog?.LAUNCH_SITE || 'Unknown'}</span>
+                        <span className="text-gray-500">Status</span><span className="text-right">{satCatalog?.OPS_STATUS_CODE || 'Unknown'}</span>
+                        <span className="text-gray-500">Apogee</span><span className="text-right">{satCatalog?.APOGEE ? `${satCatalog.APOGEE} km` : 'Unknown'}</span>
+                        <span className="text-gray-500">Perigee</span><span className="text-right">{satCatalog?.PERIGEE ? `${satCatalog.PERIGEE} km` : 'Unknown'}</span>
                       </div>
                     </div>
                     {catalogLoading && <div className="text-[11px] text-gray-500">Loading extended catalog info...</div>}

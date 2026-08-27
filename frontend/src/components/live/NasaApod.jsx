@@ -1,108 +1,96 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'motion/react';
-import { Camera, Calendar, ExternalLink } from 'lucide-react';
+import { Camera, Calendar, AlertTriangle } from 'lucide-react';
+import api from '@/lib/api';
 import { useTranslation } from '@/hooks/useTranslation';
 
+/**
+ * NASA's Astronomy Picture of the Day, as our server last saw it.
+ *
+ * Two things were wrong with the version this replaces.
+ *
+ * It authenticated to `api.nasa.gov` from the browser with `DEMO_KEY`, which
+ * NASA rate-limits to 30 requests an hour per address. A class opens the page
+ * together from one address, so the limit was reached in the first minute of
+ * the lesson and nearly every child got the failure path.
+ *
+ * And the failure path invented a picture: a fixed 2023 photograph of the
+ * Carina Nebula, captioned `new Date()` — so a three-year-old image was
+ * presented, under the words "Picture of the Day", as today's. That is the
+ * kind of wrong that a reader cannot detect, on a page whose whole promise is
+ * that what it shows is current.
+ *
+ * The picture now comes from `GET /space/apod/`, which our server fetches
+ * once every twelve hours with our own key and caches. It answers 503 when
+ * NASA is unreachable, and this shows that as "no picture yet" — never as a
+ * different picture.
+ */
 export default function NasaApod() {
   const [apod, setApod] = useState(null);
   const [loading, setLoading] = useState(true);
-  const { t, language } = useTranslation();
+  const [failed, setFailed] = useState(false);
+  const { t } = useTranslation();
 
   useEffect(() => {
-    const translateText = async (text, target) => {
-      if (!text || target === 'ENG') return text;
-      const langMap = { 'UZB': 'uz', 'RUS': 'ru' };
-      const targetLang = langMap[target] || 'en';
-      try {
-        const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${targetLang}&dt=t&q=${encodeURI(text)}`);
-        const data = await res.json();
-        return data[0].map(x => x[0]).join('');
-      } catch (err) {
-        return text;
-      }
-    };
+    let active = true;
+    api.get('/space/apod/')
+      .then(({ data }) => {
+        // `{ fetched_at, stale, data }` — the payload is NASA's own record.
+        if (active) setApod(data?.data || null);
+      })
+      .catch((err) => {
+        if (!active) return;
+        console.warn('Could not load the picture of the day', err);
+        setFailed(true);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => { active = false; };
+  }, []);
 
-    const fetchApod = async () => {
-      try {
-        // Through our backend: the NASA key stays on the server and one
-        // fetch a day serves the whole school (api.nasa.gov's DEMO_KEY allows
-        // 30 requests an hour per IP).
-        const res = await fetch('/api/v1/space/apod/');
-        if (res.ok) {
-          const data = (await res.json()).data;
-          if (!data?.url) throw new Error('API error');
-          const translatedTitle = await translateText(data.title, language);
-          const translatedExpl = await translateText(data.explanation, language);
-          setApod({ ...data, title: translatedTitle, explanation: translatedExpl });
-        } else {
-          throw new Error('API error');
-        }
-      } catch {
-        const mockData = {
-          title: 'The Carina Nebula',
-          url: 'https://apod.nasa.gov/apod/image/2307/STScI-01_1024.png',
-          explanation: 'A star-forming region captured by the James Webb Space Telescope, revealing hundreds of previously hidden young stars in the Carina Nebula.',
-          date: new Date().toISOString().split('T')[0],
-          media_type: 'image',
-        };
-        const translatedTitle = await translateText(mockData.title, language);
-        const translatedExpl = await translateText(mockData.explanation, language);
-        setApod({ ...mockData, title: translatedTitle, explanation: translatedExpl });
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchApod();
-  }, [language]);
-
-  if (loading || !apod) {
+  if (loading) {
     return (
-      <div style={{ padding: '40px', textAlign: 'center', color: 'rgba(255,255,255,0.4)', fontSize: '14px' }}>
+      <div className="py-10 text-center text-sm text-white/40">
         {t('live', 'loadingApod')}
       </div>
     );
   }
 
+  if (failed || !apod?.url) {
+    return (
+      <div className="flex items-start gap-3 rounded-2xl border border-amber-400/20 bg-amber-400/[0.05] px-4 py-5">
+        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
+        <div className="text-sm text-white/70">{t('live', 'apodUnavailable')}</div>
+      </div>
+    );
+  }
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      {/* Image */}
-      <div style={{ borderRadius: '16px', overflow: 'hidden', position: 'relative', aspectRatio: '16/9' }}>
-        {apod.media_type === 'video' ? (
-          <iframe
-            src={apod.url}
-            title={apod.title}
-            style={{ width: '100%', height: '100%', border: 'none' }}
-            allowFullScreen
-          />
-        ) : (
-          <img
-            src={apod.url}
-            alt={apod.title}
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-          />
-        )}
-        <div style={{
-          position: 'absolute', bottom: 0, left: 0, right: 0,
-          padding: '24px 20px 16px',
-          background: 'linear-gradient(transparent, rgba(0,0,0,0.85))',
-        }}>
-          <div style={{ fontSize: '10px', color: '#a78bfa', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <Camera style={{ width: '12px', height: '12px' }} /> {t('live', 'nasaApod')}
+    <div className="flex flex-col gap-4">
+      <div className="relative aspect-video overflow-hidden rounded-2xl">
+        <img
+          src={apod.url}
+          alt={apod.title}
+          loading="lazy"
+          className="h-full w-full object-cover"
+        />
+        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent px-5 pb-4 pt-6">
+          <div className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-violet-300">
+            <Camera className="h-3 w-3" /> {t('live', 'nasaApod')}
           </div>
-          <h4 style={{ fontSize: '18px', fontWeight: 800, color: '#fff', margin: 0 }}>{apod.title}</h4>
+          <h4 className="text-lg font-extrabold text-white">{apod.title}</h4>
         </div>
       </div>
 
-      {/* Description */}
-      <p style={{
-        fontSize: '13px', lineHeight: 1.7, color: 'rgba(255,255,255,0.45)',
-        display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
-      }}>
-        {apod.explanation}
-      </p>
+      {apod.explanation && (
+        <p className="line-clamp-3 text-[13px] leading-relaxed text-white/45">
+          {apod.explanation}
+        </p>
+      )}
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'rgba(255,255,255,0.3)' }}>
-        <Calendar style={{ width: '12px', height: '12px' }} /> {apod.date}
+      {/* NASA's own date for the image, never ours. */}
+      <div className="flex items-center gap-2 text-xs text-white/30">
+        <Calendar className="h-3 w-3" /> {apod.date}
       </div>
     </div>
   );
