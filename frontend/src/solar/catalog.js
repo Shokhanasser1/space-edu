@@ -25,20 +25,20 @@ export const BODIES = [
     id: 'sun', kind: 'star', astro: 'Sun',
     radiusKm: 695700, massKg: 1.9885e30, gravity: 274, tempC: 5500,
     rotationHours: 609.12, axialTilt: 7.25, color: '#FDB813',
-    textures: { map: [`${T}4k_sun.webp`, `${T}sunmap.jpg`] },
+    textures: { map: [`${T}4k_sun.webp`, `${T}2k_sun.webp`, `${T}sunmap.jpg`] },
   },
   {
     id: 'mercury', kind: 'planet', astro: 'Mercury',
     radiusKm: 2439.7, massKg: 3.3011e23, gravity: 3.7, tempC: 167,
     rotationHours: 1407.6, axialTilt: 0.034, atmosphere: [], color: '#9a9a9a',
-    textures: { map: [`${T}4k_mercury.webp`, `${T}mercurymap.jpg`], bump: [`${T}mercurybump.jpg`] },
+    textures: { map: [`${T}4k_mercury.webp`, `${T}2k_mercury.webp`, `${T}mercurymap.jpg`], bump: [`${T}mercurybump.jpg`] },
   },
   {
     id: 'venus', kind: 'planet', astro: 'Venus',
     radiusKm: 6051.8, massKg: 4.8675e24, gravity: 8.87, tempC: 464,
     rotationHours: -5832.5, axialTilt: 177.36, atmosphere: ['CO₂', 'N₂'], color: '#e3bb76',
     glow: { color: '#f3d9a4', strength: 1.4 },
-    textures: { map: [`${T}4k_venus_atmosphere.webp`, `${T}venusmap.jpg`], bump: [`${T}venusbump.jpg`] },
+    textures: { map: [`${T}4k_venus_atmosphere.webp`, `${T}2k_venus_atmosphere.webp`, `${T}venusmap.jpg`], bump: [`${T}venusbump.jpg`] },
   },
   {
     id: 'earth', kind: 'planet', astro: 'Earth',
@@ -46,8 +46,8 @@ export const BODIES = [
     rotationHours: 23.9345, axialTilt: 23.44, atmosphere: ['N₂', 'O₂', 'Ar'], color: '#3b8ad9',
     glow: { color: '#5aa6ff', strength: 1.0 },
     textures: {
-      map: [`${T}4k_earth_daymap.webp`, `${T}earth_atmos_2048.jpg`],
-      night: [`${T}4k_earth_nightmap.webp`, `${T}earth_lights_2048.png`],
+      map: [`${T}4k_earth_daymap.webp`, `${T}2k_earth_daymap.webp`, `${T}earth_atmos_2048.jpg`],
+      night: [`${T}4k_earth_nightmap.webp`, `${T}2k_earth_nightmap.webp`, `${T}earth_lights_2048.png`],
       clouds: [`${T}2k_earth_clouds.webp`, `${T}earth_clouds_1024.png`],
       specular: [`${T}2k_earth_specular.webp`, `${T}earth_specular_2048.jpg`],
       normal: [`${T}earth_normal_2048.jpg`],
@@ -58,13 +58,13 @@ export const BODIES = [
     radiusKm: 3389.5, massKg: 6.4171e23, gravity: 3.71, tempC: -65,
     rotationHours: 24.6229, axialTilt: 25.19, atmosphere: ['CO₂', 'N₂', 'Ar'], color: '#c1440e',
     glow: { color: '#e9a27a', strength: 0.35 },
-    textures: { map: [`${T}4k_mars.webp`, `${T}marsmap1k.jpg`], bump: [`${T}marsbump1k.jpg`] },
+    textures: { map: [`${T}4k_mars.webp`, `${T}2k_mars.webp`, `${T}marsmap1k.jpg`], bump: [`${T}marsbump1k.jpg`] },
   },
   {
     id: 'jupiter', kind: 'planet', astro: 'Jupiter',
     radiusKm: 69911, massKg: 1.8981e27, gravity: 24.79, tempC: -110,
     rotationHours: 9.925, axialTilt: 3.13, atmosphere: ['H₂', 'He'], color: '#d39c7e',
-    textures: { map: [`${T}4k_jupiter.webp`, `${T}jupitermap.jpg`] },
+    textures: { map: [`${T}4k_jupiter.webp`, `${T}2k_jupiter.webp`, `${T}jupitermap.jpg`] },
   },
   {
     id: 'saturn', kind: 'planet', astro: 'Saturn',
@@ -76,7 +76,7 @@ export const BODIES = [
       gaps: [[0.654, 0.726]],
       textures: { ring: [`${T}2k_saturn_ring_alpha.png`, `${T}saturnringcolor.jpg`] },
     },
-    textures: { map: [`${T}4k_saturn.webp`, `${T}saturnmap.jpg`] },
+    textures: { map: [`${T}4k_saturn.webp`, `${T}2k_saturn.webp`, `${T}saturnmap.jpg`] },
   },
   {
     id: 'uranus', kind: 'planet', astro: 'Uranus',
@@ -136,7 +136,7 @@ export const BODIES = [
  * orbit, so `rotationHours` is omitted and derived from the period.
  */
 export const MOONS = [
-  { id: 'moon', parent: 'earth', astro: 'Moon', radiusKm: 1737.4, massKg: 7.346e22, gravity: 1.62, tempC: -20, aKm: 384400, periodDays: 27.3217, color: '#b8b8b8', textures: { map: [`${T}4k_moon.webp`, `${T}moon_1024.jpg`] } },
+  { id: 'moon', parent: 'earth', astro: 'Moon', radiusKm: 1737.4, massKg: 7.346e22, gravity: 1.62, tempC: -20, aKm: 384400, periodDays: 27.3217, color: '#b8b8b8', textures: { map: [`${T}4k_moon.webp`, `${T}2k_moon.webp`, `${T}moon_1024.jpg`] } },
   { id: 'phobos', parent: 'mars', radiusKm: 11.27, massKg: 1.06e16, gravity: 0.006, tempC: -40, aKm: 9376, periodDays: 0.3189, color: '#8a8078' },
   { id: 'deimos', parent: 'mars', radiusKm: 6.2, massKg: 1.5e15, gravity: 0.003, tempC: -40, aKm: 23463, periodDays: 1.2624, color: '#9a9088' },
   { id: 'io', parent: 'jupiter', galilean: 'io', radiusKm: 1821.6, massKg: 8.93e22, gravity: 1.8, tempC: -143, aKm: 421800, periodDays: 1.7691, color: '#e8d27a' },
@@ -165,7 +165,7 @@ export const SPACECRAFT = [
 ];
 
 /** The sky behind everything: Solar System Scope's Milky Way panorama. */
-export const SKY_TEXTURE = [`${T}4k_stars_milky_way.webp`];
+export const SKY_TEXTURE = [`${T}4k_stars_milky_way.webp`, `${T}2k_stars_milky_way.webp`];
 
 export const BODY_BY_ID = new Map([...BODIES, ...MOONS].map((b) => [b.id, b]));
 

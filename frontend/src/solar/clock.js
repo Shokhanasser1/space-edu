@@ -69,6 +69,8 @@ export const useSolarStore = create((set, get) => ({
   homeRequest: 0,
   satStatus: { state: 'idle', count: 0 },
   craftStatus: 'idle',
+  /** 'high' = bloom, MSAA, dpr 1.5, 4k sky; 'low' = what a weak GPU can hold at 60 fps. */
+  quality: 'high',
   layers: {
     orbits: true,
     labels: true,
@@ -113,6 +115,7 @@ export const useSolarStore = create((set, get) => ({
   requestHome: () => set({ selectedId: null, homeRequest: get().homeRequest + 1 }),
   setSatStatus: (satStatus) => set({ satStatus }),
   setCraftStatus: (craftStatus) => set({ craftStatus }),
+  setQuality: (quality) => set({ quality }),
   setScaleMode: (scaleMode) => set({ scaleMode }),
   setLayer: (name, on) => set({ layers: { ...get().layers, [name]: on } }),
 }));

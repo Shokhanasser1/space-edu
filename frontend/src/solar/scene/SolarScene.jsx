@@ -1,6 +1,7 @@
-import { useMemo, useRef } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls } from '@react-three/drei';
+import { useEffect, useMemo, useRef } from 'react';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { OrbitControls, PerformanceMonitor } from '@react-three/drei';
+import { ToneMappingMode } from 'postprocessing';
 import { Bloom, EffectComposer, ToneMapping, Vignette } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import { BODIES, MOONS } from '../catalog';
@@ -31,6 +32,19 @@ import Sun from './Sun';
  * - Bloom threshold 1.0: only the HDR Sun blooms, not every bright planet.
  */
 
+/**
+ * With the composer the renderer must stay linear and the ToneMapping pass
+ * does it once at the end; without it (low quality) the renderer tone-maps
+ * the HDR Sun itself, or it would clip to a white disc.
+ */
+function RendererToneMapping({ composer }) {
+  const gl = useThree((s) => s.gl);
+  useEffect(() => {
+    gl.toneMapping = composer ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping;
+  }, [gl, composer]);
+  return null;
+}
+
 function ClockDriver() {
   const acc = useRef(0);
   const tick = useSolarStore((s) => s.tick);
@@ -49,7 +63,10 @@ export default function SolarScene({ onSelect, onSelectSatellite }) {
   const controlsRef = useRef();
   const selectedId = useSolarStore((s) => s.selectedId);
   const layers = useSolarStore((s) => s.layers);
+  const quality = useSolarStore((s) => s.quality);
+  const setQuality = useSolarStore((s) => s.setQuality);
   const centreMs = useMemo(() => simClock.ms, []);
+  const high = quality === 'high';
 
   const sun = BODIES[0];
   const planets = useMemo(() => BODIES.filter((b) => b.kind !== 'star'), []);
@@ -57,9 +74,9 @@ export default function SolarScene({ onSelect, onSelectSatellite }) {
 
   return (
     <Canvas
-      dpr={[1, 1.5]}
+      dpr={high ? [1, 1.5] : 1}
       camera={{ position: HOME_POSITION.toArray(), fov: 45, near: 0.002, far: 60000 }}
-      gl={{ antialias: false, logarithmicDepthBuffer: true, powerPreference: 'high-performance', alpha: false }}
+      gl={{ antialias: true, logarithmicDepthBuffer: true, powerPreference: 'high-performance', alpha: false }}
       onCreated={({ gl }) => {
         gl.toneMapping = THREE.NoToneMapping;
       }}
@@ -67,6 +84,9 @@ export default function SolarScene({ onSelect, onSelectSatellite }) {
       <color attach="background" args={['#02030a']} />
       <ambientLight intensity={0.035} />
       <ClockDriver />
+      <RendererToneMapping composer={high} />
+      {/* A few seconds under 50 fps drops to the light preset; it climbs back if the GPU copes. */}
+      <PerformanceMonitor flipflops={2} onDecline={() => setQuality('low')} onIncline={() => setQuality('high')} onFallback={() => setQuality('low')} />
 
       <SkyDome visible={layers.stars} />
       <StarField visible={layers.stars} />
@@ -101,11 +121,13 @@ export default function SolarScene({ onSelect, onSelectSatellite }) {
       <CameraRig controlsRef={controlsRef} />
       <SceneBridge />
 
-      <EffectComposer multisampling={4}>
-        <Bloom luminanceThreshold={1} mipmapBlur intensity={0.9} radius={0.55} />
-        <Vignette eskil={false} offset={0.18} darkness={0.65} />
-        <ToneMapping />
-      </EffectComposer>
+      {high && (
+        <EffectComposer multisampling={4}>
+          <Bloom luminanceThreshold={1} mipmapBlur intensity={0.9} radius={0.55} />
+          <Vignette eskil={false} offset={0.18} darkness={0.65} />
+          <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
+        </EffectComposer>
+      )}
     </Canvas>
   );
 }

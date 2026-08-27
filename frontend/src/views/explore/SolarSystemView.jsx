@@ -23,6 +23,15 @@ import TimeBar from '@/solar/ui/TimeBar';
 
 const UNIT_KEYS = ['km', 'au', 'mkm', 'min', 'h', 'd', 'years', 'days'];
 
+/** three r163+ needs WebGL 2; a school PC on a 2015 driver may not have it. */
+function hasWebGL2() {
+  try {
+    return Boolean(document.createElement('canvas').getContext('webgl2'));
+  } catch {
+    return false;
+  }
+}
+
 export default function SolarSystemView() {
   const { t: translate } = useTranslation();
   const t = useCallback((key) => translate('explore', `solar.${key}`), [translate]);
@@ -32,6 +41,7 @@ export default function SolarSystemView() {
   const [selectedSat, setSelectedSat] = useState(null);
   const [drawer, setDrawer] = useState(null); // 'bodies' | 'layers' | null (mobile)
   const { active, progress } = useProgress();
+  const [webgl] = useState(() => (typeof document === 'undefined' ? true : hasWebGL2()));
 
   const names = useMemo(() => {
     const out = {};
@@ -84,7 +94,11 @@ export default function SolarSystemView() {
   return (
     <div className="relative h-screen w-full overflow-hidden bg-[#02030a] font-sans">
       <div className="absolute inset-0 z-0">
-        <SolarScene onSelect={select} onSelectSatellite={selectSatellite} />
+        {webgl ? (
+          <SolarScene onSelect={select} onSelectSatellite={selectSatellite} />
+        ) : (
+          <div className="flex h-full items-center justify-center px-6 text-center text-sm text-white/70">{t('noWebGL')}</div>
+        )}
         <LabelLayer entries={labelEntries} names={names} selectedId={selectedId} onSelect={select} visible={layers.labels} />
       </div>
 

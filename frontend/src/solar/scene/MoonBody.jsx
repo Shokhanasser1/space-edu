@@ -6,6 +6,7 @@ import { getWorld, setWorld } from '../positions';
 import { AU_KM, displayRadius, eclipticToScene, moonOrbitRadius } from '../scale';
 import { useSolarTextures } from '../textures';
 import { applyOrientation } from './Planet';
+import { MOON_MIN_PX, MOON_PARENT_MIN_PX, minSizeScale } from './sizing';
 
 /**
  * A moon, placed by its offset from the planet. The offset's *direction* is
@@ -24,14 +25,20 @@ export default function MoonBody({ entry, parent, onSelect, selected }) {
   const groupRef = useRef();
   const tiltRef = useRef();
   const scaleMode = useSolarStore((s) => s.scaleMode);
-  const textures = useSolarTextures(entry.textures);
+  const textures = useSolarTextures(entry.textures, { hiRes: selected });
   const radius = displayRadius(entry.radiusKm, scaleMode, { isMoon: true });
   const segments = radius > 0.4 ? 48 : 24;
 
-  useFrame(() => {
+  useFrame(({ camera, size }) => {
     const group = groupRef.current;
     const parentPos = getWorld(parent.id);
     if (!group || !parentPos) return;
+    // Nothing to see until the planet itself is more than a dot.
+    const focal = size.height / 2 / Math.tan((camera.fov * Math.PI) / 360);
+    const parentPx = displayRadius(parent.radiusKm, scaleMode) * (focal / Math.max(camera.position.distanceTo(parentPos), 1e-6));
+    const show = selected || parentPx >= MOON_PARENT_MIN_PX;
+    group.visible = show;
+    if (!show) return;
     const ms = simClock.ms;
     moonOffsetAU(entry, parent, ms, tmpEcl);
     const lenAU = Math.hypot(tmpEcl[0], tmpEcl[1], tmpEcl[2]) || 1e-12;
@@ -40,8 +47,13 @@ export default function MoonBody({ entry, parent, onSelect, selected }) {
     const k = drawn / lenAU;
     eclipticToScene(tmpEcl, k, tmpScene);
     group.position.set(parentPos.x + tmpScene[0], parentPos.y + tmpScene[1], parentPos.z + tmpScene[2]);
-    if (tiltRef.current) applyOrientation(tiltRef.current, bodyOrientation(entry, ms));
-    setWorld(entry.id, group.position, radius);
+    let grow = 1;
+    if (tiltRef.current) {
+      applyOrientation(tiltRef.current, bodyOrientation(entry, ms));
+      grow = minSizeScale(radius, camera.position.distanceTo(group.position), camera, size.height, MOON_MIN_PX);
+      tiltRef.current.scale.setScalar(grow);
+    }
+    setWorld(entry.id, group.position, radius * grow);
   });
 
   return (

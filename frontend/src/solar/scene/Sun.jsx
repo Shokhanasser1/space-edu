@@ -44,7 +44,7 @@ export default function Sun({ entry, onSelect }) {
   const textures = useSolarTextures(entry.textures);
   const radius = displayRadius(entry.radiusKm, scaleMode);
   const corona = useMemo(coronaTexture, []);
-  const hdr = useMemo(() => new THREE.Color(2.6, 2.1, 1.5), []);
+  const hdr = useMemo(() => new THREE.Color(1.9, 1.5, 1.05), []);
 
   useFrame(() => {
     if (meshRef.current) applyOrientation(meshRef.current, bodyOrientation(entry, simClock.ms));
@@ -60,7 +60,7 @@ export default function Sun({ entry, onSelect }) {
       <sprite scale={[radius * 4.2, radius * 4.2, 1]}>
         <spriteMaterial map={corona} transparent depthWrite={false} blending={THREE.AdditiveBlending} opacity={0.9} toneMapped={false} />
       </sprite>
-      <pointLight intensity={Math.PI} decay={0} distance={0} color="#fff6e5" />
+      <pointLight intensity={2.3} decay={0} distance={0} color="#fff6e5" />
     </group>
   );
 }

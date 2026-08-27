@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import * as THREE from 'three';
 import { SKY_TEXTURE } from '../catalog';
-import { loadFirst } from '../textures';
+import { useSolarStore } from '../clock';
+import { isHiRes, loadFirst } from '../textures';
 
 /**
  * The Milky Way behind the real stars.
@@ -52,16 +53,18 @@ const FRAG = /* glsl */ `
 
 export default function SkyDome({ visible = true, brightness = 2.4 }) {
   const [map, setMap] = useState(null);
+  const quality = useSolarStore((s) => s.quality);
 
   useEffect(() => {
     let alive = true;
-    loadFirst(SKY_TEXTURE, true).then((tex) => {
-      if (alive && tex) setMap(tex);
+    const candidates = quality === 'high' ? SKY_TEXTURE : SKY_TEXTURE.filter((c) => !isHiRes(c));
+    loadFirst(candidates, true).then((hit) => {
+      if (alive && hit) setMap(hit.texture);
     });
     return () => {
       alive = false;
     };
-  }, []);
+  }, [quality]);
 
   const uniforms = useMemo(() => {
     const m = new THREE.Matrix3();
