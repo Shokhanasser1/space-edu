@@ -81,7 +81,9 @@ class FullProfileView(APIView):
             'total_fuel_earned': challenge_agg['total_fuel'] or 0,
             'best_score': challenge_agg['best_score'] or 0,
             'avg_score': round(challenge_agg['avg_score'] or 0, 1),
-            'current_streak': streak_obj.current_streak,
+            # Zero once a day has been missed, not the number it reached
+            # before — see `UserStreak.live_streak`.
+            'current_streak': streak_obj.live_streak,
             'longest_streak': streak_obj.longest_streak,
             'last_completed': streak_obj.last_completed,
         }

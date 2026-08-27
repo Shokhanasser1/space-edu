@@ -14,6 +14,7 @@ from .models import ChallengeQuestion, DailyChallenge, UserChallengeResult, User
 from .serializers import (
     ChallengeQuestionFullSerializer,
     ChallengeQuestionSerializer,
+    ChallengeReviewSerializer,
     DailyChallengeSerializer,
     SubmitAnswersSerializer,
     UserChallengeResultSerializer,
@@ -110,12 +111,22 @@ class SubmitChallengeView(APIView):
         questions = {q.id: q for q in challenge.questions.all()}
         seen = set()
         score = 0
+        # -1 is what the client sends for a question the clock ran out on, and
+        # it is not one of the option indices, so it grades wrong on its own.
+        # Every question starts here so that one nobody answered still comes
+        # back explained — those are the ones most worth explaining.
+        for question in questions.values():
+            question.selected = -1
+            question.is_correct = False
         for ans in answers:
             qid = ans['question_id']
             if qid in seen or qid not in questions:
                 continue
             seen.add(qid)
-            if questions[qid].correct_answer == ans['selected']:
+            question = questions[qid]
+            question.selected = ans['selected']
+            question.is_correct = question.correct_answer == ans['selected']
+            if question.is_correct:
                 score += 1
 
         total = len(questions)
@@ -152,10 +163,11 @@ class SubmitChallengeView(APIView):
         return Response({
             'result': UserChallengeResultSerializer(result).data,
             'streak': UserStreakSerializer(streak).data,
-            'correct_answers': {
-                q.id: q.correct_answer
-                for q in challenge.questions.all()
-            },
+            # `correct_answers` was a map of indices and nothing else, so the
+            # results screen could say "3 of 5" and no more. A child who got two
+            # wrong left knowing exactly what they knew when they arrived, which
+            # is the half of "sinash" the feature was missing.
+            'review': ChallengeReviewSerializer(list(questions.values()), many=True).data,
         }, status=status.HTTP_201_CREATED)
 
 

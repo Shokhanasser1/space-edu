@@ -418,7 +418,19 @@
   "daily": {
     "challengeCompleted": "Challenge Completed!",
     "alreadyCompleted": "You've already completed today's challenge. Come back tomorrow for more XP!",
-    "viewProfile": "View Profile"
+    "viewProfile": "View Profile",
+    "nextQuestion": "Next question",
+    "finish": "Finish challenge",
+    "complete": "Challenge complete!",
+    "completeSub": "Here is what you got, and why.",
+    "xpEarned": "XP earned",
+    "noQuestions": "Today's challenge has no questions yet. Try again a little later.",
+    "review": "Your answers",
+    "yourAnswer": "Your answer",
+    "correctAnswer": "Correct answer",
+    "noAnswer": "You ran out of time",
+    "correct": "Correct",
+    "wrong": "Wrong"
   },
   "premium": {
     "heroTitle": "Upgrade your space journey. Try 1 month of Premium for $0.",

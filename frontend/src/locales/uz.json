@@ -418,7 +418,19 @@
   "daily": {
     "challengeCompleted": "Chaqiriq Yakunlandi!",
     "alreadyCompleted": "Siz bugungi chaqiriqni allaqachon bajargansiz. Ko'proq XP yig'ish uchun ertaga qaytib keling!",
-    "viewProfile": "Profilni Ko'rish"
+    "viewProfile": "Profilni Ko'rish",
+    "nextQuestion": "Keyingi savol",
+    "finish": "Chaqiriqni yakunlash",
+    "complete": "Chaqiriq yakunlandi!",
+    "completeSub": "Mana javoblaringiz va ularning izohi.",
+    "xpEarned": "Yig'ilgan XP",
+    "noQuestions": "Bugungi chaqiriqda hali savollar yo'q. Birozdan keyin urinib ko'ring.",
+    "review": "Sizning javoblaringiz",
+    "yourAnswer": "Sizning javobingiz",
+    "correctAnswer": "To'g'ri javob",
+    "noAnswer": "Vaqt tugadi",
+    "correct": "To'g'ri",
+    "wrong": "Noto'g'ri"
   },
   "premium": {
     "heroTitle": "Kosmik sayohatingizni yangilang. 1 oylik Premium'ni $0 ga sinab ko'ring.",
