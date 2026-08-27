@@ -3,6 +3,7 @@ import logging
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.core.mail import send_mail
+from django.db import IntegrityError, transaction
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -42,7 +43,22 @@ class RegisterView(generics.CreateAPIView):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = serializer.save()
+        try:
+            # Its own savepoint: catching an IntegrityError without one leaves
+            # the surrounding transaction broken, so the next query raises
+            # TransactionManagementError instead of this returning a 400.
+            with transaction.atomic():
+                user = serializer.save()
+        except IntegrityError:
+            # `validate_email` is a filter().exists(), which two requests
+            # arriving together both pass; the database constraint is what
+            # actually decides. Losing that race is a caller's mistake and a
+            # 400, not a 500 with a debug page attached (C-4).
+            logger.info('Registration lost the race for an address that now exists.')
+            return Response(
+                {'email': ['This email is already registered.']},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         return Response(
             {
                 'user': UserSerializer(user, context={'request': request}).data,
