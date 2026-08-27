@@ -12,9 +12,9 @@ overwriting each other.
 you pull -> you write it -> you run the checks -> you push to main -> the lead reads it
 ```
 
-**You push straight to `main`.** No branch to create, no pull request to open,
-nobody to wait for. That is deliberate: someone learning to program should spend
-the day on the code, not on the ceremony around it.
+**You push straight to `main`.** There is nothing to open and nobody to wait
+for. That is deliberate: someone learning to program should spend the day on the
+code, not on the ceremony around it.
 
 Your whole workflow, start to finish:
 
@@ -36,34 +36,33 @@ the push: the lead reads what lands and fixes or reverts it. A mistake is a
 five-minute conversation, not a disaster. Read "Before you push" below anyway;
 being trusted is the reason to be careful, not the reason to stop being.
 
-**Branches still exist, and are still the right tool** for anything large,
-anything you want read before it lands, and anything touching authentication,
-payments, personal data or migrations. Branch, push the branch, open a pull
-request, ask for eyes on it. `type/short-description` — `fix/logout-401`,
-`feat/lesson-markdown`. One branch, one subject. Rebase rather than merge while
-it is open (`git fetch origin && git rebase origin/main`), and keep it short: a
-branch that lives a day conflicts with nothing, one that lives three weeks
-conflicts with everything.
+**Push little and often.** A day of work pushed at the end of the day meets
+whatever the others changed in that day; an hour of work meets almost nothing.
+The one thing that genuinely causes trouble here is holding a large change on
+your own machine for a week.
 
 ## Before you push
 
 None of this is enforced by anything. The lead reads every commit by hand; this
 is the list that makes that reading short, and it is thirty seconds of care in
-exchange for nobody standing between you and five other people's work:
+exchange for nobody standing between you and everyone else's work:
 
 1. **Run what CI runs** — the block in `CONTRIBUTING.md`, Part 3. Nothing stops
    you pushing without it. It is how you find out you broke something before
-   five other people do.
+   everybody else does.
 2. **Read your own diff.** `git diff --staged`. Half of all mistakes are visible
    in it: a `console.log`, a commented-out block, a file you did not mean to add.
 3. **One thing per commit.** Small commits are easy to read and easy to revert on
    their own when one of them turns out to be wrong.
-4. **Never `.env`, a password or a key.** GitHub blocks nothing here; that
+4. **New text in all three languages.** `npm run check:locales`. And if you
+   edited `src/data/*TopicsData.js`, run `npm run content:export` and commit what
+   it produces.
+5. **Never `.env`, a password or a key.** GitHub blocks nothing here; that
    mistake is the one that cannot be taken back. See
    `docs/SECURITY-INCIDENT-2026-08-22.md`.
-5. **Never `git push --force`** to `main`. GitHub still refuses it, and the day
+6. **Never `git push --force`** to `main`. GitHub still refuses it, and the day
    it does not, it destroys somebody else's work.
-6. **Say it in the daily message** when you push something big — and *before*
+7. **Say it in the daily message** when you push something big — and *before*
    you generate a migration, always.
 
 ---
@@ -74,19 +73,18 @@ Very little, on purpose. On `main`:
 
 | Rule | What you will see |
 |---|---|
-| Anyone with write access may push | `git push origin main` simply works. No pull request, no approval, no waiting for CI. |
+| Anyone with write access may push | `git push origin main` simply works. Nothing to approve, nothing to wait for. |
 | CI still runs on every push | It reports; it no longer blocks. Watch your own: `gh run watch`, or the tick next to your commit on GitHub. |
 | No force-push | `main` cannot be rewritten. This one stays, because this is the one that loses other people's work. |
 | No deletion | `main` cannot be removed. |
 
-Nothing else. Required pull requests, required approvals, required status checks
-and required conversation resolution were all switched off on 27 August 2026,
-when the team grew with people who are learning as they go. Two rules are left,
-and neither of them will ever refuse an ordinary push.
+Nothing else. Everything that used to stand between a commit and `main` was
+switched off on 27 August 2026, when the team grew with people who are learning
+as they go: it was costing more than the mistakes it caught, and a beginner
+waiting a day to land two correct lines learns nothing while they wait. The two
+rules left cannot refuse an ordinary push.
 
-The process was costing more than the mistakes it caught, and a beginner blocked
-on "Review required" learns nothing while they wait. The checking did not stop
-— the lead now reads what lands, by hand.
+The checking did not stop. It moved: the lead now reads what lands, by hand.
 
 **The trade is real and worth naming.** Before this, everything on `main` had
 been through CI and a second pair of eyes. Now `main` can be red, and the person
@@ -213,24 +211,25 @@ database is one command from being useful.
 ### Why the migration rule is the strict one
 
 Everything else a shared database does wrong is recoverable. Migrations are
-state the database remembers. Two people generating migrations in parallel
-branches produce two `0007_` files with the same parent; merged, Django has two
-leaf nodes and no way to order them. CI catches it — the suite runs migrations —
-but only after both have merged, and the fix is then a hand-written merge
-migration. Cheaper to serialise: say so in the daily message before you generate
-one.
+state the database remembers. Two people generating a migration on the same day
+produce two `0007_` files with the same parent; once both are pushed, Django has
+two leaf nodes and no way to order them. CI catches it — the suite runs
+migrations — but only after the second one has landed, and the fix is then a
+hand-written merge migration. Cheaper to serialise: say so in the daily message
+before you generate one.
 
 ---
 
 ## Not standing on each other's files
 
-Most conflicts are not bad luck. They come from long branches, from two people
-sent at the same area without knowing, and from files that should never be
-merged by hand.
+Most conflicts are not bad luck. They come from sitting on a change for days
+before pushing it, from two people sent at the same area without knowing, and
+from files that should never be merged by hand.
 
 **Areas.** `CONTRIBUTING.md` Part 4 splits the work five ways and
 `.github/CODEOWNERS` encodes it. Work inside your area by default; when you have
-to reach outside it, say so in the PR so its owner reads that part properly.
+to reach outside it, say so in the daily message so its owner reads that part
+properly.
 
 **Files nobody merges by hand — regenerate instead:**
 
@@ -240,18 +239,18 @@ to reach outside it, say so in the PR so its owner reads that part properly.
 | `backend/apps/courses/fixtures/learn_content.json` | Take either, run `npm run content:export`, commit |
 
 Both are marked `linguist-generated` in `.gitattributes`, so they stay collapsed
-in a review.
+when somebody reads the change.
 
 **The three locale files** are the most-touched files here and the easiest place
 to collide. Add keys in the section they belong to rather than at the end, add
-to all three in the same commit, and keep locale-only changes in their own small
-PR. `npm run check:locales` fails the build if the three drift apart — 1026
+to all three in the same commit, and keep locale-only work in its own small
+commit. `npm run check:locales` fails the build if the three drift apart — 1026
 keys, exact parity.
 
 **Line endings and whitespace** are settled by `.gitattributes` and
 `.editorconfig`. If your editor still reformats a whole file you touched two
-lines of, fix the editor before opening the PR: a diff claiming 400 changed
-lines cannot be reviewed, and it will conflict with everything.
+lines of, fix the editor before you push: a diff claiming 400 changed lines
+cannot be read, and it will conflict with everything.
 
 ---
 

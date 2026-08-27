@@ -5,8 +5,8 @@ audit, which found 42 defects — 20 reproducible by running the code, 4 of them
 meaning the system was compromised. None were hard problems. They survived
 because nothing checked: zero tests, no CI, no review step.
 
-There are now 202 regression tests (131 backend, 71 frontend) and CI that blocks
-a red merge.
+There are now 202 regression tests (131 backend, 71 frontend) and CI that runs
+on every push.
 
 **Contents**
 
@@ -54,7 +54,7 @@ holds their data.
 
 Your name is on the commit. "The AI wrote it" is not a review answer, not a
 post-mortem answer, and not an excuse. If you would not have written it by hand
-knowing what it does, do not merge it.
+knowing what it does, do not push it.
 
 ### AI-2. If you cannot explain it line by line, it does not go in.
 
@@ -130,7 +130,7 @@ When you ask for a small change and get 400 lines back, do not paste it in. Ask
 again for the minimal change. A diff nobody can review is a diff nobody did
 review.
 
-Same rule as everyone else: one ticket, one concern, one branch. An assistant
+Same rule as everyone else: one ticket, one concern, one commit. An assistant
 will happily "improve while it is in there". Do not let it.
 
 ### AI-9. Never weaken a check to make something pass.
@@ -139,9 +139,9 @@ Ask an assistant why a test fails and it may suggest loosening the assertion,
 widening a permission, or deleting the awkward case. If a security test is in
 your way, the test is right and your change is wrong.
 
-Deleting or relaxing an existing test needs the reviewer's explicit agreement,
-and a sentence in the PR saying why the behaviour it protected is no longer
-wanted.
+Deleting or relaxing an existing test needs the lead's explicit agreement, asked
+for before you push it, and a sentence in the commit body saying why the
+behaviour it protected is no longer wanted.
 
 ### AI-10. Its comments can be confidently wrong.
 
@@ -150,7 +150,7 @@ always what it does. A wrong comment is worse than no comment — the next reade
 trusts it instead of reading. Read every comment you keep. Delete the ones that
 restate the code. Write the *why* yourself.
 
-### AI-11. Say so — in the commit body, or in the PR if you opened one.
+### AI-11. Say so in the commit body.
 
 One line: *"structure drafted with AI, reviewed and tested by me"*, or *"written
 by hand"*. Nobody is judged for either. It tells whoever reads it next where to
@@ -353,15 +353,15 @@ by someone who assumes it works.
 | File size | 200–400 lines normal, 800 hard ceiling. Split by feature, not by file type. `SpaceRunScene.jsx` at 2097 lines is the counter-example. |
 | Functions | Under 50 lines, nesting depth 4 maximum. |
 | Immutability | Never mutate arguments or state. `return {...user, name}`. |
-| Logging | No `console.log` in merged code. Python uses `logging`, never `print`. |
+| Logging | No `console.log` in code you push. Python uses `logging`, never `print`. |
 | Comments | Explain *why*, never *what*. A comment naming the bug it prevents is worth ten that restate the code. |
 | Naming | Name things the way a user would: a person manages *notifications*, not *webhook config*. |
-| Language | Code, comments, commits, tickets and PRs in English. UI strings only from the locale files. |
+| Language | Code, comments, commits and tickets in English. UI strings only from the locale files. |
 | i18n | Every new key lands in `en`, `uz` and `ru` in the same commit. CI enforces it. We are at 1007 keys with perfect parity. |
 | Secrets | Never in the repo. Never in a `VITE_*` variable — Vite inlines those into the public bundle. |
 | Queries | `select_related` / `prefetch_related` / `annotate(Count(...))`. A `.count()` inside a serializer field runs once per row. |
 | Migrations | Model change and its migration in the same commit. |
-| Dependencies | Adding one needs a reason in the PR. Removing an unused one needs none. |
+| Dependencies | Adding one needs a reason in the commit body. Removing an unused one needs none. |
 
 ---
 
@@ -376,14 +376,10 @@ by someone who assumes it works.
 5. **Run the checks below** — all of them, on your machine.
 6. **Push it to `main`:** `git pull --rebase origin main`, then `git push`.
 
-No branch, no pull request, no waiting for an approval. The lead reads what
-lands and fixes or reverts anything wrong, so the worst case is a short
-conversation. The full sequence, and the short list to go through before every
-push, are in `docs/TEAM.md`.
-
-Branches and pull requests are still the right tool for anything large, anything
-you want read before it lands, and anything touching authentication, payments,
-personal data or migrations: `fix/<slug>`, `feat/<slug>`, `chore/<slug>`.
+There is nothing to open and nobody to wait for. The lead reads what lands and
+fixes or reverts anything wrong, so the worst case is a short conversation. The
+full sequence, and the short list to go through before every push, are in
+`docs/TEAM.md`.
 
 Commits: `<type>: <what changed>` where type is one of
 `feat fix refactor docs test chore perf ci`. The body explains **why** and names
@@ -438,8 +434,8 @@ two people: whoever is reading `main` today, and you, on your own diff, before
 you push it. The job is not to admire the code. It is to find the thing that
 will break. If you sign it off without reading the diff, the bug is yours too.
 
-- [ ] **Does a test fail without this change?** Check out the branch, revert the
-      source file, run the test. If it still passes, the test is decoration.
+- [ ] **Does a test fail without this change?** Revert the source file, run the
+      test. If it still passes, the test is decoration.
 - [ ] **Who is allowed to call this?** Name the permission class out loud. If it
       is `AllowAny`, say why that is correct.
 - [ ] **What does it do with rubbish input?** Empty, missing, wrong type,
@@ -452,9 +448,9 @@ will break. If you sign it off without reading the diff, the bug is yours too.
 - [ ] **Is anything swallowed?** Search the diff for `except Exception` and
       `catch {}`.
 - [ ] **Would this break an existing client?** A changed response shape needs the
-      frontend change in the same PR.
-- [ ] **Can the author explain it?** Pick a line and ask. Especially on an
-      AI-assisted PR.
+      frontend change in the same commit.
+- [ ] **Can the author explain it?** Pick a line and ask. Especially on
+      AI-assisted code.
 
 Be specific and be kind. "This crashes when `answers` is empty" beats "needs
 validation". Say what you would do, not only what is wrong. Say what is good out
@@ -476,8 +472,7 @@ Seven things. Six out of seven is not done.
 3. CI is green: tests, migrations, build, locale parity.
 4. You read your own diff before pushing it, against the review checklist above.
 5. New user-facing strings exist in all three locales.
-6. The commit body — or the PR body, if you opened one — says why, and how AI was
-   used if it was.
+6. The commit body says why, and how AI was used if it was.
 7. Anything found but not fixed is a new ticket.
 
 ## Releases and incidents
@@ -570,7 +565,7 @@ one person understands a part of the system.
 - **A spike ends with:** the options honestly stated, what each costs, your
   recommendation and why, and what you are still unsure about.
 - **Never:** exceed the two-day timebox silently — needing longer is itself the
-  finding; merge prototype code; recommend without having run it.
+  finding; push prototype code; recommend without having run it.
 
 **Review pairing.** Backend reviews Frontend and vice versa. Content and
 Research review each other. Quality reviews anyone; everyone reviews Quality.
@@ -613,10 +608,11 @@ npx vitest run src/lib/api.test.js
 
 ---
 
-**How six people do all this at once** — branches, what is protected on `main`,
-the shared database and the files nobody merges by hand — is in `docs/TEAM.md`.
+**How everybody does all this at once** — how a change reaches `main`, what is
+protected there, the shared database and the files nobody merges by hand — is in
+`docs/TEAM.md`.
 
 Rules are versioned. If one of these gets in the way of good work, argue with
 it — bring the case and we will change it. What is not negotiable: tests before
-fixes, review before merge, the server never trusting the client, and you
-understanding every line you sign your name to.
+fixes, every change being read by someone, the server never trusting the client,
+and you understanding every line you sign your name to.
