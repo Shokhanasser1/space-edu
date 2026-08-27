@@ -14,7 +14,7 @@
  * These tests pin the contract, not the markup: what the server sends is what
  * the board must read, and the withheld fields must stay withheld.
  */
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -29,8 +29,11 @@ let LeaderboardView;
 let useAuthStore;
 let useGamificationStore;
 
-// Exactly the shape the endpoint returns — see LeaderboardSerializer.
-const entry = (display_name, xp, level = 1) => ({ display_name, xp, level });
+// Exactly the shape the endpoint returns — see apps/gamification/leaderboard.py.
+// `rank` is the server's, not the row's position: tied players share one.
+const entry = (display_name, xp, level = 1, extra = {}) => ({
+  display_name, xp, level, rank: 1, is_you: false, ...extra,
+});
 
 beforeEach(async () => {
   ({ default: api } = await import('@/lib/api'));
@@ -42,8 +45,16 @@ beforeEach(async () => {
   useGamificationStore.setState({ xp: 0, level: 1 });
 });
 
-const serve = (leaderboard) =>
-  api.get.mockResolvedValue({ data: { leaderboard, total_players: leaderboard.length } });
+const serve = (leaderboard, extra = {}) =>
+  api.get.mockResolvedValue({
+    data: {
+      leaderboard: leaderboard.map((row, i) => ({ ...row, rank: row.rank ?? i + 1 })),
+      total_players: leaderboard.length,
+      board_size: 100,
+      poll_after_seconds: 30,
+      ...extra,
+    },
+  });
 
 async function renderBoard() {
   const view = render(
@@ -132,5 +143,169 @@ describe('the leaderboard reads what the server actually sends', () => {
       expect(img.getAttribute('src')).toContain('dicebear');
       expect(img.getAttribute('src')).not.toMatch(/undefined/);
     }
+  });
+});
+
+/**
+ * The board showed you a place you were not in, and then stopped.
+ *
+ * Two separate problems, both about the same missing habit of reading what the
+ * server sends. `GET /gamification/leaderboard/` has always returned `my_rank`,
+ * `my_xp` and `my_level`; this view ignored all three and instead pushed a row
+ * built out of the browser's own persisted XP into the list, sorted it in, and
+ * printed the array index beside it. A player ranked five thousandth was shown
+ * sitting just under the last visible name — with whatever XP localStorage
+ * happened to hold, which is optimistic by design and is never the truth.
+ *
+ * And the fetch ran once, on mount, so "live table" meant reloading the page.
+ */
+describe('the leaderboard shows your real place, and keeps itself current', () => {
+  it('prints the place the server gives each row, not its position', async () => {
+    // Three players level on 500 points are all first. Counting rows says
+    // first, second and third, and disagrees with all three profile pages.
+    serve([
+      entry('Ayaz', 500, 3, { rank: 1 }),
+      entry('Bek', 500, 3, { rank: 1 }),
+      entry('Dilnoza', 500, 3, { rank: 1 }),
+      entry('Kamola', 400, 3, { rank: 4 }),
+    ]);
+    const { container } = await renderBoard();
+    await screen.findByText('Ayaz');
+
+    expect(container.textContent).toContain('#1');
+    expect(container.textContent).not.toContain('#2');
+    expect(container.textContent).not.toContain('#3');
+    expect(screen.getByText('4')).toBeInTheDocument();
+  });
+
+  it('tells you your own place when you are past the last visible row', async () => {
+    useAuthStore.setState({
+      user: { username: 'kamola', astronaut_name: 'Kamola' },
+      isAuthenticated: true,
+    });
+    serve([entry('Ayaz', 9000), entry('Bek', 8000)], {
+      my_rank: 4951, my_xp: 120, my_level: 2, total_players: 9975,
+    });
+    await renderBoard();
+    await screen.findByText('Ayaz');
+
+    expect(screen.getByText(/4[\s,]?951/)).toBeInTheDocument();
+    expect(screen.getByText(/9[\s,]?975/)).toBeInTheDocument();
+  });
+
+  it('never invents a row out of the number in the browser', async () => {
+    // The store is optimistic and persisted; it is not the server's answer.
+    useAuthStore.setState({
+      user: { username: 'kamola', astronaut_name: 'Kamola' },
+      isAuthenticated: true,
+    });
+    useGamificationStore.setState({ xp: 999999, level: 99 });
+    serve([entry('Ayaz', 9000), entry('Bek', 8000)], {
+      my_rank: 4951, my_xp: 120, my_level: 2, total_players: 9975,
+    });
+    const { container } = await renderBoard();
+    await screen.findByText('Ayaz');
+
+    expect(screen.queryByText('Kamola')).not.toBeInTheDocument();
+    expect(container.textContent).not.toContain('999,999');
+    expect(container.textContent).not.toContain('999999');
+  });
+
+  it('says nothing about a place for a player who has not scored yet', async () => {
+    useAuthStore.setState({
+      user: { username: 'kamola', astronaut_name: 'Kamola' },
+      isAuthenticated: true,
+    });
+    serve([entry('Ayaz', 9000)], { my_rank: null, my_xp: 0, my_level: 1, total_players: 1 });
+    const { container } = await renderBoard();
+    await screen.findByText('Ayaz');
+
+    expect(container.textContent).not.toMatch(/#null|#undefined|#NaN/);
+    expect(screen.getByText(/join the rankings/i)).toBeInTheDocument();
+  });
+
+  it('highlights the row the server says is yours, not your namesake', async () => {
+    // Two children may choose the same astronaut name. Matching on the name
+    // put the highlight on both of them.
+    useAuthStore.setState({
+      user: { username: 'nebula2', astronaut_name: 'Nebula' },
+      isAuthenticated: true,
+    });
+    serve([
+      entry('Cosmo', 900, 4, { rank: 1 }),
+      entry('Nebula', 800, 4, { rank: 2 }),
+      entry('Vega', 700, 3, { rank: 3 }),
+      entry('Nebula', 600, 3, { rank: 4, is_you: true }),
+    ]);
+    const { container } = await renderBoard();
+    await screen.findAllByText('Nebula');
+
+    const mine = [...container.querySelectorAll('[aria-current="true"]')];
+    expect(mine).toHaveLength(1);
+    expect(mine[0].textContent).toContain('4');
+  });
+
+  it('asks again on its own, at the interval the server sets', async () => {
+    serve([entry('Ayaz', 900)], { poll_after_seconds: 30 });
+    const started = vi.spyOn(globalThis, 'setInterval');
+    await renderBoard();
+    await screen.findByText('Ayaz');
+
+    const scheduled = started.mock.calls.filter(([, delay]) => delay >= 30000);
+    expect(scheduled.length).toBeGreaterThan(0);
+
+    api.get.mockClear();
+    await act(async () => {
+      scheduled.at(-1)[0]();
+    });
+    expect(api.get).toHaveBeenCalledWith('/gamification/leaderboard/');
+    started.mockRestore();
+  });
+
+  it('does not poll a tab nobody is looking at', async () => {
+    // Ten thousand pages left open in background tabs are ten thousand
+    // requests a minute for something nobody is reading.
+    serve([entry('Ayaz', 900)]);
+    const started = vi.spyOn(globalThis, 'setInterval');
+    await renderBoard();
+    await screen.findByText('Ayaz');
+
+    const tick = started.mock.calls.filter(([, delay]) => delay >= 30000).at(-1)[0];
+    const visibility = Object.getOwnPropertyDescriptor(Document.prototype, 'visibilityState');
+    Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true });
+    api.get.mockClear();
+    await act(async () => { tick(); });
+
+    expect(api.get).not.toHaveBeenCalled();
+    Object.defineProperty(document, 'visibilityState', visibility ?? { value: 'visible', configurable: true });
+    started.mockRestore();
+  });
+
+  it('stops asking when the page is left', async () => {
+    serve([entry('Ayaz', 900)]);
+    const started = vi.spyOn(globalThis, 'setInterval');
+    const stopped = vi.spyOn(globalThis, 'clearInterval');
+    const { unmount } = await renderBoard();
+    await screen.findByText('Ayaz');
+
+    const index = started.mock.calls.findIndex(([, delay]) => delay >= 30000);
+    const handle = started.mock.results[index].value;
+    unmount();
+
+    expect(stopped.mock.calls.flat()).toContain(handle);
+    started.mockRestore();
+    stopped.mockRestore();
+  });
+
+  it('says the board could not be loaded rather than showing an empty one', async () => {
+    // The failure was swallowed by an empty catch (C-10) and the page then
+    // claimed there were no players.
+    api.get.mockRejectedValue(new Error('502'));
+    const { container } = await renderBoard();
+
+    await vi.waitFor(() =>
+      expect(container.textContent).not.toMatch(/Syncing|Sinxron|Синхрон/i),
+    );
+    expect(container.textContent).toMatch(/rankings/i);
   });
 });

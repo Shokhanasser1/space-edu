@@ -482,7 +482,11 @@
     "level": "Level",
     "experience": "Experience",
     "xpPoints": "XP points",
-    "secureProtocol": "Secure Data Protocol Verified"
+    "secureProtocol": "Secure Data Protocol Verified",
+    "yourPlace": "Your place",
+    "ofPlayers": "of {count} players",
+    "notRankedYet": "Earn XP to join the rankings",
+    "loadFailed": "Rankings could not be loaded. Trying again shortly."
   },
   "live": {
     "title": "Live",

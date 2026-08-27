@@ -20,6 +20,12 @@ class UserGamificationProfile(models.Model):
 
     class Meta:
         verbose_name = 'Gamification Profile'
+        indexes = [
+            # The leaderboard orders by this and counts against it on every
+            # request the cache does not answer. Without an index both are a
+            # scan of every account on the platform, on a public endpoint.
+            models.Index(fields=['-xp'], name='gamification_xp_desc_idx'),
+        ]
 
     def __str__(self):
         return f'{self.user.username} — Level {self.level}'

@@ -482,7 +482,11 @@
     "level": "Daraja",
     "experience": "Tajriba",
     "xpPoints": "XP ballari",
-    "secureProtocol": "Xavfsiz ma'lumotlar protokoli tasdiqlangan"
+    "secureProtocol": "Xavfsiz ma'lumotlar protokoli tasdiqlangan",
+    "yourPlace": "Sizning o'rningiz",
+    "ofPlayers": "{count} ishtirokchidan",
+    "notRankedYet": "Reytingga kirish uchun XP to'plang",
+    "loadFailed": "Reytinglarni yuklab bo'lmadi. Tez orada qayta urinamiz."
   },
   "live": {
     "title": "Jonli",

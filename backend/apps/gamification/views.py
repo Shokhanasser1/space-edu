@@ -1,5 +1,6 @@
 
 from django.db.models import Avg, Count, Max, Sum
+from django.utils.cache import patch_vary_headers
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -9,11 +10,11 @@ from .full_profile import FullProfileView
 from django.db import transaction
 from rest_framework.permissions import IsAuthenticated
 
+from .leaderboard import BOARD_SIZE, BOARD_TTL_SECONDS, cached_board, rank_for_xp
 from .models import Badge, UserBadge, UserGamificationProfile, RewardProduct, UserRewardPurchase
 from .serializers import (
     BadgeSerializer,
     GamificationProfileSerializer,
-    LeaderboardEntrySerializer,
     RewardProductSerializer,
     UserBadgeSerializer,
     UserRewardPurchaseSerializer,
@@ -28,45 +29,66 @@ class GamificationProfileView(generics.RetrieveAPIView):
         return profile
 
 
-class LeaderboardView(generics.ListAPIView):
-    """XP-based global leaderboard."""
-    serializer_class = LeaderboardEntrySerializer
+class LeaderboardView(APIView):
+    """GET /gamification/leaderboard/ — the public XP board, and your place on it.
+
+    The board is the same for everybody, so it is built once every
+    `BOARD_TTL_SECONDS` and served from the cache to every caller in between;
+    the two numbers that are yours alone — your place and your XP — are read per
+    request, from indexed counts. That is what makes a table refreshed by
+    polling affordable with ten thousand children on it: the poll rate decides
+    how much serialising the web workers do, not how much work the database
+    does.
+
+    Every place printed here comes from `rank_for_xp`, which the profile page
+    calls too. It used to be the row's position in the list, which is a
+    different number as soon as two players are level.
+    """
     permission_classes = [AllowAny]
-    pagination_class = None
 
-    def get_queryset(self):
-        return (
-            UserGamificationProfile.objects
-            .select_related('user')
-            .order_by('-xp')[:100]
-        )
+    def get(self, request):
+        page = cached_board()
 
-    def list(self, request, *args, **kwargs):
-        response = super().list(request, *args, **kwargs)
-
-        # Include user's own rank if authenticated
+        # `request.user.gamification` raises when the row is missing, which the
+        # view used to answer with `except Exception: pass` — banned by C-10,
+        # and it left the caller unable to tell "not ranked yet" from "the
+        # server broke". Ask a question that has an answer.
+        profile = None
         if request.user.is_authenticated:
-            try:
-                profile = request.user.gamification
-                rank = UserGamificationProfile.objects.filter(xp__gt=profile.xp).count() + 1
-                response.data = {
-                    'leaderboard': response.data,
-                    'my_rank': rank,
-                    'my_xp': profile.xp,
-                    'my_level': profile.level,
-                    'total_players': UserGamificationProfile.objects.count(),
-                }
-            except Exception:
-                response.data = {
-                    'leaderboard': response.data,
-                    'total_players': UserGamificationProfile.objects.count(),
-                }
-        else:
-            response.data = {
-                'leaderboard': response.data,
-                'total_players': UserGamificationProfile.objects.count(),
-            }
+            profile = UserGamificationProfile.objects.filter(user=request.user).first()
+        my_id = profile.id if profile else None
 
+        payload = {
+            # `is_you` is added here rather than baked into the cached row: the
+            # rows are shared by every caller and this one field is not.
+            'leaderboard': [
+                {**row, 'is_you': profile_id == my_id}
+                for profile_id, row in page['board']
+            ],
+            'total_players': page['total_players'],
+            'board_size': BOARD_SIZE,
+            # The refresh interval is the server's to set — it is the cache
+            # window, and it is what the polling costs. Sending it means it can
+            # be turned down under load without shipping a new front end.
+            'poll_after_seconds': BOARD_TTL_SECONDS,
+        }
+
+        if request.user.is_authenticated:
+            payload['my_rank'] = rank_for_xp(profile.xp) if profile else None
+            payload['my_xp'] = profile.xp if profile else 0
+            payload['my_level'] = profile.level if profile else 1
+
+        response = Response(payload)
+        if request.user.is_authenticated:
+            # Carries this child's own place. Not for a shared cache, and not
+            # for the disk either.
+            response['Cache-Control'] = 'private, no-store'
+        else:
+            # The anonymous board is public and already stale by up to the cache
+            # window, so a proxy holding it for the same window costs nothing in
+            # freshness and takes the poll traffic off the application entirely.
+            response['Cache-Control'] = f'public, max-age={BOARD_TTL_SECONDS}'
+        patch_vary_headers(response, ('Authorization',))
         return response
 
 
