@@ -80,7 +80,7 @@ export default function SpaceRunView() {
     };
   }, [started]);
 
-  const { score, survivalSec, distance, coinsCollected, health, shield, boost, gameOver, paused, difficulty, activePower, setHud, reset } =
+  const { score, survivalSec, distance, coinsCollected, shield, boost, gameOver, paused, difficulty, activePower, setHud, reset } =
     useSpaceRunHud();
   const wallet = useSpaceArcadeStore((s) => s.wallet);
   const tryBuySkin = useSpaceArcadeStore((s) => s.tryBuySkin);
@@ -366,17 +366,10 @@ export default function SpaceRunView() {
               </>
             )}
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
-            {/* Health HUD Bar */}
-            <div className="sr-hud-bar" style={{ borderColor: 'rgba(251,113,133,0.35)', boxShadow: '0 0 18px rgba(251,113,133,0.08), inset 0 0 12px rgba(251,113,133,0.04)' }}>
-              <div className="flex justify-between text-[10px] uppercase tracking-wider font-bold mb-2">
-                <span className="text-rose-200" style={{ textShadow: '0 0 8px rgba(251,113,133,0.6)' }}>Health</span>
-                <span className="text-rose-300 tabular-nums" style={{ textShadow: '0 0 6px rgba(251,113,133,0.5)' }}>{Math.round(health)}%</span>
-              </div>
-              <div className="h-[6px] rounded-[3px] bg-black/40 overflow-hidden" style={{ boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.5)' }}>
-                <div className="sr-hud-bar-fill h-full" style={{ width: `${health}%`, background: 'linear-gradient(90deg, #fb7185, #f43f5e, #e11d48)', boxShadow: '0 0 10px rgba(251,113,133,0.6), 0 0 20px rgba(251,113,133,0.25)' }} />
-              </div>
-            </div>
+          {/* One meteor ends the run, so there is no health left to meter —
+              the shield is the only thing standing between the ship and the
+              next rock, and it is either there or it is not. */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
             {/* Shield HUD Bar */}
             <div className="sr-hud-bar" style={{ borderColor: 'rgba(34,211,238,0.35)', boxShadow: '0 0 18px rgba(34,211,238,0.08), inset 0 0 12px rgba(34,211,238,0.04)' }}>
               <div className="flex justify-between text-[10px] uppercase tracking-wider font-bold mb-2">
