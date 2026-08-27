@@ -51,11 +51,20 @@ export default function RegisterView() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // Caught here rather than at the server, because a round trip to be told
+    // the two boxes differ is a round trip nobody needed.
+    if (form.password !== form.password2) {
+      setErrors({ password2: [t('registerPage', 'passwordsDoNotMatch')] });
+      return;
+    }
     setLoading(true);
     setErrors({});
     try {
       const { data } = await api.post('/auth/register/', form);
       login(data.user, data.access, data.refresh);
+      // Registration sends a code to confirm the address. Nothing is blocked
+      // until it is used except writing to other people, so this lands on the
+      // home page and the banner in chat does the asking.
       navigate('/');
     } catch (err) {
       const minutes = retryAfterMinutes(err);

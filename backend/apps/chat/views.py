@@ -68,6 +68,30 @@ def suspension_refusal(user):
     )
 
 
+def verification_refusal(user):
+    """Refuse a post from an account whose address nobody has proved.
+
+    An unconfirmed address is an account somebody made in thirty seconds with a
+    name that is not theirs, and this is where that costs something: a message
+    to another child. Confirming it puts a real address behind whoever wrote it,
+    which is most of what moderation needs and none of what it had.
+
+    Reading is not gated, and neither are reporting and blocking. A child must
+    always be able to report or block, and putting the safety controls behind an
+    e-mail they may not be able to reach today is the wrong trade in the wrong
+    direction.
+    """
+    if user.email_verified_at is not None:
+        return None
+    return Response(
+        {
+            'detail': 'Confirm your e-mail address before writing to other people.',
+            'code': 'email_unverified',
+        },
+        status=status.HTTP_403_FORBIDDEN,
+    )
+
+
 class DirectMessagesEnabledMixin:
     """Refuse every DM endpoint while the feature flag is off.
 
@@ -128,7 +152,7 @@ class RoomMessagesView(APIView):
         except ChatRoom.DoesNotExist:
             return Response({'detail': 'Room not found.'}, status=status.HTTP_404_NOT_FOUND)
 
-        refusal = suspension_refusal(request.user)
+        refusal = verification_refusal(request.user) or suspension_refusal(request.user)
         if refusal:
             return refusal
 
@@ -419,6 +443,10 @@ class ConversationStartView(DirectMessagesEnabledMixin, APIView):
             return Response({'detail': 'Cannot message yourself.'},
                             status=status.HTTP_400_BAD_REQUEST)
 
+        refusal = verification_refusal(request.user)
+        if refusal:
+            return refusal
+
         if UserBlock.between(request.user, other):
             # Same wording either way. "You are blocked" tells the blocked party
             # something the blocker did not agree to share.
@@ -493,7 +521,11 @@ class ConversationMessagesView(DirectMessagesEnabledMixin, APIView):
             return Response({'detail': 'You cannot message this person.'},
                             status=status.HTTP_403_FORBIDDEN)
 
-        refusal = suspension_refusal(request.user) or self._consent_refusal(convo, request.user)
+        refusal = (
+            verification_refusal(request.user)
+            or suspension_refusal(request.user)
+            or self._consent_refusal(convo, request.user)
+        )
         if refusal:
             return refusal
 
@@ -614,4 +646,8 @@ class ChatSettingsView(APIView):
             ],
             # So the composer can explain itself rather than just refusing.
             'suspension': ChatSuspensionSerializer(suspension).data if suspension else None,
+            'email_verified': request.user.email_verified_at is not None,
+            'can_post': (
+                request.user.email_verified_at is not None and suspension is None
+            ),
         })

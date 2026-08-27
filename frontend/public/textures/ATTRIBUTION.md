@@ -43,3 +43,67 @@ the budget nothing. Keep it that way: resize before adding, not after.
 
 `jupitermap.jpg`, `marsmap1k.jpg`, `moon_1024.jpg` and the rest predate this
 note. If you touch one, record where it came from here.
+
+## The Solar System scene (28 August 2026)
+
+The rebuilt `/3d-solar-system` reads every planet map from this directory
+through a candidate list (`src/solar/catalog.js`): the first file that exists
+wins. The lists name Solar System Scope's `2k_*.jpg` files first and the older
+maps second, so upgrading a planet is: download the 2k map from
+https://www.solarsystemscope.com/textures/ (CC BY 4.0 — add the credit here),
+resize if it is over 2 MB, drop it in, done. Nothing else changes. The files
+that would be picked up: `2k_sun.jpg`, `2k_mercury.jpg`, `2k_venus_atmosphere.jpg`,
+`2k_earth_daymap.jpg`, `2k_earth_nightmap.jpg`, `2k_earth_clouds.jpg`,
+`2k_mars.jpg`, `2k_jupiter.jpg`, `2k_saturn.jpg`, `2k_saturn_ring_alpha.png`,
+`2k_uranus.jpg`, `2k_neptune.jpg`, `2k_moon.jpg`, and the `2k_*_fictional.jpg`
+maps for Ceres, Eris, Haumea and Makemake. NASA's CGI Moon Kit
+(https://svs.gsfc.nasa.gov/4720, public domain) is the better Moon.
+
+Neither host could be reached from the machine that did the rebuild, so the
+scene ships with the maps that were already here.
+
+## `public/data/`
+
+| File | From | Licence |
+|---|---|---|
+| `stars-bsc5.json` | Yale Bright Star Catalogue, 5th ed. (Hoffleit & Warren 1991), via `tdc-www.harvard.edu/catalogs/bsc5.dat.gz`; 9 096 stars with J2000 RA/Dec, V and B−V | public domain |
+| `small-bodies.json` | NASA/JPL Small-Body Database Query API: 2 500 main-belt asteroids and 1 119 trans-Neptunian objects, osculating elements at JD 2461200.5 | public domain (US Government work) |
+
+## Solar System Scope maps (added 28 August 2026)
+
+`4k_sun.webp`, `4k_mercury.webp`, `4k_venus_atmosphere.webp`,
+`4k_earth_daymap.webp`, `4k_earth_nightmap.webp`, `2k_earth_clouds.webp`,
+`2k_earth_specular.webp`, `4k_mars.webp`, `4k_jupiter.webp`, `4k_saturn.webp`,
+`2k_saturn_ring_alpha.png`, `2k_uranus.webp`, `2k_neptune.webp`, `4k_moon.webp`,
+`2k_{ceres,eris,haumea,makemake}_fictional.webp`, `4k_stars_milky_way.webp`
+— **Solar System Scope**, https://www.solarsystemscope.com/textures/, licensed
+**CC BY 4.0**. Downloaded as the 8k/4k/2k JPEG/PNG/TIFF originals and re-encoded
+to WebP at 4096×2048 or 2048×1024 (quality 72–86) to sit under the 2 MB
+per-file CI budget; the cloud map's luminance became its alpha channel; the ring
+strip was resized to 2048 wide. The four dwarf-planet maps are the artist's
+"fictional" ones — nobody has imaged Eris, Haumea or Makemake at that detail.
+The Milky Way panorama is in galactic coordinates (centre at the middle of
+the image, longitude increasing to the left), which `SkyDome.jsx` relies on.
+
+Every `4k_*` map also exists as `2k_*` (same source, 2048×1024). A 4k map
+decodes to 45 MB of GPU memory whatever its file size, so the scene loads the
+2k tier for everything and swaps in the 4k file only for the selected body
+(`src/solar/textures.js`); the 4k sky is used only in the high-quality preset.
+
+**The 8k tier is not in git.** `scripts/convert-textures.py <dir with the SSS
+originals>` writes `8k_{sun,mercury,earth_daymap,earth_nightmap,mars,jupiter,
+saturn,moon}.webp` (0.2–8 MB each) next to the others; `.gitignore` keeps them
+out of the repository. On the server, put them in the same static `textures/`
+directory, or on a CDN/S3 and point `VITE_ASSET_BASE` at it (with CORS). The
+scene loads an 8k map only for the selected body, only on the high-quality
+preset, and only when the GPU reports `maxTextureSize ≥ 8192` (a decoded 8k
+map is 180 MB); otherwise it takes the 4k file, so a deploy without the 8k
+files loses nothing but the last step of sharpness.
+
+## `public/models/probes/`
+
+`voyager.glb`, `new_horizons.glb`, `parker.glb`, `juno.glb` — NASA
+Visualization Technology Applications and Development (VTAD), from
+https://science.nasa.gov/3d-resources/ (public domain, NASA). Reduced with
+gltf-transform (Draco) and 512 px WebP textures from 3–9 MB to 0.1–0.3 MB each.
+JWST has no model on that site; it stays a marker.

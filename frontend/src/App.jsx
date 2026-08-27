@@ -5,6 +5,7 @@ import Navigation from '@/components/layout/Navigation';
 import ParticleBackground from '@/components/layout/ParticleBackground';
 import PageTransition from '@/components/layout/PageTransition';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import GuestRoute from '@/components/GuestRoute';
 import StaffRoute from '@/components/StaffRoute';
 import Footer from '@/components/layout/Footer';
 import CosmicLoader from '@/components/ui/CosmicLoader';
@@ -13,6 +14,8 @@ import ChatSystem from '@/features/chat/ChatSystem';
 // Eager — first-hit pages, tiny bundles
 import LoginView    from '@/views/auth/LoginView';
 import RegisterView from '@/views/auth/RegisterView';
+import ForgotPasswordView from '@/views/auth/ForgotPasswordView';
+import VerifyEmailView    from '@/views/auth/VerifyEmailView';
 import HomeView     from '@/views/home/HomeView';
 import NotFoundView from '@/views/misc/NotFoundView';
 
@@ -60,10 +63,13 @@ function PT({ children }) {
 export default function App() {
   const location = useLocation();
   const isGame  = location.pathname === GAME_PATH;
-  const isAuth  = ['/login', '/register'].includes(location.pathname);
+  // The chrome-free screens: no navigation, no particles, no footer. A new
+  // auth route that is not in here gets the whole site around it.
+  const isAuth  = ['/login', '/register', '/forgot-password', '/verify-email']
+    .includes(location.pathname);
   const isAdmin = location.pathname === '/admin-panel';
   const isHome  = location.pathname === '/';
-  const shouldHideFooter = ['/history', '/live', '/'].includes(location.pathname) || isAdmin;
+  const shouldHideFooter = ['/history', '/live', '/3d-solar-system', '/'].includes(location.pathname) || isAdmin;
 
   return (
     <div className="relative min-h-screen text-white font-sans">
@@ -81,8 +87,14 @@ export default function App() {
           <Routes>
             {/* Public */}
             <Route path="/"         element={<PT><HomeView /></PT>} />
-            <Route path="/login"    element={<LoginView />} />
-            <Route path="/register" element={<RegisterView />} />
+            {/* Signed out only. Reaching the sign-in form while somebody else is
+                still signed in on a shared computer is how one child ends up
+                looking at another child's account. */}
+            <Route element={<GuestRoute />}>
+              <Route path="/login"           element={<LoginView />} />
+              <Route path="/register"        element={<RegisterView />} />
+              <Route path="/forgot-password" element={<ForgotPasswordView />} />
+            </Route>
             <Route path="/leaderboard"  element={<PT><LeaderboardView /></PT>} />
             <Route path="/history"      element={<PT><HistoryView /></PT>} />
             <Route path="/market"       element={<PT><MarketView /></PT>} />
@@ -121,6 +133,7 @@ export default function App() {
               <Route path="/portfolio" element={<PT><PortfolioView /></PT>} />
               <Route path="/chat"      element={<PT><ChatView /></PT>} />
               <Route path="/daily"     element={<PT><DailyChallengeView /></PT>} />
+              <Route path="/verify-email" element={<VerifyEmailView />} />
             </Route>
 
             {/* Admin — staff only, not merely signed in */}

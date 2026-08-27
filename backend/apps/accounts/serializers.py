@@ -1,7 +1,29 @@
 from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 
 from .models import User
+
+
+def check_new_password(password, password2, user=None):
+    """The password rules, in one place, for the four flows that set one.
+
+    Registration, a reset, a change, and setting a first password on an account
+    that arrived without one all have to agree about what a password is. Four
+    copies of AUTH_PASSWORD_VALIDATORS would agree on the day they were written
+    and not for long after.
+
+    `user` matters: UserAttributeSimilarityValidator is in the list and does
+    nothing without it, so without this argument "aziz@example.com" is an
+    acceptable password for aziz@example.com. Registration cannot pass one --
+    there is no account yet -- but every other caller can and does.
+    """
+    if password != password2:
+        raise serializers.ValidationError({'password': 'Passwords do not match.'})
+    try:
+        validate_password(password, user=user)
+    except DjangoValidationError as e:
+        raise serializers.ValidationError({'password': list(e.messages)})
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -39,13 +61,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, attrs):
-        if attrs['password'] != attrs['password2']:
-            raise serializers.ValidationError({'password': 'Passwords do not match.'})
-        from django.core.exceptions import ValidationError as DjangoValidationError
-        try:
-            validate_password(attrs['password'])
-        except DjangoValidationError as e:
-            raise serializers.ValidationError({'password': list(e.messages)})
+        check_new_password(attrs['password'], attrs['password2'])
         return attrs
 
     def create(self, validated_data):
@@ -90,13 +106,16 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     avatar_url = serializers.SerializerMethodField()
+    # The boolean, never the timestamp behind it: when a particular child was at
+    # a computer is not something a response needs to carry.
+    email_verified = serializers.BooleanField(source='is_email_verified', read_only=True)
 
     class Meta:
         model = User
         fields = (
             'id', 'username', 'first_name', 'last_name', 'email',
             'date_of_birth', 'avatar_url', 'astronaut_name', 'bio', 'language', 'date_joined',
-            'is_staff',
+            'is_staff', 'role', 'email_verified', 'pending_email',
         )
         read_only_fields = fields
 
@@ -138,3 +157,44 @@ class ProfileSerializer(serializers.ModelSerializer):
         if instance.avatar and request:
             data['avatar'] = request.build_absolute_uri(instance.avatar.url)
         return data
+
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    """Who to send a code to. The answer to this is always the same 200,
+    whether or not there is an account, so nothing here identifies anybody."""
+
+    email = serializers.EmailField()
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    code = serializers.RegexField(r'^\d{6}$')
+    password = serializers.CharField(write_only=True, style={'input_type': 'password'})
+    password2 = serializers.CharField(write_only=True, style={'input_type': 'password'})
+
+
+class PasswordChangeSerializer(serializers.Serializer):
+    """`current_password` is optional here and required by the view.
+
+    The view has the account, and an account with no usable password is refused
+    outright rather than let through without one -- see the reasoning there. The
+    field stays optional at this level so that refusal can carry an explanation
+    instead of a field error that does not fit the situation.
+    """
+
+    current_password = serializers.CharField(
+        write_only=True, required=False, allow_blank=True, style={'input_type': 'password'}
+    )
+    password = serializers.CharField(write_only=True, style={'input_type': 'password'})
+    password2 = serializers.CharField(write_only=True, style={'input_type': 'password'})
+
+
+class EmailChangeRequestSerializer(serializers.Serializer):
+    new_email = serializers.EmailField()
+    current_password = serializers.CharField(
+        write_only=True, required=False, allow_blank=True, style={'input_type': 'password'}
+    )
+
+
+class EmailChangeConfirmSerializer(serializers.Serializer):
+    code = serializers.RegexField(r'^\d{6}$')

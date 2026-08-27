@@ -1,6 +1,7 @@
 """Regression tests for findings from the 2026-08-22 audit."""
 import math
 
+from django.core.cache import cache
 from django.test import TestCase
 from django.utils import timezone
 from rest_framework import status
@@ -167,11 +168,21 @@ class LeaderboardPrivacyTests(TestCase):
         UserGamificationProfile.objects.filter(user=user).update(xp=500)
 
     def test_anonymous_leaderboard_does_not_expose_real_names(self):
+        cache.clear()  # the board is cached across callers
         r = APIClient().get('/api/v1/gamification/leaderboard/')
         self.assertEqual(r.status_code, status.HTTP_200_OK)
         body = str(r.data)
         self.assertNotIn('Aziz', body)
         self.assertNotIn('Karimov', body)
+
+    def test_a_row_carries_these_fields_and_no_others(self):
+        """Pinned as an exact set, not a subset. The board and the browser have
+        already drifted apart once (commit cbc4c6e), and the way a real name
+        comes back is somebody adding one more convenient field."""
+        cache.clear()
+        r = APIClient().get('/api/v1/gamification/leaderboard/')
+        for row in r.data['leaderboard']:
+            self.assertEqual(set(row), {'rank', 'display_name', 'xp', 'level', 'is_you'})
 
 
 class DailyStreakClaimTests(TestCase):
@@ -259,3 +270,147 @@ class DailyStreakClaimTests(TestCase):
             self.assertNotEqual(
                 timezone.localdate(tashkent_evening), tashkent_evening.date(),
             )
+
+
+class LeaderboardAccuracyTests(TestCase):
+    """What the board ranks, and whether it says the same thing as the profile.
+
+    The board sorted by XP and let the browser count the rows, so the number a
+    child saw next to their name was a position in an array, not a rank. Two of
+    the three problems that follows from that are visible without any data at
+    all:
+
+      - tied players were given different places, silently and in whatever
+        order the database happened to return them, while `my_rank` — and the
+        rank on the profile page, computed the same way — said they were level;
+      - every account has a gamification row from the moment it is created, so
+        `total_players` was the number of registrations, and a child who had
+        never earned a point was ranked among them.
+
+    The third needs a full board: past place 100 the browser appended a row
+    built from its own locally-stored XP and sorted it in, so a player ranked
+    four thousandth was shown sitting just under the last visible name.
+    """
+
+    def setUp(self):
+        cache.clear()  # the board is cached; see apps/gamification/leaderboard.py
+
+    def _player(self, name, xp):
+        user = User.objects.create_user(
+            username=name, email=f'{name}@e.com', password='x', astronaut_name=name,
+        )
+        UserGamificationProfile.objects.filter(user=user).update(
+            xp=xp, level=UserGamificationProfile.level_for_xp(xp),
+        )
+        # Creating the profile caches it on the User instance, so `user.gamification`
+        # here would still read the XP it was created with. A request loads its own
+        # user; so does this.
+        return User.objects.get(pk=user.pk)
+
+    def _board(self, user=None):
+        client = APIClient()
+        if user is not None:
+            client.force_authenticate(user)
+        response = client.get('/api/v1/gamification/leaderboard/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        return response.data
+
+    def test_tied_players_share_one_place(self):
+        for name in ('ayaz', 'bek', 'dilnoza'):
+            self._player(name, 500)
+
+        rows = self._board()['leaderboard']
+        self.assertEqual([row['rank'] for row in rows], [1, 1, 1])
+
+    def test_a_tied_players_place_is_the_one_their_profile_shows(self):
+        """A board that disagrees with the child's own profile page is worse
+        than no board. Both numbers now come from the same helper."""
+        users = [self._player(name, 500) for name in ('ayaz', 'bek', 'dilnoza')]
+        self._player('chempion', 900)
+
+        for user in users:
+            board = self._board(user)
+            profile = APIClient()
+            profile.force_authenticate(user)
+            full = profile.get('/api/v1/gamification/profile/full/')
+            self.assertEqual(full.status_code, status.HTTP_200_OK)
+
+            self.assertEqual(board['my_rank'], 2, f'{user.username} on the board')
+            self.assertEqual(full.data['leaderboard']['rank'], board['my_rank'])
+            self.assertEqual(full.data['leaderboard']['total_players'], board['total_players'])
+
+            # And the place printed beside their name is that same number. It
+            # used to be the row's position in the array, so of three tied
+            # players one was shown second and one third while every profile
+            # page said second.
+            mine = [row for row in board['leaderboard'] if row['is_you']]
+            self.assertEqual([row['rank'] for row in mine], [board['my_rank']])
+
+    def test_an_account_that_never_played_is_not_a_player(self):
+        self._player('ayaz', 500)
+        self._player('bek', 300)
+        lurker = self._player('kuzatuvchi', 0)
+
+        board = self._board(lurker)
+        self.assertEqual(board['total_players'], 2, 'registrations are not players')
+        self.assertEqual(
+            [row['display_name'] for row in board['leaderboard']], ['ayaz', 'bek'],
+        )
+        self.assertIsNone(board['my_rank'], 'nobody is ranked for having signed up')
+
+    def test_your_own_place_is_yours_even_when_you_are_off_the_board(self):
+        for i in range(105):
+            self._player(f'player{i:03d}', 10_000 - i)
+        last = User.objects.get(username='player104')
+
+        board = self._board(last)
+        self.assertEqual(len(board['leaderboard']), 100)
+        self.assertEqual(board['my_rank'], 105)
+        self.assertEqual(board['my_xp'], 10_000 - 104)
+        self.assertNotIn('player104', [row['display_name'] for row in board['leaderboard']])
+
+    def test_the_board_marks_your_row_and_not_your_namesake(self):
+        """Two children may choose the same astronaut name, and the row carries
+        nothing else to tell them apart — so the browser cannot work out which
+        one is you and used to highlight both."""
+        first = self._player('nebula', 500)
+        second = User.objects.create_user(
+            username='nebula2', email='n2@e.com', password='x', astronaut_name='nebula',
+        )
+        UserGamificationProfile.objects.filter(user=second).update(xp=400, level=3)
+        second = User.objects.get(pk=second.pk)
+
+        board = self._board(first)['leaderboard']
+        self.assertEqual([row['is_you'] for row in board], [True, False])
+
+        cache.clear()
+        board = self._board(second)['leaderboard']
+        self.assertEqual([row['is_you'] for row in board], [False, True])
+
+    def test_a_cached_board_does_not_hand_you_someone_elses_highlight(self):
+        """The rows are cached and shared by every caller; `is_you` is not."""
+        first = self._player('ayaz', 500)
+        second = self._player('bek', 400)
+
+        self._board(first)                       # fills the cache
+        board = self._board(second)['leaderboard']  # served from it
+        self.assertEqual([row['is_you'] for row in board], [False, True])
+
+    def test_a_caller_with_no_gamification_row_gets_an_answer_not_a_swallowed_error(self):
+        """The view wrapped the whole block in `except Exception: pass`, which
+        is banned (C-10) and left the caller unable to tell "unranked" from
+        "the server broke"."""
+        self._player('bek', 500)
+        user = self._player('ayaz', 400)
+        UserGamificationProfile.objects.filter(user=user).delete()
+
+        board = self._board(user)
+        self.assertEqual([row['display_name'] for row in board['leaderboard']], ['bek'])
+        self.assertIn('my_rank', board)
+        self.assertIsNone(board['my_rank'])
+
+    def test_the_board_tells_the_client_how_often_it_is_worth_asking_again(self):
+        """The poll interval is the server's decision, not the browser's: it is
+        what the cache lifetime is, and it is what 10 000 clients cost."""
+        board = self._board()
+        self.assertGreaterEqual(board['poll_after_seconds'], 1)

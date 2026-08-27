@@ -9,6 +9,18 @@ python-decouple==3.8.*
 dj-database-url==2.2.*
 psycopg2-binary==2.9.*
 
+# Verifying the ID token Google's sign-in button hands the browser: signature,
+# expiry, and the audience it was minted for. Fifteen lines of it are used, and
+# the alternative -- django-allauth or social-auth -- is roughly twenty tables,
+# django.contrib.sites, and a second authentication stack living beside
+# SimpleJWT, for one button.
+#
+# `requests` is listed for itself and not left to chance: google-auth's HTTP
+# transport imports it, and nothing else in this file requires it (botocore
+# vendors its own urllib3). It is here today only because something installed it.
+google-auth==2.*
+requests==2.34.*
+
 # Only used by apps/tests_repo.py, which parses .github/workflows/*.yml. A
 # workflow that does not parse never runs and reports a zero-second startup
 # failure instead of a red build, so it is the one break CI cannot tell us

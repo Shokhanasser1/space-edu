@@ -215,13 +215,184 @@
     "toggleRings": "Toggle Rings",
     "ssTitle": "SOLAR SYSTEM",
     "ssRealtime": "REAL-TIME",
-    "ssDescription": "Live Keplerian orbital simulation. Data provided by NASA JPL Horizons.",
+    "ssDescription": "Positions by VSOP87 ephemerides, verified against NASA JPL Horizons.",
     "currentDate": "Current Date",
     "live": "LIVE",
     "oneDayPerSec": "1 DAY/S",
     "oneMonthPerSec": "1 MO/S",
     "speed": "Speed",
-    "realTimeValue": "REAL TIME"
+    "realTimeValue": "REAL TIME",
+      "solar": {
+        "title": "Solar System",
+        "subtitle": "Positions from VSOP87 ephemerides (astronomy-engine), checked against NASA JPL Horizons. Satellites from CelesTrak, probes from JPL Horizons, stars from the Yale Bright Star Catalogue.",
+        "speed": {
+          "live": "Live",
+          "hour": "1 h/s",
+          "day": "1 day/s",
+          "week": "1 wk/s",
+          "month": "1 mo/s",
+          "year": "1 yr/s"
+        },
+        "speedLabel": "Speed",
+        "play": "Play",
+        "pause": "Pause",
+        "reverse": "Backwards",
+        "forward": "Forwards",
+        "today": "Now",
+        "date": "Date",
+        "atEdge": "The ephemerides are valid from 1800 to 2200 — the clock stopped at the edge.",
+        "overview": "Overview",
+        "escHint": "Esc — close the panel, then back to the overview",
+        "bodies": "Bodies",
+        "star": "Star",
+        "planets": "Planets",
+        "dwarfs": "Dwarf planets",
+        "moons": "Moons",
+        "kind": {
+          "star": "Star",
+          "planet": "Planet",
+          "dwarf": "Dwarf planet",
+          "moon": "Moon",
+          "satellite": "Satellite",
+          "spacecraft": "Space probe"
+        },
+        "facts": {
+          "radius": "Radius",
+          "mass": "Mass",
+          "gravity": "Surface gravity",
+          "temp": "Mean temperature",
+          "day": "Day length",
+          "tilt": "Axial tilt",
+          "atmosphere": "Atmosphere",
+          "none": "None",
+          "moonsCount": "Moons",
+          "retrograde": "spins backwards"
+        },
+        "live": {
+          "title": "Right now",
+          "distSun": "Distance from the Sun",
+          "distEarth": "Distance from Earth",
+          "light": "Light travel time",
+          "period": "Orbital period",
+          "orbits": "Orbits"
+        },
+        "units": {
+          "km": "km",
+          "au": "au",
+          "mkm": "M km",
+          "min": "min",
+          "h": "h",
+          "d": "d",
+          "years": "years",
+          "days": "days"
+        },
+        "layers": {
+          "title": "Layers",
+          "orbits": "Orbits",
+          "labels": "Names",
+          "asteroids": "Asteroid & Kuiper belts",
+          "stars": "Real stars",
+          "satellites": "Satellites (ISS, stations)",
+          "spacecraft": "Space probes",
+          "trueScale": "True scale",
+          "scaleNote": "At true scale the planets become dots — this is how empty the Solar System really is."
+        },
+        "satStatus": {
+          "loading": "Loading element sets…",
+          "noWebGL": "This page needs WebGL 2, which this browser or graphics driver does not provide. Try Chrome or Firefox on a computer with a working graphics driver.",
+          "ready": "{n} satellites",
+          "error": "Satellite data unavailable (server offline)",
+          "outOfRange": "Satellite orbits are only known within ±30 days of today"
+        },
+        "craftStatus": {
+          "loading": "Asking JPL Horizons…",
+          "error": "Probe data unavailable (server offline)"
+        },
+        "events": {
+          "title": "Coming up",
+          "fullMoon": "Full Moon",
+          "newMoon": "New Moon",
+          "lunarEclipse": "Lunar eclipse",
+          "solarEclipse": "Solar eclipse",
+          "opposition": "opposition",
+          "jump": "Jump the clock to this moment",
+          "kinds": {
+            "penumbral": "penumbral",
+            "partial": "partial",
+            "total": "total",
+            "annular": "annular"
+          }
+        },
+        "sat": {
+          "norad": "NORAD ID",
+          "altitude": "Altitude",
+          "speed": "Speed",
+          "inclination": "Inclination",
+          "position": "Above (lat, lon)"
+        },
+        "loading": "Loading textures…",
+          "quiz": {
+            "title": "Check yourself",
+            "intro": "Five questions the sky answers right now — the answers change with the date.",
+            "start": "Start",
+            "next": "Next",
+            "finish": "Finish",
+            "again": "Again",
+            "show": "show",
+            "question": "{i} / {n}",
+            "correct": "Correct.",
+            "wrong": "No — it is {answer}.",
+            "score": "You got {score} of {n}.",
+            "best": "best {best}",
+            "noXp": "Practice only — no XP for this yet.",
+            "unitsDays": "{n} days",
+            "q": {
+              "closestPlanet": "Which planet is closest to the Earth right now?",
+              "farthest": "Which of these is farthest from the Sun right now?",
+              "lightTime": "How long does sunlight take to reach {body} right now?",
+              "nextOpposition": "Which planet is next at opposition?",
+              "longestDay": "Which of these has the longest day?",
+              "retrograde": "Which of these spins backwards?",
+              "daysToFullMoon": "How many days until the next full Moon?"
+            }
+          },
+          "probeNote": "Trajectory: NASA/JPL Horizons. Model: NASA VTAD.",
+          "launched": "Launched"
+      },
+      "bodies": {
+        "sun": "Sun",
+        "mercury": "Mercury",
+        "venus": "Venus",
+        "earth": "Earth",
+        "mars": "Mars",
+        "jupiter": "Jupiter",
+        "saturn": "Saturn",
+        "uranus": "Uranus",
+        "neptune": "Neptune",
+        "pluto": "Pluto",
+        "ceres": "Ceres",
+        "eris": "Eris",
+        "haumea": "Haumea",
+        "makemake": "Makemake",
+        "moon": "Moon",
+        "phobos": "Phobos",
+        "deimos": "Deimos",
+        "io": "Io",
+        "europa": "Europa",
+        "ganymede": "Ganymede",
+        "callisto": "Callisto",
+        "mimas": "Mimas",
+        "enceladus": "Enceladus",
+        "rhea": "Rhea",
+        "titan": "Titan",
+        "iapetus": "Iapetus",
+        "titania": "Titania",
+        "oberon": "Oberon",
+        "triton": "Triton",
+        "charon": "Charon",
+        "iss": "ISS"
+      }
+
   },
   "lab": {
     "title": "Space",
@@ -280,7 +451,42 @@
     "blackHole": "Black Hole",
     "blackHoleDesc": "Infinite density, extreme gravity."
   },
+  "forgotPassword": {
+    "title": "Lost your",
+    "titleHighlight": "password",
+    "subtitle": "We will send a six-digit code to your address.",
+    "emailLabel": "Your e-mail",
+    "sendCode": "Send the code",
+    "codeSentGeneric": "If there is an account for that address, a code is on its way.",
+    "codeLabel": "Code from the message",
+    "newPasswordLabel": "New password",
+    "confirmPasswordLabel": "New password again",
+    "submit": "Set the password",
+    "success": "Your password is changed. Sign in with it.",
+    "invalidCode": "That code is wrong or has expired.",
+    "passwordsDoNotMatch": "The two passwords are not the same.",
+    "tooManyAttempts": "Too many tries. Wait {{minutes}} minutes.",
+    "failed": "That did not work. Try again."
+  },
+  "verifyEmail": {
+    "title": "Confirm your address",
+    "subtitle": "Type the code we sent you",
+    "sentTo": "We sent it to",
+    "codeLabel": "Six-digit code",
+    "verify": "Confirm",
+    "resend": "Send another code",
+    "resent": "A new code is on its way.",
+    "verified": "Your address is confirmed.",
+    "invalidCode": "That code is wrong or has expired.",
+    "tooManyAttempts": "Too many tries. Wait {{minutes}} minutes.",
+    "failed": "That did not work. Try again.",
+    "bannerText": "Confirm your e-mail address to write to other people here.",
+    "bannerAction": "Confirm"
+  },
   "auth": {
+    "signInWithGoogle": "Continue with Google",
+    "googleFailed": "Google sign-in did not work. Try again.",
+    "emailNotVerified": "Confirm your e-mail address first.",
     "login": "Log In",
     "signup": "Sign Up",
     "forgotPassword": "Forgot Password",
@@ -418,7 +624,19 @@
   "daily": {
     "challengeCompleted": "Challenge Completed!",
     "alreadyCompleted": "You've already completed today's challenge. Come back tomorrow for more XP!",
-    "viewProfile": "View Profile"
+    "viewProfile": "View Profile",
+    "nextQuestion": "Next question",
+    "finish": "Finish challenge",
+    "complete": "Challenge complete!",
+    "completeSub": "Here is what you got, and why.",
+    "xpEarned": "XP earned",
+    "noQuestions": "Today's challenge has no questions yet. Try again a little later.",
+    "review": "Your answers",
+    "yourAnswer": "Your answer",
+    "correctAnswer": "Correct answer",
+    "noAnswer": "You ran out of time",
+    "correct": "Correct",
+    "wrong": "Wrong"
   },
   "premium": {
     "heroTitle": "Upgrade your space journey. Try 1 month of Premium for $0.",
@@ -482,7 +700,11 @@
     "level": "Level",
     "experience": "Experience",
     "xpPoints": "XP points",
-    "secureProtocol": "Secure Data Protocol Verified"
+    "secureProtocol": "Secure Data Protocol Verified",
+    "yourPlace": "Your place",
+    "ofPlayers": "of {count} players",
+    "notRankedYet": "Earn XP to join the rankings",
+    "loadFailed": "Rankings could not be loaded. Trying again shortly."
   },
   "live": {
     "title": "Live",
@@ -570,13 +792,55 @@
   "history": {
     "title": "Space",
     "titleHighlight": "History",
-    "subtitle": "Click a card to see full historical information, images, and video blocks in a large window.",
+    "subtitle": "Explore humanity's journey from ancient stargazing to modern space exploration — tap any era to dive deeper.",
     "backBtn": "⬅ Back to History",
     "viewMore": "View More",
     "videoBlock": "Video Block",
     "videoPlaceholder": "Video placeholder (ready for iframe)",
     "imagePlaceholder": "Image placeholder",
-    "historicalImage": "Historical Image"
+    "historicalImage": "Historical Image",
+    "era1": {
+      "title": "Ancient Astronomy",
+      "period": "3000 BC – 100 BC",
+      "summary": "Egyptian, Babylonian, American, and Greek scholars laid the foundation for calendars, eclipse calculations, and early cosmic ideas.",
+      "details": "3000–2000 BC | Ancient Egypt: Stars were observed, and the first 365-day calendar was created. Time and distance measurement developed with sundials (obelisks).\n\n1000–500 BC | Babylonian civilization: Planetary maps were drawn, and 12 zodiac signs were formed. Predicting lunar and solar eclipses was established.\n\n500–200 BC | Ancient American peoples: Maya and Inca ancestors accurately calculated the movements of the Sun and Venus and built stone observatories.\n\n300–100 BC | Ancient Greece: The Earth's circumference was calculated almost accurately, and the early forms of the heliocentric idea emerged."
+    },
+    "era2": {
+      "title": "Central Asian Golden Age",
+      "period": "IX – XV centuries",
+      "summary": "From al-Farghani and al-Khwarizmi to Ulugh Beg's Samarkand observatory — Central Asian scholars advanced mathematics, astronomy, and star-mapping to unprecedented precision.",
+      "details": "IX century | Ahmad al-Farghani (Alfraganus): Born in the Ferghana Valley, he wrote one of the most influential astronomy textbooks of the medieval world, summarising Ptolemy for students across the Islamic world and medieval Europe.\n\nIX century | Muhammad al-Khwarizmi: The Khwarazm-born mathematician gave the world the word 'algorithm' and pioneered algebra, creating astronomical tables used from Baghdad to Córdoba.\n\nXI century | Abu Rayhan al-Biruni: A polymath from Khwarazm who accurately estimated the Earth's radius using trigonometry, and wrote encyclopaedic works on astronomy, geography, and chronology.\n\n1424–1449 | Mirzo Ulugh Beg: Timurid prince and astronomer who built the Samarkand Observatory — one of the most advanced in the medieval world. His star catalogue (Zij-i Sultani) listed 1,018 stars with remarkable precision and was used by astronomers for centuries."
+    },
+    "era3": {
+      "title": "Scientific Revolution & the Telescope",
+      "period": "XVI – XVIII centuries",
+      "summary": "Scholars from Copernicus to Newton laid the foundation for modern astronomy through the telescope and laws of physics.",
+      "details": "1500s | Nicolaus Copernicus: Developed a revolutionary heliocentric system where the Sun, not the Earth, is at the centre of the universe.\n\n1608 | Hans Lippershey: A Dutch master invented the first historical telescope that brought distant objects closer.\n\n1609 | Galileo Galilei: The first scientist to point a telescope at the universe. He discovered lunar craters and 4 satellites of Jupiter, confirming Copernicus's ideas.\n\n1611 | Johannes Kepler: Discovered the basic laws of planetary motion and created a more accurate astronomical telescope.\n\n1687 | Isaac Newton: Physically proved why planets move in a certain orbit through the law of universal gravitation."
+    },
+    "era4": {
+      "title": "Space Race & First Steps",
+      "period": "1950–1960s",
+      "summary": "In the period from Sputnik to Apollo 11, humanity went into space and took the first step on the Moon.",
+      "details": "1957 | \"Sputnik-1\" and Laika: The first artificial satellite in human history was launched into orbit. Soon after, a dog named Laika became the first living creature to fly into space.\n\nApril 12, 1961 | Yuri Gagarin: The first person to fly into space on the \"Vostok-1\" ship. This was a huge historical step for all of humanity.\n\n1963 & 1965 | Valentina Tereshkova became the first woman in space. Alexei Leonov became the first person to perform a spacewalk (12 minutes).\n\nJuly 20, 1969 | \"Apollo-11\": Neil Armstrong and Buzz Aldrin set foot on the lunar surface for the first time. Armstrong said his famous phrase: \"That's one small step for man, one giant leap for mankind.\""
+    },
+    "era5": {
+      "title": "Conquering the Planets",
+      "period": "1970–1990s",
+      "summary": "From landings on Venus and Mars to Voyager, Shuttle, Mir, and Hubble — this period saw humanity reach beyond Earth orbit.",
+      "details": "1970–1971 | \"Venera-7\" was the first spacecraft to land on Venus. A year later, \"Mars-3\" successfully landed on Mars.\n\n1977 | \"Voyager\" mission: Voyager-1 and Voyager-2 were launched to explore the frontiers of space. They are currently the most distant human-made objects.\n\n1981–1986 | The reusable Space Shuttle made its first flight. The permanent modular station \"Mir\" was launched for long-term research.\n\n1990–1997 | The Hubble telescope was launched into orbit, fundamentally changing our view of space. The complex Cassini-Huygens mission was sent to study Saturn."
+    },
+    "era6": {
+      "title": "International Cooperation & Commercial Space",
+      "period": "2000–2020s",
+      "summary": "ISS, private rockets, Mars and Pluto missions, and the first image of a black hole took this era to a new level.",
+      "details": "2000 | International Space Station (ISS): Permanent human living and working in space began with the first crew.\n\n2008 | SpaceX successfully launched Falcon 1 — the first private spacecraft to reach orbit, starting the era of commercial space flights.\n\n2012–2015 | Curiosity landed on Mars. New Horizons sent the first clear images of Pluto. A spacecraft landed on a comet (67P) for the first time.\n\n2019 | The first actual photograph of a black hole (in galaxy M87) was captured, once again confirming Einstein's theory of relativity."
+    },
+    "era7": {
+      "title": "New Horizons & Uzbekistan's Space Future",
+      "period": "2021–2028+",
+      "summary": "With James Webb, DART, Starship, and Uzbekistan's Samarkand-2028 satellite — humanity is actively entering the Moon, Mars, and a new era of national space programmes.",
+      "details": "2021–2022 | The James Webb Space Telescope was launched to study the universe's oldest galaxies. The DART mission struck an asteroid to test planetary defence.\n\n2023–2024 | India's Chandrayaan-3 landed on the Moon's south pole. SpaceX began Starship tests — the largest rocket ever built.\n\n2026 | Uzbekistan launched the Samarkand-2028 hyperspectral satellite — the nation's first satellite in orbit. Artemis II astronauts orbited the Moon after a half-century break.\n\n2028 | Uzbekistan prepares to launch the 'Mirzo Ulugbek' scientific CubeSat, host the IAC 2028 in Samarkand, and aims to send the first Uzbek cosmonaut into space."
+    }
   },
   "game": {
     "title": "Space Run",
@@ -702,11 +966,19 @@
     "loginRequired": "Please log in to purchase items.",
     "purchaseSuccess": "Purchase successful!",
     "purchaseFailed": "Purchase failed.",
+    "realProduct": "Real product",
+    "realProductNote": "This is a real thing, sold by another shop. You pay there with real money — fuel is not accepted.",
+    "openAtShop": "Open at the shop",
+    "soldBy": "Sold by",
+    "priceAtShop": "Price is at the shop",
+    "priceAtShopNote": "Shop prices change, so we do not print one here. The shop's page shows today's price.",
     "types": {
       "spaceship": "Spaceship",
       "badge": "Badge",
       "boost": "XP Boost",
       "book": "Book",
+      "model_kit": "Model Kit",
+      "apparel": "Clothing",
       "rocket_module": "Rocket Module",
       "satellite": "Satellite",
       "avatar": "Avatar",
@@ -772,6 +1044,10 @@
     "unknown": "Unknown"
   },
   "loginPage": {
+    "forgotPasswordLink": "Forgot your password?",
+    "googleUnavailable": "Signing in with Google is not available right now.",
+    "googleFailed": "Google sign-in did not work. Try again, or use your password.",
+    "googleEmailUnverified": "Google has not confirmed that address. Confirm it with Google first.",
     "welcomeTitle": "Welcome",
     "welcomeHighlight": "Back",
     "subtitle": "Enter your credentials to re-enter mission control",
@@ -786,6 +1062,9 @@
     "tooManyAttempts": "Too many wrong passwords from this network. Try again in {{minutes}} min."
   },
   "registerPage": {
+    "passwordsDoNotMatch": "The two passwords are not the same.",
+    "checkYourEmail": "Check your e-mail",
+    "verificationSent": "We sent a code to confirm your address. You can look around while you wait.",
     "joinTitle": "Join the",
     "joinHighlight": "Academy",
     "subtitle": "Initialize your profile to begin the cosmic journey",
@@ -890,6 +1169,27 @@
     "all": "All"
   },
   "profilePage": {
+    "securityTitle": "Account",
+    "changePassword": "Change password",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "confirmNewPassword": "New password again",
+    "passwordsDoNotMatch": "The two passwords are not the same.",
+    "passwordChanged": "Your password is changed. Everywhere else has been signed out.",
+    "passwordChangeFailed": "The password was not changed.",
+    "changeEmail": "Change e-mail",
+    "newEmail": "New e-mail",
+    "emailChangeRequested": "We sent a code to the new address.",
+    "emailPendingNotice": "Waiting for a code sent to",
+    "cancelEmailChange": "Cancel the change",
+    "emailChanged": "Your address is changed.",
+    "emailChangeFailed": "The address was not changed.",
+    "emailVerified": "Confirmed",
+    "emailNotVerified": "Not confirmed",
+    "verifyNow": "Confirm it",
+    "roleStudent": "Student",
+    "roleTeacher": "Teacher",
+    "roleAdmin": "Administrator",
     "refreshData": "Refresh Data",
     "leaderboard": "Leaderboard",
     "quizHub": "Quiz Hub",
@@ -944,6 +1244,8 @@
     "levelExplorer": "Level {level}: Galactic Explorer"
   },
   "chat": {
+    "verifyToWrite": "Confirm your e-mail address before writing here.",
+    "verifyToWriteAction": "Confirm now",
     "title": "Community",
     "titleHighlight": "Chat",
     "selectingRoom": "Selecting room...",

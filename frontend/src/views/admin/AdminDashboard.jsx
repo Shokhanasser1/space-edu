@@ -4,6 +4,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import api from '@/lib/api';
 import { Users, BookOpen, ShoppingBag, MessageCircle, Newspaper, Calendar, HelpCircle, Search, Plus, Trash2, Edit, X, Shield, Sun, Moon, ArrowLeft } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useFormat } from '@/hooks/useFormat';
 
 const MENU_GROUPS = [
   {
@@ -109,6 +110,7 @@ function Field({ label, value, onChange, type = 'text', options }) {
 }
 
 function DashboardTab({ stats }) {
+  const fmt = useFormat();
   const { t, i18n } = useTranslation();
   if (!stats) return <p className="text-slate-400">Loading...</p>;
   return (
@@ -134,7 +136,7 @@ function DashboardTab({ stats }) {
             </div>
             <div className="flex items-center gap-2">
               {u.is_staff && <span className="text-[9px] font-bold bg-violet/20 text-violet-light px-2 py-0.5 rounded-full">STAFF</span>}
-              <span className="text-[10px] text-slate-400">{new Date(u.date_joined).toLocaleDateString()}</span>
+              <span className="text-[10px] text-slate-400">{fmt.date(u.date_joined)}</span>
             </div>
           </div>
         ))}
@@ -377,14 +379,22 @@ const MARKET_FIELDS = [
   { name: 'description_en', label: 'Description (EN)', type: 'textarea' }, { name: 'description_uz', label: 'Description (UZ)', type: 'textarea' }, { name: 'description_ru', label: 'Description (RU)', type: 'textarea' },
   { name: 'item_type', label: 'Type', type: 'select', options: [
     {value:'spaceship',label:'Spaceship'},{value:'badge',label:'Badge'},{value:'boost',label:'XP Boost'},
-    {value:'book',label:'Book'},{value:'rocket_module',label:'Rocket Module'},{value:'satellite',label:'Satellite'},
+    {value:'book',label:'Book'},{value:'model_kit',label:'Model Kit'},{value:'apparel',label:'Clothing'},
+    {value:'rocket_module',label:'Rocket Module'},{value:'satellite',label:'Satellite'},
     {value:'avatar',label:'Avatar'},{value:'theme',label:'Theme'},{value:'tool',label:'Tool'},{value:'other',label:'Other'}
   ]},
   { name: 'price', label: 'Price (UZS)', type: 'number' }, { name: 'cost_fuel', label: 'Cost Fuel', type: 'number' },
+  // A product page here makes the row a real product: the shop button becomes a
+  // link and the server refuses to sell it for fuel.
+  { name: 'external_url', label: 'Shop product page (real products only)' }, { name: 'merchant', label: 'Shop name' },
+  { name: 'external_price', label: 'Shop price (leave empty unless checked)', type: 'number' },
+  { name: 'currency', label: 'Shop currency', type: 'select', options: [
+    {value:'',label:'—'},{value:'UZS',label:'UZS'},{value:'USD',label:'USD'},{value:'EUR',label:'EUR'}
+  ]},
   { name: 'stock', label: 'Stock (0=unlimited)', type: 'number' },
   { name: 'is_active', label: 'Active', type: 'checkbox' }, { name: 'is_bestseller', label: 'Bestseller', type: 'checkbox' }
 ];
-const MARKET_DEFAULT = { slug:'', title_en:'', title_uz:'', title_ru:'', description_en:'', description_uz:'', description_ru:'', item_type:'other', price:0, cost_fuel:0, stock:0, is_active:true, is_bestseller:false };
+const MARKET_DEFAULT = { slug:'', title_en:'', title_uz:'', title_ru:'', description_en:'', description_uz:'', description_ru:'', item_type:'other', price:0, cost_fuel:0, external_url:'', merchant:'', external_price:'', currency:'', stock:0, is_active:true, is_bestseller:false };
 
 export default function AdminDashboard() {
   const { user } = useAuthStore();

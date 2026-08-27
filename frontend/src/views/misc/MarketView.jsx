@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ShoppingCart, Fuel, Check, Lock, Loader, Search, Menu, X, Star, Percent, Flame, Sparkles, Rocket, Zap, Award, Filter, Tags, ArrowDownUp } from 'lucide-react';
+import { ShoppingCart, Fuel, Check, Lock, Loader, Search, Menu, X, Star, Percent, Flame, Sparkles, Rocket, Zap, Award, Filter, Tags, ArrowDownUp, ExternalLink, Store } from 'lucide-react';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useGamificationStore } from '@/store/useGamificationStore';
 import { useTranslation } from '@/hooks/useTranslation';
+import { formatMoney } from '@/lib/format';
 
 // ── MOCK DATA ───────────────────────────────────────────────────────────────
 const MOCK_ITEMS = [
@@ -216,11 +217,41 @@ const MOCK_ITEMS = [
 
 const formatPrice = (price, t) => {
   if (price == null) return '—';
-  const formatted = Number(price).toLocaleString('uz-UZ').replace(/,/g, ' ');
+  const formatted = formatMoney(price);
   return `${formatted} ${t('market', 'sum')}`;
 };
 
 const getPrice = (item) => item.price ?? item.cost_fuel ?? 0;
+
+/**
+ * A real product: something another shop sells for money, reached by a link.
+ *
+ * The API sends `is_external`; the offline sample catalogue has only the URL,
+ * so fall back to it rather than showing a fuel button for a real book.
+ */
+const isRealProduct = (item) => item.is_external ?? Boolean(item.external_url);
+
+const CURRENCY_SIGN = { USD: '$', EUR: '€' };
+
+/**
+ * The shop's own price, or null when there is nothing honest to show.
+ *
+ * A number with no currency is worse than no number at all: on a page that
+ * prints soums everywhere else, 59.99 reads as soums when the shop meant
+ * dollars. Most real products sit here with no price on purpose — nobody fills
+ * one in until they have looked at the shop — and the card then says so.
+ */
+const formatShopPrice = (item, t) => {
+  if (item.external_price == null || !item.currency) return null;
+  const amount = Number(item.external_price);
+  if (!Number.isFinite(amount)) return null;
+  const shown = Number.isInteger(amount)
+    ? formatMoney(amount)
+    : amount.toFixed(2);
+  if (item.currency === 'UZS') return `${shown} ${t('market', 'sum')}`;
+  const sign = CURRENCY_SIGN[item.currency];
+  return sign ? `${sign}${shown}` : `${shown} ${item.currency}`;
+};
 
 function ItemCard({ item, onClick, onBuy, buying }) {
   const getAccent = () => {
@@ -235,6 +266,8 @@ function ItemCard({ item, onClick, onBuy, buying }) {
 
   const accent = getAccent();
   const { t, i18n } = useTranslation();
+  const real = isRealProduct(item);
+  const shopPrice = formatShopPrice(item, t);
   // `language` is the store code (ENG/UZB/RUS); the model columns are title_en /
   // title_uz / title_ru. Lower-casing the store code asked for `title_uzb`,
   // which does not exist, so every product fell back to English in every
@@ -256,12 +289,19 @@ function ItemCard({ item, onClick, onBuy, buying }) {
           />
         ) : (
           <div className="flex items-center justify-center w-full h-full text-5xl transition-transform duration-500 group-hover:scale-110">
-            {item.item_type === 'book' ? '📖' : item.item_type === 'rocket_module' ? '🚀' : item.item_type === 'satellite' ? '🛰️' : '📦'}
+            {item.item_type === 'book' ? '📖' : item.item_type === 'model_kit' ? '🛠️' : item.item_type === 'apparel' ? '👕' : item.item_type === 'rocket_module' ? '🚀' : item.item_type === 'satellite' ? '🛰️' : '📦'}
           </div>
         )}
         
         {/* Badges overlay */}
         <div className="absolute top-3 left-3 flex flex-col gap-1 z-10">
+          {/* First badge on the card, because it changes what the button does:
+              this one costs real money at somebody else's shop. */}
+          {real && (
+            <span className="bg-emerald-500 text-white text-[10px] font-bold px-2 py-1 rounded-lg shadow-lg flex items-center gap-1 w-max">
+              <Store className="w-3 h-3" /> {t('market', 'realProduct')}
+            </span>
+          )}
           {item.discount_percent > 0 && (
             <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-lg shadow-lg w-max">
               -{item.discount_percent}%
@@ -284,7 +324,13 @@ function ItemCard({ item, onClick, onBuy, buying }) {
       <div className="p-5 flex-1 flex flex-col">
         {/* Price section */}
         <div className="mb-2">
-          {item.original_price ? (
+          {real ? (
+            /* getPrice() would print "0 sum" here: `price` is the soum column
+               for virtual goods and stays 0 on a product we do not sell. */
+            <span className="text-lg font-[800] text-emerald-300 leading-none">
+              {shopPrice || t('market', 'priceAtShop')}
+            </span>
+          ) : item.original_price ? (
             <div className="flex items-end gap-2 flex-wrap">
               <span className="text-xl font-[900] text-red-400 leading-none">{formatPrice(getPrice(item), t)}</span>
               <span className="text-sm font-medium text-white/30 line-through leading-none">{formatPrice(item.original_price, t)}</span>
@@ -299,18 +345,33 @@ function ItemCard({ item, onClick, onBuy, buying }) {
           {title}
         </h3>
 
-        {/* Action Button */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onBuy(item.slug);
-          }}
-          disabled={buying}
-          className="w-full bg-violet-600 hover:bg-violet-500 text-white py-3 rounded-xl font-[700] text-[13px] flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
-        >
-          {buying ? <Loader className="w-4 h-4 animate-spin" /> : <ShoppingCart className="w-4 h-4" />}
-          {t('market', 'inCart')}
-        </button>
+        {/* Action: a link out for a real product, the fuel purchase for ours */}
+        {real ? (
+          <a
+            href={item.external_url}
+            target="_blank"
+            /* noopener keeps the shop's page away from window.opener;
+               noreferrer keeps our URL out of its logs. */
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-[700] text-[13px] flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+          >
+            <ExternalLink className="w-4 h-4" />
+            {t('market', 'openAtShop')}{item.merchant ? ` · ${item.merchant}` : ''}
+          </a>
+        ) : (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onBuy(item.slug);
+            }}
+            disabled={buying}
+            className="w-full bg-violet-600 hover:bg-violet-500 text-white py-3 rounded-xl font-[700] text-[13px] flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+          >
+            {buying ? <Loader className="w-4 h-4 animate-spin" /> : <ShoppingCart className="w-4 h-4" />}
+            {t('market', 'inCart')}
+          </button>
+        )}
       </div>
     </div>
   );
@@ -322,6 +383,8 @@ function ProductModal({ item, onClose, onBuy, buying }) {
   if (!item) return null;
   const title = item[`title_${i18n.language}`] || item.title_en;
   const description = item[`description_${i18n.language}`] || item.description_en;
+  const real = isRealProduct(item);
+  const shopPrice = formatShopPrice(item, t);
 
   return (
     <AnimatePresence>
@@ -368,24 +431,67 @@ function ProductModal({ item, onClose, onBuy, buying }) {
             <h2 className="text-3xl font-[800] text-white mb-2 leading-tight">{title}</h2>
             <p className="text-white/50 text-sm mb-6">{description}</p>
 
-            <div className="bg-white/[0.03] rounded-2xl p-6 mb-8 border border-white/5">
-              {item.original_price && (
-                <div className="text-white/40 line-through text-lg font-medium mb-1">
-                  {formatPrice(item.original_price, t)}
+            {/* Said in full words, not only by the colour of a button: this one
+                is a real thing, and paying for it happens somewhere else. */}
+            {real && (
+              <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-5 mb-6">
+                <div className="flex items-center gap-2 text-emerald-300 text-xs font-[800] uppercase tracking-wider mb-2">
+                  <Store className="w-4 h-4" /> {t('market', 'realProduct')}
                 </div>
-              )}
-              <div className="flex items-center gap-4">
-                <span className="text-4xl font-[900] text-white">{formatPrice(getPrice(item), t)}</span>
+                <p className="text-white/70 text-sm leading-relaxed">{t('market', 'realProductNote')}</p>
+                {item.merchant && (
+                  <p className="text-white/40 text-xs mt-3">
+                    {t('market', 'soldBy')}: <span className="text-white/80 font-[700]">{item.merchant}</span>
+                  </p>
+                )}
               </div>
-              
-              <button
-                onClick={() => onBuy(item.slug)}
-                disabled={buying}
-                className="w-full mt-6 bg-violet-600 hover:bg-violet-500 text-white py-4 rounded-xl font-[800] text-[15px] flex items-center justify-center gap-2 transition-all shadow-[0_10px_30px_rgba(124,58,237,0.3)] active:scale-[0.98]"
-              >
-                {buying ? <Loader className="w-5 h-5 animate-spin" /> : <ShoppingCart className="w-5 h-5" />}
-                {t('market', 'addCart')}
-              </button>
+            )}
+
+            <div className="bg-white/[0.03] rounded-2xl p-6 mb-8 border border-white/5">
+              {real ? (
+                <>
+                  <div className="text-2xl font-[900] text-emerald-300">
+                    {shopPrice || t('market', 'priceAtShop')}
+                  </div>
+                  {!shopPrice && (
+                    <p className="text-white/40 text-xs mt-2 leading-relaxed">
+                      {t('market', 'priceAtShopNote')}
+                    </p>
+                  )}
+                </>
+              ) : (
+                <>
+                  {item.original_price && (
+                    <div className="text-white/40 line-through text-lg font-medium mb-1">
+                      {formatPrice(item.original_price, t)}
+                    </div>
+                  )}
+                  <div className="flex items-center gap-4">
+                    <span className="text-4xl font-[900] text-white">{formatPrice(getPrice(item), t)}</span>
+                  </div>
+                </>
+              )}
+
+              {real ? (
+                <a
+                  href={item.external_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full mt-6 bg-emerald-600 hover:bg-emerald-500 text-white py-4 rounded-xl font-[800] text-[15px] flex items-center justify-center gap-2 transition-all shadow-[0_10px_30px_rgba(16,185,129,0.3)] active:scale-[0.98]"
+                >
+                  <ExternalLink className="w-5 h-5" />
+                  {t('market', 'openAtShop')}{item.merchant ? ` · ${item.merchant}` : ''}
+                </a>
+              ) : (
+                <button
+                  onClick={() => onBuy(item.slug)}
+                  disabled={buying}
+                  className="w-full mt-6 bg-violet-600 hover:bg-violet-500 text-white py-4 rounded-xl font-[800] text-[15px] flex items-center justify-center gap-2 transition-all shadow-[0_10px_30px_rgba(124,58,237,0.3)] active:scale-[0.98]"
+                >
+                  {buying ? <Loader className="w-5 h-5 animate-spin" /> : <ShoppingCart className="w-5 h-5" />}
+                  {t('market', 'addCart')}
+                </button>
+              )}
             </div>
 
             {/* `specs` only exists on the offline sample list — MarketItem has no
@@ -419,6 +525,27 @@ function ProductModal({ item, onClose, onBuy, buying }) {
  * item 21 onwards simply did not exist as far as the UI was concerned.
  */
 const MAX_PAGES = 50;
+
+/**
+ * What to say when a purchase is refused.
+ *
+ * The server's refusal for a real product is an English sentence written for
+ * whoever is calling the API. Repeating it at a ten-year-old reading the page
+ * in Uzbek is how untranslated strings get in front of children, so the one
+ * refusal we can recognise gets said in their language instead — the response
+ * carries `external_url` and `merchant` for exactly this.
+ *
+ * The UI renders a link rather than a buy button for these products, so this is
+ * reached by a page that was already open when the item became real, or by a
+ * request nobody made from our own card. It still has to read properly.
+ */
+export function purchaseErrorMessage(data, t) {
+  if (data?.external_url) {
+    const note = t('market', 'realProductNote');
+    return data.merchant ? `${note} (${data.merchant})` : note;
+  }
+  return data?.detail || t('market', 'purchaseFailed');
+}
 
 export async function fetchAllPages(url) {
   const collected = [];
@@ -488,7 +615,7 @@ export default function MarketView() {
       setInventory(prev => new Set([...prev, slug]));
       alert(t('market', 'purchaseSuccess'));
     } catch (err) {
-      alert(err.response?.data?.detail || t('market', 'purchaseFailed'));
+      alert(purchaseErrorMessage(err.response?.data, t));
     } finally {
       setBuying(null);
     }

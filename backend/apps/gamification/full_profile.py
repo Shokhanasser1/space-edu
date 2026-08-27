@@ -12,6 +12,7 @@ from apps.challenges.models import (
     ChallengeQuestion, DailyChallenge, QuizSession,
     UserChallengeResult, UserStreak,
 )
+from apps.gamification.leaderboard import player_count, rank_for_xp
 from apps.gamification.models import UserBadge, UserGamificationProfile, Mission, UserMission
 from apps.gamification.serializers import BadgeSerializer, GamificationProfileSerializer, MissionSerializer, UserMissionSerializer
 from apps.market.models import UserInventory, Wishlist
@@ -45,12 +46,13 @@ class FullProfileView(APIView):
         gamification_data = GamificationProfileSerializer(gam_profile).data
 
         # ── 3. Leaderboard rank ──
-        rank = (
-            UserGamificationProfile.objects
-            .filter(xp__gt=gam_profile.xp)
-            .count() + 1
-        )
-        total_players = UserGamificationProfile.objects.count()
+        # The same two calls the board itself makes. They were computed here a
+        # second time, by hand, and the two answers were free to differ — which
+        # they did the moment two players were level, and again for every child
+        # who had never played, because counting profile rows counts sign-ups
+        # rather than players.
+        rank = rank_for_xp(gam_profile.xp)
+        total_players = player_count()
 
         # ── 4. Badges ──
         badges = UserBadge.objects.filter(user=user).select_related('badge')
@@ -79,7 +81,9 @@ class FullProfileView(APIView):
             'total_fuel_earned': challenge_agg['total_fuel'] or 0,
             'best_score': challenge_agg['best_score'] or 0,
             'avg_score': round(challenge_agg['avg_score'] or 0, 1),
-            'current_streak': streak_obj.current_streak,
+            # Zero once a day has been missed, not the number it reached
+            # before — see `UserStreak.live_streak`.
+            'current_streak': streak_obj.live_streak,
             'longest_streak': streak_obj.longest_streak,
             'last_completed': streak_obj.last_completed,
         }

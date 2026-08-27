@@ -325,14 +325,10 @@ second address.
 `base/tests.py` has three tests that hold the rule rather than the numbers, so
 a future edit that reintroduces a person-sized address limit fails the build.
 
-**Known limit, and the way out.** 300 accounts a day from one address is
-generous for a school and not nothing for an abuser. The real answer is
-verifying the e-mail address before an account is worth anything. The machinery
-already exists — `apps/accounts/email_code.py` sends and verifies six-digit
-codes, and `/auth/email-code/request/` and `/verify/` both work — but **nothing
-in the front end calls either of them**, and registration does not require
-verification. That is the next thing to do here, and it would let the ceiling
-come back down.
+**Known limit, and the way out — done, 28 August 2026.** 300 accounts a day from
+one address is generous for a school and not nothing for an abuser, and the real
+answer was always to make an unproved address worth nothing. It now is: see
+"Accounts, end to end" below.
 
 ---
 
@@ -584,3 +580,154 @@ migrations against a real Postgres 16 as a separate step.
 - Team handbook — <https://claude.ai/code/artifact/4a85e840-04bb-4b32-a7bc-418c4b648eb3>
   (same content as `CONTRIBUTING.md`)
 - Ground comparison — <https://claude.ai/code/artifact/25974d1b-86cd-4426-af5f-0006126edc0c>
+
+---
+
+## 28 August 2026 — the Solar System is real
+
+`/3d-solar-system` was rebuilt from scratch; the review that drove it is
+`docs/SOLAR_SYSTEM_3D_RESEARCH.md`. What is where now:
+
+- `frontend/src/solar/` — the scene. `ephemeris.js` wraps `astronomy-engine`
+  (VSOP87; the tests in `ephemeris.test.js` hold the Earth and Mars within
+  0.02° of JPL Horizons). `clock.js` is the simulation time — a plain object
+  advanced in the render loop, mirrored to a zustand store at 10 Hz; nothing
+  re-renders per frame. `catalog.js` carries NASA Fact Sheet numbers and texture
+  candidate lists. `scene/` is one component per thing (planet, moon, rings,
+  belts on the GPU, real stars, satellites, probes, camera, labels).
+- `frontend/public/data/` — 9 096 real stars (Yale BSC5) and 3 619 real
+  asteroids/TNOs (JPL SBDB); provenance in `public/textures/ATTRIBUTION.md`.
+- `backend/apps/space/` — a caching proxy for CelesTrak, JPL Horizons, Launch
+  Library and APOD, so browsers never call those hosts (school IPs get
+  firewalled). `/live` and the APOD/launch widgets now go through it. Set
+  `NASA_API_KEY` in `.env` for APOD.
+- Data outside the ephemerides' comfort zone is refused, not guessed: the clock
+  stops at 1800/2200, satellites hide beyond ±30 days of their element sets,
+  probes hide outside the fetched Horizons window.
+
+Second pass the same night: Solar System Scope maps (8k → 4k WebP, CC BY 4.0,
+every file under the 2 MB CI limit — `public/textures/ATTRIBUTION.md` has the
+list), the Milky Way panorama behind the catalogue stars (`SkyDome.jsx`, in
+galactic coordinates), NASA VTAD models for Voyager, New Horizons, Parker and
+Juno (`public/models/probes/`, Draco + 512 px WebP, 0.1–0.3 MB each), and a
+"check yourself" quiz (`src/solar/quiz.js`) whose five questions are generated
+from the sky at the simulation's date. KTX2 was judged and skipped: UASTC at
+4k is ~5 MB a file against the 2 MB budget, and WebP already cuts JPEG 4–5×.
+JWST has no NASA model and stays a marker. A live review afterwards fixed what
+the screenshots showed: bodies never drop below 4.5 px on screen (`scene/sizing.js`),
+textures load in two tiers (2k for all, 4k for the selected body), ACES tone
+mapping instead of AgX (which bleached the new maps), and drei's
+`PerformanceMonitor` drops to a light preset — dpr 1, no bloom, 2k sky — on a
+GPU that cannot hold 50 fps. WebGL 2 is checked before the Canvas mounts. There is also an 8k texture
+tier that never enters git: `frontend/scripts/convert-textures.py` makes the
+files from the Solar System Scope originals, the deploy serves them from
+`textures/` or from `VITE_ASSET_BASE`, and the scene uses them only for the
+selected body on a GPU with `maxTextureSize ≥ 8192` (see
+`public/textures/ATTRIBUTION.md`). `frontend/scripts/shrink-models.py` is the
+matching pipeline for NASA glb files. The three `ProfileView` tests were
+already red on `main` before this work.
+
+---
+
+## 28 August 2026 — accounts, end to end
+
+Registering, signing in and signing out were solid after five passes of audit,
+and nothing else about an account worked at all. There was no way to confirm an
+address, no way to reset a forgotten password, and no way to change a password —
+not through the API, not through the profile, not anywhere. `ProfileSerializer`
+accepts neither `email` nor `password` and `UserSerializer` is read-only
+throughout, so a child who forgot their password had lost the account. The only
+recovery in the system was the passwordless sign-in code, and nothing in the
+front end called it.
+
+Ten commits, `62ad026` through `4208c73`. What is true now:
+
+**Mail leaves the building.** `EMAIL_*` and `FRONTEND_URL` are read from the
+environment in `base.py` instead of being pinned in `development.py`, which
+overrides everything and made "set it in .env" a lie. The project sends through
+Gmail with an app password; blank credentials fall back to printing the message
+to the console and say why in `EMAIL_CONFIG_NOTE`, so the seven people who do
+not hold the password are not silently losing mail. Messages are written in
+Uzbek, English and Russian, one under the other: most of the readers do not read
+English, and a code they cannot read the instructions for is a code they do not
+use.
+
+**One address is one account.** `User.email` was never unique — the check that
+looks like it enforces that is a `filter().exists()`, which two requests arriving
+together both pass, and `LoginView` has always resolved an address with
+`.order_by('id').first()` because there might be two rows. Migration 0005 adds a
+partial unique constraint on `LOWER(email)`. Not `unique=True`: that is
+case-sensitive on PostgreSQL, so it would allow what every lookup here treats as
+the same address, and it collides on the `''` that every address-less superuser
+holds. `dedupe_user_emails` is the way through if the constraint ever refuses;
+run against the shared database it reported nothing to do.
+
+**An address has to be proved.** Registration sends a six-digit code;
+`email_verified_at` records when one was used. Until it is, everything works
+except writing to another child — chat and direct messages refuse with
+`email_unverified`, and reading, reporting and blocking stay open, because
+putting the safety controls behind an e-mail a child may not be able to reach
+today is the wrong trade in the wrong direction.
+
+**A forgotten password is recoverable**, and a password and an address can both
+be changed. Codes for all four flows come out of the same tested module, and the
+purpose is part of the cache key — a code mailed out to confirm an address
+cannot be presented at the sign-in endpoint to get a token pair. An address does
+not move until a code sent *to the new one* comes back, and the address being
+left is told, with no code in it and nothing to click.
+
+**Sign in with Google**, by ID token. No client secret exists in this flow at
+all. An unset `GOOGLE_OAUTH_CLIENT_ID` refuses before the library is called,
+because `audience=None` means "accept a token minted for anybody" and
+google-auth does not complain about it. Linking to an account whose address we
+have never proved clears that account's password: registration hands out tokens
+immediately, so anybody can make an account on a victim's address and wait, and
+this is the one branch where that would otherwise pay off.
+
+**`role`** is student, teacher or admin, set by a superuser. It grants nothing —
+every gate still reads `is_staff` — and a test says so, which is the test that
+fails on the day somebody joins the two.
+
+### What is not done
+
+Two things on this list were finished the same evening and are recorded here
+rather than deleted, because both are the kind of step somebody repeats by
+mistake later.
+
+- ~~The client id.~~ **Set, 28 August 2026.** `GOOGLE_OAUTH_CLIENT_ID` and
+  `VITE_GOOGLE_CLIENT_ID` hold the same value in `backend/.env` and
+  `frontend/.env.local`; neither file is tracked, so a new machine needs it
+  copied in. Verified against Google: a forged token now comes back 401 rather
+  than 503, which is the difference between "the audience is checked" and "there
+  is nothing to check it against". A Web OAuth client can only be created in the
+  Cloud Console — there is no API for one — so this is a person's job every time.
+- ~~Migrations 0005 to 0009.~~ **Applied to the shared database, 28 August
+  2026**, along with three of the team's that had been waiting. `role`,
+  `email_verified_at`, `pending_email`, `accounts_user_email_ci_unique` and
+  `accounts_socialaccount` are all present. Worth knowing for next time: the
+  assistant's harness refuses `manage.py migrate` against the shared database, so
+  the owner runs it. Between the code landing on `main` and the migration, every
+  request touching a user failed with `column accounts_user.role does not exist`
+  — the two belong in the same hour, not the same week.
+- **The only account left on the shared database is `admin`**
+  (`admin@uzcosmos.uz`, staff and superuser). The second one, `admin@admin.com`,
+  was a staff account with no e-mail address, no login, nothing attached but its
+  own gamification row, and it was deleted on 28 August. Note that `admin` has
+  not confirmed its address either, so it cannot post in chat until it does —
+  the gate reads the address, not the rank, on purpose.
+- **Access tokens still cannot be revoked.** Every "everything else is signed
+  out" in this work means the refresh tokens were blacklisted, which caps whoever
+  holds an access token at eight more hours rather than throwing them out.
+  `apps/accounts/tokens.py` says so in its docstring and nothing claims more.
+  Closing it needs a claim checked against the account on every request, which is
+  a change to how every endpoint authenticates.
+- **A Google account has no date of birth.** Registration requires one and Google
+  does not give one, so those accounts carry `profile_complete: false` and
+  nothing yet asks them to fill it in.
+- ~~Numbers formatted with the machine's locale.~~ **Fixed, 28 August 2026.**
+  Twenty-odd calls to `toLocaleString()` with no argument went through
+  `src/lib/format.js` and the `useFormat()` hook, which format in the language
+  the page is in. Four call sites had already worked the mapping out and written
+  the same ternary inline; it lives in one place now. The three
+  `ProfileView.test.jsx` failures that only appeared on non-English machines are
+  gone with it — 416 frontend tests, all passing, on a Russian-locale laptop.

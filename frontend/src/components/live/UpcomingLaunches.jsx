@@ -22,11 +22,13 @@ export default function UpcomingLaunches() {
 
     const fetchLaunches = async () => {
       try {
-        const res = await fetch('https://ll.thespacedevs.com/2.2.0/launch/upcoming/?limit=8&mode=list');
+        // Through our backend cache: Launch Library allows 15 requests an
+        // hour per IP, and a classroom is one IP.
+        const res = await fetch('/api/v1/space/launches/');
         let results = [];
         if (res.ok) {
-          const data = await res.json();
-          results = data.results || [];
+          const data = (await res.json()).data;
+          results = data?.results || [];
         } else {
           throw new Error('API limit');
         }

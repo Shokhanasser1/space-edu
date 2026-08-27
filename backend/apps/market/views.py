@@ -178,6 +178,23 @@ class PurchaseView(APIView):
         except MarketItem.DoesNotExist:
             return Response({'detail': 'Item not found.'}, status=status.HTTP_404_NOT_FOUND)
 
+        # A real product belongs to the shop that sells it, and fuel buys
+        # nothing there. Refuse before anything is debited: the endpoint cannot
+        # rely on the UI hiding the button, and a child who spends fuel earned
+        # over weeks of lessons and receives nothing has no way to get it back.
+        if item.is_external:
+            return Response(
+                {
+                    'detail': (
+                        f'"{item.title_en}" is a real product sold by '
+                        f'{item.merchant or "another shop"} for money. It cannot be bought with fuel.'
+                    ),
+                    'external_url': item.external_url,
+                    'merchant': item.merchant,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         if not item.in_stock:
             return Response({'detail': 'Item is out of stock.'}, status=status.HTTP_400_BAD_REQUEST)
 

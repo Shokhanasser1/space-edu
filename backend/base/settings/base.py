@@ -2,7 +2,9 @@ import os
 import sys
 from pathlib import Path
 from datetime import timedelta
+
 from decouple import config
+from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -15,6 +17,31 @@ def _csv(name, default=''):
     dashboard by hand, which makes that a matter of when rather than if.
     """
     return [item.strip() for item in config(name, default=default).split(',') if item.strip()]
+
+
+def _text(name, default=''):
+    """Environment variable, where blank means "not set".
+
+    Every template line in .env.example is `NAME=` with nothing after it, so the
+    variable exists and is empty — which decouple returns as '', not as the
+    default. For a list that is harmless; for a class path or a port it is the
+    difference between the safe default and a setting that is present, empty and
+    broken. A value someone deleted the right-hand side of has to land in the
+    same place as one they never typed.
+    """
+    return (config(name, default='') or '').strip() or default
+
+
+def _int(name, default):
+    raw = _text(name)
+    return int(raw) if raw else default
+
+
+def _flag(name, default):
+    raw = _text(name).lower()
+    if not raw:
+        return default
+    return raw in ('1', 'true', 'yes', 'on', 'y', 't')
 
 
 ALLOWED_HOSTS = _csv('ALLOWED_HOSTS', default='localhost,127.0.0.1')
@@ -41,6 +68,7 @@ INSTALLED_APPS = [
     'apps.challenges',
     'apps.admin_api',
     'apps.ai',
+    'apps.space',
 ]
 
 MIDDLEWARE = [
@@ -266,6 +294,29 @@ REST_FRAMEWORK = {
         'register': '60/min',
         'register_day': '300/day',
 
+        # Confirming an address, keyed on the account rather than the address it
+        # is asked from -- so a classroom confirming together is thirty separate
+        # budgets, not one shared. Person-sized: somebody who mistypes the code
+        # and asks for another has room to, somebody working through six-digit
+        # numbers does not. The code itself dies after five wrong guesses, so
+        # this is the outer bound rather than the only one.
+        'email_verify': '20/hour',
+
+        # Nobody is signed in for a password reset, so it is keyed on the pair
+        # (address it came from, account it is aimed at) the way the sign-in
+        # codes are. Every request sends an e-mail or guesses six digits.
+        'password_reset': '20/hour',
+
+        # These two are keyed on the account. A person changes their password
+        # or their address a handful of times in a lifetime; the room is for
+        # mistyping, not for working through possibilities.
+        'password_change': '20/hour',
+        'email_change': '10/hour',
+
+        # Google sign-in. Address-keyed and therefore machine-sized, and every
+        # request counts because every one of them verifies a signature.
+        'google': '60/min',
+
         'ai': '40/hour',
 
         # Chat is keyed on the account. Set for a classroom, not a newsroom:
@@ -305,6 +356,79 @@ CORS_ALLOWED_ORIGIN_REGEXES = _csv('CORS_ALLOWED_ORIGIN_REGEXES')
 CSRF_TRUSTED_ORIGINS = _csv('CSRF_TRUSTED_ORIGINS') or [
     origin for origin in CORS_ALLOWED_ORIGINS if '://' in origin
 ]
+
+# ── Sending e-mail ────────────────────────────────────────────────────────────
+# Sign-in codes, address confirmation and password resets all leave through
+# here. It used to be two hard-coded lines in settings/development.py, which
+# meant "switch to a real mail server" was a code change in the module that
+# overrides everything else — the same shape as the fail-open settings bug.
+#
+# Unset, it prints the message to the server log and delivers nothing. That is
+# the safe default and it is what a laptop wants (C-7: the permissive branch is
+# the one you ask for by name). Naming an SMTP backend without a host, on the
+# other hand, is not a safe default — it is a mail server that silently fails —
+# so that refuses to start instead.
+EMAIL_BACKEND = _text('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+EMAIL_HOST = _text('EMAIL_HOST')
+EMAIL_PORT = _int('EMAIL_PORT', 587)
+EMAIL_HOST_USER = _text('EMAIL_HOST_USER')
+# Stripped, unlike a password normally would be: this one is copied out of a
+# Google dialog that prints it as four groups of four, so a stray space or
+# newline on the end is the likeliest thing in the file. Gmail accepts the
+# spaces between the groups, so those are left exactly as pasted.
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='').strip()
+EMAIL_USE_TLS = _flag('EMAIL_USE_TLS', True)
+EMAIL_USE_SSL = _flag('EMAIL_USE_SSL', False)
+DEFAULT_FROM_EMAIL = _text('DEFAULT_FROM_EMAIL', 'noreply@localhost')
+
+# A code is mailed from inside the request that asked for it, so a mail server
+# that stops answering would otherwise hold a worker until the client gave up.
+EMAIL_TIMEOUT = _int('EMAIL_TIMEOUT', 10)
+
+if 'smtp' in EMAIL_BACKEND and not EMAIL_HOST:
+    raise ImproperlyConfigured(
+        'EMAIL_BACKEND is set to SMTP but EMAIL_HOST is empty. Set EMAIL_HOST, '
+        'EMAIL_HOST_USER and EMAIL_HOST_PASSWORD, or leave EMAIL_BACKEND unset '
+        'to print messages to the console.'
+    )
+if EMAIL_USE_TLS and EMAIL_USE_SSL:
+    raise ImproperlyConfigured('EMAIL_USE_TLS and EMAIL_USE_SSL are mutually exclusive.')
+
+# A named account with no password to log in with is not a mail server, it is a
+# silent failure: every send is refused by the server, send_mail(fail_silently)
+# swallows the refusal, and the child waiting for a code never learns anything
+# went wrong. Half-configured falls back to the console, where the message is at
+# least still readable — the same reasoning as the unset case, one step along.
+#
+# It stays a fallback rather than a hard stop because eight people share this
+# repository and only one of them holds the mailbox password; refusing to boot
+# would take the other seven's servers down with it.
+EMAIL_CONFIG_NOTE = ''
+if 'smtp' in EMAIL_BACKEND and EMAIL_HOST_USER and not EMAIL_HOST_PASSWORD:
+    EMAIL_CONFIG_NOTE = (
+        f'EMAIL_HOST_PASSWORD is empty, so nothing can be sent as {EMAIL_HOST_USER} '
+        f'through {EMAIL_HOST}. Messages are being printed to the console instead. '
+        f'Set an app password to deliver them.'
+    )
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# Where the front end lives, for the convenience links inside those messages.
+# Empty is a valid answer and the default one: a code works without a link, and
+# a link we are not sure about is the worst thing to put in a message to a
+# child. `apps.links.frontend_link` refuses anything that is not one of our own
+# front ends — see the reasoning there.
+FRONTEND_URL = _text('FRONTEND_URL').rstrip('/')
+
+# ── Sign in with Google ───────────────────────────────────────────────────────
+# The OAuth *client id*, which is public by design -- it is in the page source of
+# every site that offers this. There is no client secret in this flow at all: the
+# browser receives a signed assertion from Google and the server checks the
+# signature, so nothing here is a credential.
+#
+# Empty means the endpoint refuses. That is not a nicety: the audience check is
+# the only thing standing between "a token minted for us" and "any Google token
+# for any application", and google-auth accepts audience=None without complaint.
+GOOGLE_CLIENT_ID = _text('GOOGLE_OAUTH_CLIENT_ID')
 
 # ── Direct messages ───────────────────────────────────────────────────────────
 # Off by default, and deliberately so. The product is used by 10-to-18-year-olds

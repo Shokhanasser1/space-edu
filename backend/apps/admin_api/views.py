@@ -147,7 +147,9 @@ class UserViewSet(AdminModelViewSet):
         """Profile fields for staff; the privilege flags for superusers only."""
         instance = self.get_object()
 
-        privileged = {k: v for k, v in request.data.items() if k in ('is_staff', 'is_active')}
+        privileged = {
+            k: v for k, v in request.data.items() if k in ('is_staff', 'is_active', 'role')
+        }
         if privileged and not request.user.is_superuser:
             return Response(
                 {'detail': f'Only a superuser may change {", ".join(sorted(privileged))}.'},

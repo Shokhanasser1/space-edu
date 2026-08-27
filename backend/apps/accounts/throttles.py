@@ -165,3 +165,91 @@ class CredentialRateThrottle(_AlwaysOnRateThrottle):
             'scope': self.scope,
             'ident': f'{self.get_ident(request)}|{email}',
         }
+
+
+class _AccountRateThrottle(SimpleRateThrottle):
+    """Keyed on the account when there is one, on the address when there is not.
+
+    A school reaches this API from a single public address, so an address-keyed
+    limit is shared by the whole building -- which is what locked a classroom
+    out of signing in once already. Everything below is something a signed-in
+    person asks for on their own behalf, so it is counted against them, and the
+    thirty people beside them are unaffected.
+    """
+
+    def get_cache_key(self, request, view):
+        user = getattr(request, 'user', None)
+        ident = (
+            f'user-{user.pk}' if user is not None and user.is_authenticated
+            else self.get_ident(request)
+        )
+        return self.cache_format % {'scope': self.scope, 'ident': ident}
+
+
+class EmailVerifyThrottle(_AccountRateThrottle):
+    """Asking for a confirmation code, and guessing at one.
+
+    Every request costs an e-mail or an attempt at a six-digit number, so every
+    request counts. Sized for a person who mistypes and asks again, not for a
+    person working through a million codes -- the code itself is single-use and
+    dies after five wrong guesses, so this is the outer bound rather than the
+    only one.
+    """
+
+    scope = 'email_verify'
+
+
+class PasswordResetThrottle(_AlwaysOnRateThrottle):
+    """Asking for a password-reset code, and answering with one.
+
+    Every request counts: each one either sends an e-mail or is a guess at a
+    six-digit number. Keyed on the address it came from *and* the account it is
+    aimed at, like the sign-in codes, so hammering one account from many places
+    and many accounts from one place are both bounded. It cannot be keyed on the
+    account alone -- nobody is signed in here, which is the whole point of it.
+    """
+
+    scope = 'password_reset'
+
+    def get_cache_key(self, request, view):
+        email = ''
+        if hasattr(request, 'data') and isinstance(request.data, dict):
+            email = str(request.data.get('email') or '').strip().lower()
+        return self.cache_format % {
+            'scope': self.scope,
+            'ident': f'{self.get_ident(request)}|{email}',
+        }
+
+
+class PasswordChangeThrottle(_AccountRateThrottle):
+    """Changing a password from inside the account.
+
+    Counts every attempt, including the ones that work: the cost being bounded
+    is guesses at the *current* password, and a person changing their password
+    repeatedly is not a thing that needs room.
+    """
+
+    scope = 'password_change'
+
+
+class EmailChangeThrottle(_AccountRateThrottle):
+    """Moving an account to another address.
+
+    Sends mail to an address the caller chose, which is the part that needs a
+    limit: without one this is a way to send messages signed with our name to
+    anybody, a few an hour, for as long as somebody cares to.
+    """
+
+    scope = 'email_change'
+
+
+class GoogleAuthThrottle(_AlwaysOnRateThrottle):
+    """Signing in with Google.
+
+    Address-keyed, so machine-sized: a whole school arrives through one public
+    address and a person-sized number would lock the class out on the second
+    lesson. Every request counts, including the ones that work -- each verifies
+    a signature and may reach Google for its keys.
+    """
+
+    scope = 'google'

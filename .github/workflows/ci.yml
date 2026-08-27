@@ -149,6 +149,17 @@ jobs:
             fail=1
           fi
 
+          # `backend/venv` and `frontend/node_modules` reached `main` once as
+          # symlinks to an absolute path on one laptop, because .gitignore
+          # matched them with a trailing slash — which matches a directory and
+          # not a link. Everyone who pulled had their own directory replaced by
+          # a dead link. Nothing in this repository is meant to be a symlink, so
+          # the check is simply that none is tracked.
+          if git ls-files -s | awk '$1 == "120000" { print "  " $4 }' | grep .; then
+            echo "::error::A symlink is tracked. Nothing here should be one — it points at a path that only exists on the machine that committed it. git rm --cached the paths listed above."
+            fail=1
+          fi
+
           # VITE_* values are inlined into the public bundle at build time.
           if git ls-files 'frontend/*' | xargs grep -lE 'VITE_[A-Z_]*(KEY|SECRET|TOKEN)\s*=\s*\S' 2>/dev/null | grep -v '\.example$'; then
             echo "::error::A VITE_ secret has a value outside .env.example. Vite ships that to every visitor."

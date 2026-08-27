@@ -26,9 +26,9 @@ User = get_user_model()
 class AdminUserSerializer(serializers.ModelSerializer):
     """Staff view of a user.
 
-    `is_staff` and `is_active` are read-only here and handled separately in the
-    view, because IsAdminUser means plain `is_staff`: without that split any
-    staff member could promote themselves, or set `is_active=False` on a
+    `is_staff`, `is_active` and `role` are read-only here and handled separately
+    in the view, because IsAdminUser means plain `is_staff`: without that split
+    any staff member could promote themselves, or set `is_active=False` on a
     superuser and lock the owner out of their own project.
     """
 
@@ -38,10 +38,12 @@ class AdminUserSerializer(serializers.ModelSerializer):
         model = User
         fields = (
             'id', 'username', 'first_name', 'last_name', 'email',
-            'is_staff', 'is_active', 'date_joined', 'date_of_birth',
+            'is_staff', 'is_active', 'role', 'date_joined', 'date_of_birth',
             'language', 'astronaut_name', 'bio', 'gamification',
         )
-        read_only_fields = ('id', 'username', 'email', 'date_joined', 'is_staff', 'is_active')
+        read_only_fields = (
+            'id', 'username', 'email', 'date_joined', 'is_staff', 'is_active', 'role',
+        )
 
     def get_gamification(self, obj):
         profile = getattr(obj, 'gamification', None)
@@ -56,10 +58,16 @@ class AdminUserSerializer(serializers.ModelSerializer):
 
 
 class PrivilegeSerializer(serializers.Serializer):
-    """The two fields only a superuser may change."""
+    """The three fields only a superuser may change.
+
+    `role` is here rather than beside the profile fields even though it grants
+    nothing today, because it is the record of who a teacher is, and a label
+    every member of staff can hand out is not a record of anything.
+    """
 
     is_staff = serializers.BooleanField(required=False)
     is_active = serializers.BooleanField(required=False)
+    role = serializers.ChoiceField(choices=User.Role.choices, required=False)
 
 
 class AdminNewsSerializer(serializers.ModelSerializer):

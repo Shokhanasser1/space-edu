@@ -19,9 +19,12 @@ import { useSpaceRunHud } from "@/game/spaceRun/spaceRunHudStore";
 import { useSpaceArcadeStore, SHIP_SKINS, skinPrice } from "@/game/spaceRun/spaceArcadeStore";
 import { closeAudio, resumeAudio, startEngineHum, startSpaceMusic, stopEngineHum, stopSpaceMusic } from "@/game/spaceRun/spaceRunSounds";
 import MiniSolarSystem from "@/components/layout/MiniSolarSystem";
+import { useStarfield } from "./useStarfield";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useFormat } from '@/hooks/useFormat';
 
 export default function SpaceRunView() {
+  const fmt = useFormat();
   const { t, language } = useTranslation();
   const [gameKey, setGameKey] = useState(0);
   const [started, setStarted] = useState(false);
@@ -33,52 +36,7 @@ export default function SpaceRunView() {
   const bonusGiven = useRef(false);
   const starCanvasRef = useRef(null);
 
-  // Animated starfield canvas
-  useEffect(() => {
-    if (started) return;
-    const canvas = starCanvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    let raf;
-    const stars = Array.from({ length: 220 }, () => ({
-      x: Math.random(),
-      y: Math.random(),
-      r: Math.random() * 1.8 + 0.3,
-      speed: Math.random() * 0.4 + 0.15,
-      phase: Math.random() * Math.PI * 2,
-      hue: Math.random() > 0.7 ? 200 + Math.random() * 60 : 0,
-      sat: Math.random() > 0.7 ? 60 : 0,
-    }));
-    const resize = () => {
-      canvas.width = canvas.offsetWidth * window.devicePixelRatio;
-      canvas.height = canvas.offsetHeight * window.devicePixelRatio;
-      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-    };
-    resize();
-    window.addEventListener('resize', resize);
-    const draw = (t) => {
-      const w = canvas.offsetWidth;
-      const h = canvas.offsetHeight;
-      ctx.clearRect(0, 0, w, h);
-      for (const s of stars) {
-        const alpha = 0.35 + 0.65 * ((Math.sin(t * 0.001 * s.speed + s.phase) + 1) / 2);
-        if (s.hue) {
-          ctx.fillStyle = `hsla(${s.hue}, ${s.sat}%, 85%, ${alpha})`;
-        } else {
-          ctx.fillStyle = `rgba(255,255,255,${alpha})`;
-        }
-        ctx.beginPath();
-        ctx.arc(s.x * w, s.y * h, s.r, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      raf = requestAnimationFrame(draw);
-    };
-    raf = requestAnimationFrame(draw);
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener('resize', resize);
-    };
-  }, [started]);
+  useStarfield(starCanvasRef, !started);
 
   const { score, survivalSec, distance, coinsCollected, shield, boost, gameOver, paused, difficulty, activePower, setHud, reset } =
     useSpaceRunHud();
@@ -219,7 +177,7 @@ export default function SpaceRunView() {
     inputRef.current.boost = false;
   };
 
-  const scoreDisplay = started ? Math.floor(score).toLocaleString() : "—";
+  const scoreDisplay = started ? fmt.number(Math.floor(score)) : "—";
   const timeDisplay = started && !gameOver ? survivalSec.toFixed(0) + "s" : null;
 
   return (

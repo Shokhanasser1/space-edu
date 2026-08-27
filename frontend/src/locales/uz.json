@@ -215,13 +215,184 @@
     "toggleRings": "Halqalarni Yoqish/O'chirish",
     "ssTitle": "QUYOSH TIZIMI",
     "ssRealtime": "REAL-VAQT",
-    "ssDescription": "Jonli Kepler orbital simulyatsiyasi. Ma'lumotlar NASA JPL Horizons tomonidan taqdim etilgan.",
+    "ssDescription": "Joylashuvlar — VSOP87 efemeridalari, NASA JPL Horizons bilan tekshirilgan.",
     "currentDate": "Joriy Sana",
     "live": "JONLI",
     "oneDayPerSec": "1 KUN/S",
     "oneMonthPerSec": "1 OY/S",
     "speed": "Tezlik",
-    "realTimeValue": "REAL VAQT"
+    "realTimeValue": "REAL VAQT",
+      "solar": {
+        "title": "Quyosh tizimi",
+        "subtitle": "Joylashuvlar — VSOP87 efemeridalari (astronomy-engine), NASA JPL Horizons bilan solishtirilgan. Sun'iy yo'ldoshlar — CelesTrak, zondlar — JPL Horizons, yulduzlar — Yale Bright Star Catalogue.",
+        "speed": {
+          "live": "Jonli",
+          "hour": "1 soat/s",
+          "day": "1 kun/s",
+          "week": "1 hafta/s",
+          "month": "1 oy/s",
+          "year": "1 yil/s"
+        },
+        "speedLabel": "Tezlik",
+        "play": "Davom ettirish",
+        "pause": "To'xtatish",
+        "reverse": "Orqaga",
+        "forward": "Oldinga",
+        "today": "Hozir",
+        "date": "Sana",
+        "atEdge": "Efemeridalar 1800–2200 yillar uchun ishonchli — soat chegarada to'xtadi.",
+        "overview": "Umumiy ko'rinish",
+        "escHint": "Esc — panelni yopish, keyin umumiy ko'rinishga qaytish",
+        "bodies": "Jismlar",
+        "star": "Yulduz",
+        "planets": "Sayyoralar",
+        "dwarfs": "Mitti sayyoralar",
+        "moons": "Yo'ldoshlar",
+        "kind": {
+          "star": "Yulduz",
+          "planet": "Sayyora",
+          "dwarf": "Mitti sayyora",
+          "moon": "Tabiiy yo'ldosh",
+          "satellite": "Sun'iy yo'ldosh",
+          "spacecraft": "Kosmik zond"
+        },
+        "facts": {
+          "radius": "Radius",
+          "mass": "Massa",
+          "gravity": "Erkin tushish tezlanishi",
+          "temp": "O'rtacha harorat",
+          "day": "Sutka uzunligi",
+          "tilt": "O'q og'ishi",
+          "atmosphere": "Atmosfera",
+          "none": "Yo'q",
+          "moonsCount": "Yo'ldoshlar",
+          "retrograde": "teskari aylanadi"
+        },
+        "live": {
+          "title": "Ayni paytda",
+          "distSun": "Quyoshgacha masofa",
+          "distEarth": "Yergacha masofa",
+          "light": "Yorug'lik yetib keladi",
+          "period": "Aylanish davri",
+          "orbits": "Atrofida aylanadi"
+        },
+        "units": {
+          "km": "km",
+          "au": "a.b.",
+          "mkm": "mln km",
+          "min": "daq",
+          "h": "soat",
+          "d": "kun",
+          "years": "yil",
+          "days": "kun"
+        },
+        "layers": {
+          "title": "Qatlamlar",
+          "orbits": "Orbitalar",
+          "labels": "Nomlar",
+          "asteroids": "Asteroidlar va Koyper kamari",
+          "stars": "Haqiqiy yulduzlar",
+          "satellites": "Sun'iy yo'ldoshlar (XKS, stansiyalar)",
+          "spacecraft": "Kosmik zondlar",
+          "trueScale": "Haqiqiy masshtab",
+          "scaleNote": "Haqiqiy masshtabda sayyoralar nuqtaga aylanadi — Quyosh tizimi aslida shunchalik bo'sh."
+        },
+        "satStatus": {
+          "loading": "Orbital elementlar yuklanmoqda…",
+          "noWebGL": "Bu sahifaga WebGL 2 kerak, bu brauzer yoki video-drayver esa uni bermaydi. Ishlaydigan video-drayverli kompyuterda Chrome yoki Firefox'ni sinab ko'ring.",
+          "ready": "Sun'iy yo'ldoshlar: {n}",
+          "error": "Sun'iy yo'ldosh ma'lumotlari mavjud emas (server o'chiq)",
+          "outOfRange": "Sun'iy yo'ldosh orbitalari faqat bugundan ±30 kun oralig'ida ma'lum"
+        },
+        "craftStatus": {
+          "loading": "JPL Horizons so'ralmoqda…",
+          "error": "Zondlar ma'lumotlari mavjud emas (server o'chiq)"
+        },
+        "events": {
+          "title": "Yaqin voqealar",
+          "fullMoon": "To'lin oy",
+          "newMoon": "Yangi oy",
+          "lunarEclipse": "Oy tutilishi",
+          "solarEclipse": "Quyosh tutilishi",
+          "opposition": "qarama-qarshi turish",
+          "jump": "Soatni shu lahzaga o'tkazish",
+          "kinds": {
+            "penumbral": "yarim soyali",
+            "partial": "qisman",
+            "total": "to'liq",
+            "annular": "halqasimon"
+          }
+        },
+        "sat": {
+          "norad": "NORAD raqami",
+          "altitude": "Balandlik",
+          "speed": "Tezlik",
+          "inclination": "Og'ish burchagi",
+          "position": "Ustida (kenglik, uzunlik)"
+        },
+        "loading": "Teksturalar yuklanmoqda…",
+          "quiz": {
+            "title": "O'zingizni sinang",
+            "intro": "Osmon hozir javob beradigan beshta savol — javoblar sana bilan o'zgaradi.",
+            "start": "Boshlash",
+            "next": "Keyingi",
+            "finish": "Tayyor",
+            "again": "Yana",
+            "show": "ko'rsatish",
+            "question": "{i} / {n}",
+            "correct": "To'g'ri.",
+            "wrong": "Yo'q — to'g'ri javob: {answer}.",
+            "score": "{n} tadan {score} tasi to'g'ri.",
+            "best": "eng yaxshi {best}",
+            "noXp": "Mashq — buning uchun XP hozircha berilmaydi.",
+            "unitsDays": "{n} kun",
+            "q": {
+              "closestPlanet": "Hozir Yerga eng yaqin sayyora qaysi?",
+              "farthest": "Bulardan qaysi biri hozir Quyoshdan eng uzoqda?",
+              "lightTime": "Quyosh yorug'ligi {body} sayyorasiga hozir qancha vaqtda yetib boradi?",
+              "nextOpposition": "Keyingi qarama-qarshi turish qaysi sayyorada?",
+              "longestDay": "Bulardan qaysi birida sutka eng uzun?",
+              "retrograde": "Bulardan qaysi biri teskari aylanadi?",
+              "daysToFullMoon": "Keyingi to'lin oygacha necha kun qoldi?"
+            }
+          },
+          "probeNote": "Traektoriya: NASA/JPL Horizons. Model: NASA VTAD.",
+          "launched": "Uchirilgan"
+      },
+      "bodies": {
+        "sun": "Quyosh",
+        "mercury": "Merkuriy",
+        "venus": "Venera",
+        "earth": "Yer",
+        "mars": "Mars",
+        "jupiter": "Yupiter",
+        "saturn": "Saturn",
+        "uranus": "Uran",
+        "neptune": "Neptun",
+        "pluto": "Pluton",
+        "ceres": "Serera",
+        "eris": "Erida",
+        "haumea": "Haumea",
+        "makemake": "Makemake",
+        "moon": "Oy",
+        "phobos": "Fobos",
+        "deimos": "Deymos",
+        "io": "Io",
+        "europa": "Yevropa",
+        "ganymede": "Ganimed",
+        "callisto": "Kallisto",
+        "mimas": "Mimas",
+        "enceladus": "Enselad",
+        "rhea": "Reya",
+        "titan": "Titan",
+        "iapetus": "Yapet",
+        "titania": "Titaniya",
+        "oberon": "Oberon",
+        "triton": "Triton",
+        "charon": "Xaron",
+        "iss": "XKS"
+      }
+
   },
   "lab": {
     "title": "Kosmik",
@@ -280,7 +451,42 @@
     "blackHole": "Qora Tuynuk",
     "blackHoleDesc": "Cheksiz zichlik, ekstremal tortishish kuchi."
   },
+  "forgotPassword": {
+    "title": "Parolni",
+    "titleHighlight": "tiklash",
+    "subtitle": "Manzilingizga olti xonali kod yuboramiz.",
+    "emailLabel": "Pochtangiz",
+    "sendCode": "Kod yuborish",
+    "codeSentGeneric": "Agar bu manzilda hisob bo‘lsa, kod yo‘lga chiqdi.",
+    "codeLabel": "Xatdagi kod",
+    "newPasswordLabel": "Yangi parol",
+    "confirmPasswordLabel": "Yangi parol yana",
+    "submit": "Parolni o‘rnatish",
+    "success": "Parol o‘zgartirildi. Endi u bilan kiring.",
+    "invalidCode": "Kod noto‘g‘ri yoki muddati o‘tgan.",
+    "passwordsDoNotMatch": "Ikkala parol bir xil emas.",
+    "tooManyAttempts": "Juda ko‘p urinish. {{minutes}} daqiqa kuting.",
+    "failed": "Bajarilmadi. Qayta urinib ko‘ring."
+  },
+  "verifyEmail": {
+    "title": "Manzilni tasdiqlang",
+    "subtitle": "Yuborilgan kodni kiriting",
+    "sentTo": "Yubordik:",
+    "codeLabel": "Olti xonali kod",
+    "verify": "Tasdiqlash",
+    "resend": "Yana kod yuborish",
+    "resent": "Yangi kod yo‘lga chiqdi.",
+    "verified": "Manzilingiz tasdiqlandi.",
+    "invalidCode": "Kod noto‘g‘ri yoki muddati o‘tgan.",
+    "tooManyAttempts": "Juda ko‘p urinish. {{minutes}} daqiqa kuting.",
+    "failed": "Bajarilmadi. Qayta urinib ko‘ring.",
+    "bannerText": "Boshqalarga yozish uchun pochta manzilingizni tasdiqlang.",
+    "bannerAction": "Tasdiqlash"
+  },
   "auth": {
+    "signInWithGoogle": "Google bilan davom etish",
+    "googleFailed": "Google orqali kirish ishlamadi. Qayta urinib ko‘ring.",
+    "emailNotVerified": "Avval pochta manzilingizni tasdiqlang.",
     "login": "Kirish",
     "signup": "Ro'yxatdan o'tish",
     "forgotPassword": "Parolni unutdingizmi?",
@@ -418,7 +624,19 @@
   "daily": {
     "challengeCompleted": "Chaqiriq Yakunlandi!",
     "alreadyCompleted": "Siz bugungi chaqiriqni allaqachon bajargansiz. Ko'proq XP yig'ish uchun ertaga qaytib keling!",
-    "viewProfile": "Profilni Ko'rish"
+    "viewProfile": "Profilni Ko'rish",
+    "nextQuestion": "Keyingi savol",
+    "finish": "Chaqiriqni yakunlash",
+    "complete": "Chaqiriq yakunlandi!",
+    "completeSub": "Mana javoblaringiz va ularning izohi.",
+    "xpEarned": "Yig'ilgan XP",
+    "noQuestions": "Bugungi chaqiriqda hali savollar yo'q. Birozdan keyin urinib ko'ring.",
+    "review": "Sizning javoblaringiz",
+    "yourAnswer": "Sizning javobingiz",
+    "correctAnswer": "To'g'ri javob",
+    "noAnswer": "Vaqt tugadi",
+    "correct": "To'g'ri",
+    "wrong": "Noto'g'ri"
   },
   "premium": {
     "heroTitle": "Kosmik sayohatingizni yangilang. 1 oylik Premium'ni $0 ga sinab ko'ring.",
@@ -482,7 +700,11 @@
     "level": "Daraja",
     "experience": "Tajriba",
     "xpPoints": "XP ballari",
-    "secureProtocol": "Xavfsiz ma'lumotlar protokoli tasdiqlangan"
+    "secureProtocol": "Xavfsiz ma'lumotlar protokoli tasdiqlangan",
+    "yourPlace": "Sizning o'rningiz",
+    "ofPlayers": "{count} ishtirokchidan",
+    "notRankedYet": "Reytingga kirish uchun XP to'plang",
+    "loadFailed": "Reytinglarni yuklab bo'lmadi. Tez orada qayta urinamiz."
   },
   "live": {
     "title": "Jonli",
@@ -570,13 +792,55 @@
   "history": {
     "title": "Kosmik",
     "titleHighlight": "Tarix",
-    "subtitle": "Kartani bosing - to'liq tarixiy ma'lumot, rasm va video bloklari bilan katta oynada ko'rasiz.",
+    "subtitle": "Insoniyatning qadimgi yulduz kuzatishlaridan zamonaviy kosmik tadqiqotlargacha bo'lgan sayohatini o'rganing — batafsil ma'lumot uchun davrni bosing.",
     "backBtn": "⬅ Tarixga qaytish",
     "viewMore": "Batafsil ko'rish",
     "videoBlock": "Video blok",
     "videoPlaceholder": "Video joyi (iframe uchun tayyor placeholder)",
     "imagePlaceholder": "Rasm o'rni",
-    "historicalImage": "Tarixiy rasm"
+    "historicalImage": "Tarixiy rasm",
+    "era1": {
+      "title": "Qadimgi astronomiya",
+      "period": "Mil.avv. 3000 – 100 yillar",
+      "summary": "Misr, Bobil, Amerika va Yunon olimlari taqvimlar, tutilish hisoblari va ilk koinot g'oyalari uchun asos yaratdilar.",
+      "details": "Mil.avv. 3000–2000 | Qadimgi Misr: Yulduzlar kuzatildi va birinchi 365 kunlik taqvim yaratildi. Quyosh soatlari (obelisklar) yordamida vaqt va masofa o'lchash rivojlandi.\n\nMil.avv. 1000–500 | Bobil tsivilizatsiyasi: Sayyoralar xaritalari chizildi va 12 burj belgisi shakllandi. Oy va Quyosh tutilishlarini bashorat qilish joriy etildi.\n\nMil.avv. 500–200 | Qadimgi Amerika xalqlari: Mayya va Inka ajdodlari Quyosh va Venera harakatlarini aniq hisobladilar va tosh rasadxonalar qurdilar.\n\nMil.avv. 300–100 | Qadimgi Yunoniston: Yer aylanasi deyarli aniq hisoblab chiqildi va geliosentrik g'oyaning dastlabki shakllari paydo bo'ldi."
+    },
+    "era2": {
+      "title": "Markaziy Osiyo oltin davri",
+      "period": "IX – XV asrlar",
+      "summary": "Al-Farg'oniydan va al-Xorazmiydan Ulug'bekning Samarqand rasadxonasigacha — Markaziy Osiyo olimlari matematika, astronomiya va yulduzlar xaritasini misli ko'rilmagan darajaga olib chiqdilar.",
+      "details": "IX asr | Ahmad al-Farg'oniy (Alfraganus): Farg'ona vodiysida tug'ilgan, u o'rta asrlarning eng ta'sirli astronomiya darsliklaridan birini yozgan — Ptolemey asarlarini islom olami va o'rta asr Yevropasi talabalari uchun soddalashtirib bayon qilgan.\n\nIX asr | Muhammad al-Xorazmiy: Xorazmda tug'ilgan matematik dunyoga «algoritm» so'zini berdi va algebrani asos soldi, Bag'doddan Kordobagacha foydalanilgan astronomik jadvallar yaratdi.\n\nXI asr | Abu Rayhon al-Beruniy: Xorazmlik qomusiy olim trigonometriya yordamida Yer radiusini aniq hisoblagan, astronomiya, geografiya va xronologiya bo'yicha ensiklopedik asarlar yozgan.\n\n1424–1449 | Mirzo Ulug'bek: Temuriy shahzoda va astronom, o'rta asrlarning eng ilg'or rasadxonalaridan birini — Samarqand rasadxonasini qurdirgan. Uning yulduzlar katalogi (Zij-i Sultoniy) 1018 ta yulduzni ajoyib aniqlik bilan qayd etgan va asrlar davomida astronomlar tomonidan foydalanilgan."
+    },
+    "era3": {
+      "title": "Ilmiy inqilob va teleskop",
+      "period": "XVI – XVIII asrlar",
+      "summary": "Kopernikdan Nyutongacha bo'lgan olimlar teleskop va fizika qonunlari orqali zamonaviy astronomiyaga asos yaratdilar.",
+      "details": "1500-yillar | Nikolay Kopernik: Quyosh, Yer emas, koinot markazida turgan inqilobiy geliosentrik tizimni ishlab chiqdi.\n\n1608 | Gans Lippershey: Gollandiyalik usta uzoqdagi narsalarni yaqinlashtiruvchi birinchi tarixiy teleskopni ixtiro qildi.\n\n1609 | Galileo Galiley: Teleskopni koinotga yo'naltirgan birinchi olim. U Oy kraterlarini va Yupiterning 4 ta yo'ldoshini kashf etib, Kopernik g'oyalarini tasdiqladi.\n\n1611 | Iogann Kepler: Sayyoralar harakatining asosiy qonunlarini kashf etdi va aniqroq astronomik teleskop yaratdi.\n\n1687 | Isaak Nyuton: Butun olam tortishish qonuni orqali sayyoralar nima uchun ma'lum orbitada harakatlanishini fizik jihatdan isbotladi."
+    },
+    "era4": {
+      "title": "Kosmik poyga va ilk qadamlar",
+      "period": "1950–1960-yillar",
+      "summary": "Sputnikdan Apollo 11gacha bo'lgan davrda insoniyat kosmosga chiqdi va Oyda birinchi qadamni qo'ydi.",
+      "details": "1957 | «Sputnik-1» va Layka: Inson tarixidagi birinchi sun'iy yo'ldosh orbitaga uchirildi. Ko'p o'tmay Layka ismli it kosmosga uchgan birinchi tirik mavjudot bo'ldi.\n\n1961-yil 12-aprel | Yuriy Gagarin: «Vostok-1» kemasida kosmosga uchgan birinchi inson. Bu butun insoniyat uchun ulkan tarixiy qadam bo'ldi.\n\n1963 va 1965 | Valentina Tereshkova kosmosga uchgan birinchi ayol bo'ldi. Aleksey Leonov ochiq kosmosga chiqqan birinchi inson bo'ldi (12 daqiqa).\n\n1969-yil 20-iyul | «Apollo-11»: Nil Armstrong va Baz Oldrin birinchi marta Oy yuzasiga qadam qo'ydilar. Armstrong mashhur iborasini aytdi: «Bu inson uchun kichik qadam, insoniyat uchun ulkan sakrash.»"
+    },
+    "era5": {
+      "title": "Sayyoralarni zabt etish",
+      "period": "1970–1990-yillar",
+      "summary": "Venera va Marsga qo'nishlardan Voyager, Shuttle, Mir va Hubblgacha — bu davrda insoniyat Yer orbitasidan tashqariga chiqdi.",
+      "details": "1970–1971 | «Venera-7» Venera sayyorasiga qo'ngan birinchi kosmik apparat bo'ldi. Bir yil keyin «Mars-3» Marsga muvaffaqiyatli qo'ndi.\n\n1977 | «Voyager» missiyasi: Voyager-1 va Voyager-2 kosmosning chegaralarini o'rganish uchun uchirildi. Ular hozirda insoniyat yaratgan eng uzoqdagi ob'ektlardir.\n\n1981–1986 | Ko'p marta foydalaniladigan «Space Shuttle» birinchi parvozini amalga oshirdi. Doimiy modulli «Mir» stansiyasi uzoq muddatli tadqiqotlar uchun uchirildi.\n\n1990–1997 | «Hubble» teleskopi orbitaga uchirildi va insoniyatning koinot haqidagi tasavvurini tubdan o'zgartirdi. Saturnni o'rganish uchun murakkab «Cassini-Huygens» missiyasi jo'natildi."
+    },
+    "era6": {
+      "title": "Xalqaro hamkorlik va tijorat kosmosi",
+      "period": "2000–2020-yillar",
+      "summary": "XKS, xususiy raketalar, Mars va Pluton missiyalari, va qora tuynukning birinchi surati bu davrni yangi bosqichga olib chiqdi.",
+      "details": "2000 | Xalqaro kosmik stansiya (XKS): Birinchi ekipaj bilan kosmosda doimiy inson yashashi va ishlashi boshlandi.\n\n2008 | SpaceX Falcon 1 raketasini muvaffaqiyatli uchirib yubordi — orbitaga yetgan birinchi xususiy kosmik apparat, tijorat kosmik parvozlari davrini boshladi.\n\n2012–2015 | «Curiosity» Marsga qo'ndi. «New Horizons» Plutonning birinchi aniq suratlarini yubordi. Birinchi marta kosmik apparat kometaga (67P) qo'ndi.\n\n2019 | Qora tuynukning (M87 galaktikasi) birinchi haqiqiy surati olinib, Eynshteynning nisbiylik nazariyasi yana bir bor tasdiqlandi."
+    },
+    "era7": {
+      "title": "Yangi ufqlar va O'zbekiston kosmik kelajagi",
+      "period": "2021–2028+",
+      "summary": "Jeyms Vebb, DART, Starship va O'zbekistonning «Samarqand-2028» sun'iy yo'ldoshi bilan — insoniyat Oy, Mars va milliy kosmik dasturlarning yangi davriga faol kirib bormoqda.",
+      "details": "2021–2022 | Jeyms Vebb kosmik teleskopi koinotning eng qadimgi galaktikalarini o'rganish uchun uchirildi. DART missiyasi sayyora himoyasini sinash uchun asteroidga zarba berdi.\n\n2023–2024 | Hindistonning «Chandrayaan-3» Oyning janubiy qutbiga qo'ndi. SpaceX tarixdagi eng katta raketa — Starship sinovlarini boshladi.\n\n2026 | O'zbekiston «Samarqand-2028» giperspektral sun'iy yo'ldoshini uchirib yubordi — mamlakatning orbitadagi birinchi sun'iy yo'ldoshi. Artemis II astronavtlari yarim asrlik tanaffusdan keyin Oy atrofida parvoz qildi.\n\n2028 | O'zbekiston «Mirzo Ulug'bek» ilmiy CubeSat sun'iy yo'ldoshini uchirishga, Samarqandda IAC 2028 kongressini o'tkazishga va birinchi o'zbek kosmonavtini kosmosga yuborishga tayyorlanmoqda."
+    }
   },
   "game": {
     "title": "Kosmik Poyga",
@@ -702,11 +966,19 @@
     "loginRequired": "Xarid qilish uchun kiring.",
     "purchaseSuccess": "Xarid muvaffaqiyatli!",
     "purchaseFailed": "Xaridda xatolik.",
+    "realProduct": "Haqiqiy mahsulot",
+    "realProductNote": "Bu — haqiqiy narsa, uni boshqa do'kon sotadi. To'lov o'sha yerda, haqiqiy pul bilan bo'ladi — yoqilg'i qabul qilinmaydi.",
+    "openAtShop": "Do'konda ochish",
+    "soldBy": "Sotuvchi",
+    "priceAtShop": "Narxi do'konda",
+    "priceAtShopNote": "Do'kondagi narxlar o'zgarib turadi, shuning uchun bu yerda ko'rsatmaymiz. Bugungi narx do'kon sahifasida.",
     "types": {
       "spaceship": "Kosmik kema",
       "badge": "Nishon",
       "boost": "XP kuchaytirgich",
       "book": "Kitob",
+      "model_kit": "Model to'plami",
+      "apparel": "Kiyim",
       "rocket_module": "Raketa moduli",
       "satellite": "Sun'iy yo'ldosh",
       "avatar": "Avatar",
@@ -772,6 +1044,10 @@
     "unknown": "Noma'lum"
   },
   "loginPage": {
+    "forgotPasswordLink": "Parolni unutdingizmi?",
+    "googleUnavailable": "Hozir Google orqali kirish mavjud emas.",
+    "googleFailed": "Google orqali kirish ishlamadi. Qayta urining yoki parol bilan kiring.",
+    "googleEmailUnverified": "Google bu manzilni tasdiqlamagan. Avval Google’da tasdiqlang.",
     "welcomeTitle": "Qaytganingiz",
     "welcomeHighlight": "Bilan",
     "subtitle": "Missiya boshqaruviga qayta kirish uchun ma'lumotlaringizni kiriting",
@@ -786,6 +1062,9 @@
     "tooManyAttempts": "Bu tarmoqdan juda koʻp notoʻgʻri parol kiritildi. {{minutes}} daqiqadan soʻng qayta urinib koʻring."
   },
   "registerPage": {
+    "passwordsDoNotMatch": "Ikkala parol bir xil emas.",
+    "checkYourEmail": "Pochtangizni tekshiring",
+    "verificationSent": "Manzilni tasdiqlash uchun kod yubordik. Kutib turib, saytni ko‘rishingiz mumkin.",
     "joinTitle": "Qo'shiling",
     "joinHighlight": "Akademiyaga",
     "subtitle": "Kosmik sayohatni boshlash uchun profilingizni yarating",
@@ -890,6 +1169,27 @@
     "all": "Barchasi"
   },
   "profilePage": {
+    "securityTitle": "Hisob",
+    "changePassword": "Parolni o‘zgartirish",
+    "currentPassword": "Joriy parol",
+    "newPassword": "Yangi parol",
+    "confirmNewPassword": "Yangi parol yana",
+    "passwordsDoNotMatch": "Ikkala parol bir xil emas.",
+    "passwordChanged": "Parol o‘zgartirildi. Qolgan hamma joydan chiqarildingiz.",
+    "passwordChangeFailed": "Parol o‘zgartirilmadi.",
+    "changeEmail": "Pochtani o‘zgartirish",
+    "newEmail": "Yangi pochta",
+    "emailChangeRequested": "Yangi manzilga kod yubordik.",
+    "emailPendingNotice": "Kod yuborilgan manzil kutilmoqda:",
+    "cancelEmailChange": "Bekor qilish",
+    "emailChanged": "Manzilingiz o‘zgartirildi.",
+    "emailChangeFailed": "Manzil o‘zgartirilmadi.",
+    "emailVerified": "Tasdiqlangan",
+    "emailNotVerified": "Tasdiqlanmagan",
+    "verifyNow": "Tasdiqlash",
+    "roleStudent": "O‘quvchi",
+    "roleTeacher": "O‘qituvchi",
+    "roleAdmin": "Administrator",
     "refreshData": "Ma'lumotlarni yangilash",
     "leaderboard": "Peshqadamlar",
     "quizHub": "Viktorina markazi",
@@ -944,6 +1244,8 @@
     "levelExplorer": "{level}-daraja: Galaktik tadqiqotchi"
   },
   "chat": {
+    "verifyToWrite": "Bu yerga yozishdan oldin pochta manzilingizni tasdiqlang.",
+    "verifyToWriteAction": "Hozir tasdiqlash",
     "title": "Hamjamiyat",
     "titleHighlight": "Chati",
     "selectingRoom": "Xona tanlanmoqda...",

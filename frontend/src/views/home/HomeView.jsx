@@ -4,10 +4,12 @@ import { Rocket, ArrowRight, BookOpen, Target, Award, Globe, Star, ChevronDown, 
 import { Link } from "react-router-dom";
 import { useTranslation } from "@/hooks/useTranslation";
 import Earth3D from "@/components/3d/Earth3D";
+import { useFormat } from '@/hooks/useFormat';
 
 
 // ── ANIMATED COUNTER ──────────────────────────────────────────────────────────
 const AnimatedCounter = ({ end, label, suffix = "" }) => {
+  const fmt = useFormat();
   const [count, setCount] = useState(0);
   const ref = useRef(null);
 
@@ -33,7 +35,7 @@ const AnimatedCounter = ({ end, label, suffix = "" }) => {
     <div ref={ref} className="flex flex-col items-center gap-1">
       <span className="text-4xl md:text-5xl font-[800] tabular-nums"
         style={{ color: '#a78bfa' }}>
-        {count.toLocaleString()}{suffix}
+        {fmt.number(count)}{suffix}
       </span>
       <span className="text-white/40 text-xs tracking-[0.18em] uppercase">{label}</span>
     </div>

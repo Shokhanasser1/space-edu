@@ -18,8 +18,34 @@ class ChallengeQuestionFullSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChallengeQuestion
         fields = ('id', 'category', 'difficulty', 'question', 'question_en', 'question_ru',
-                  'options', 'options_en', 'options_ru', 'correct_answer', 'explanation',
+                  'options', 'options_en', 'options_ru', 'correct_answer',
+                  'explanation', 'explanation_en', 'explanation_ru',
                   'time_seconds', 'is_active')
+
+
+# ── Question (marked — what it looks like once the child has answered) ──
+class ChallengeReviewSerializer(serializers.ModelSerializer):
+    """One question, the right answer, and why it is the right answer.
+
+    Served from the submit response and from nowhere else. `explanation` is as
+    much of an answer key as `correct_answer` is — it names the answer in the
+    course of teaching it — so it must not be reachable before the child has
+    committed. Keeping that apart from ChallengeQuestionSerializer is the same
+    rule as C-3, and grep both before adding a field to either.
+
+    `selected` and `is_correct` belong to this attempt rather than to the
+    question; the view attaches them to the instances it passes in.
+    """
+
+    selected = serializers.IntegerField(read_only=True)
+    is_correct = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = ChallengeQuestion
+        fields = ('id', 'question', 'question_en', 'question_ru',
+                  'options', 'options_en', 'options_ru',
+                  'correct_answer', 'explanation', 'explanation_en', 'explanation_ru',
+                  'selected', 'is_correct')
 
 
 # ── Daily Challenge ──
@@ -74,6 +100,10 @@ class UserStreakSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserStreak
         fields = ('current_streak', 'longest_streak', 'last_completed')
+
+    # A broken streak reads as 0 here rather than as the number it reached
+    # before the day was missed — see `UserStreak.live_streak`.
+    current_streak = serializers.IntegerField(source='live_streak', read_only=True)
 
 
 class LeaderboardEntrySerializer(serializers.Serializer):

@@ -5,6 +5,8 @@ import api from '@/lib/api';
 import { useAuthStore } from '@/store/useAuthStore';
 import GlassCard from '@/components/ui/GlassCard';
 import { useTranslation } from '@/hooks/useTranslation';
+import EmailVerificationBanner from '@/components/auth/EmailVerificationBanner';
+import { useFormat } from '@/hooks/useFormat';
 
 function Avatar({ url, username }) {
   return url
@@ -15,6 +17,7 @@ function Avatar({ url, username }) {
 }
 
 function Message({ msg, isMe, onReport, onBlock }) {
+  const fmt = useFormat();
   return (
     <motion.div 
       initial={{ opacity: 0, x: isMe ? 20 : -20 }}
@@ -36,7 +39,7 @@ function Message({ msg, isMe, onReport, onBlock }) {
         </div>
         <div className={`flex items-center gap-2 px-2 ${isMe ? 'flex-row-reverse' : ''}`}>
           <span className="text-[9px] font-[700] text-white/20 tracking-tighter">
-            {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            {fmt.time(msg.created_at)}
           </span>
           {/* There was no way to report or block anyone at all — ticket B1. */}
           {!isMe && (
@@ -56,6 +59,7 @@ function Message({ msg, isMe, onReport, onBlock }) {
 }
 
 export default function ChatView() {
+  const fmt = useFormat();
   const { user } = useAuthStore();
   const { t, i18n } = useTranslation();
   const [rooms, setRooms] = useState([]);
@@ -66,6 +70,9 @@ export default function ChatView() {
   const [reportTarget, setReportTarget] = useState(null);
   const [reportReasons, setReportReasons] = useState([]);
   const [suspension, setSuspension] = useState(null);
+  // The server refuses a post from an unconfirmed address. This is so the
+  // composer can say why instead of the child watching a button do nothing.
+  const [canPost, setCanPost] = useState(true);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -99,6 +106,7 @@ export default function ChatView() {
       .then(({ data }) => {
         setReportReasons(data.report_reasons ?? []);
         setSuspension(data.suspension ?? null);
+        setCanPost(data.can_post !== false);
       })
       .catch(() => setReportReasons([]));
   }, []);
@@ -259,9 +267,12 @@ export default function ChatView() {
                 broken rather than that they were moderated. */}
             {suspension && (
               <p className="mb-3 px-2 text-xs text-amber-200/90 leading-snug">
-                {t('chat', 'suspended')} {new Date(suspension.until).toLocaleString()}
+                {t('chat', 'suspended')} {fmt.dateTime(suspension.until)}
                 {suspension.reason ? ` — ${suspension.reason}` : ''}
               </p>
+            )}
+            {!canPost && !suspension && (
+              <EmailVerificationBanner className="mb-3" />
             )}
             {sendError && <p className="mb-3 px-2 text-xs text-rose-300/90 leading-snug">{sendError}</p>}
             <form onSubmit={send} className="flex gap-3">
@@ -274,7 +285,7 @@ export default function ChatView() {
               />
               <button 
                 type="submit" 
-                disabled={!text.trim() || sending || Boolean(suspension)}
+                disabled={!text.trim() || sending || Boolean(suspension) || !canPost}
                 className="w-14 h-14 rounded-2xl bg-violet hover:bg-violet-dark disabled:opacity-30 disabled:grayscale flex items-center justify-center shadow-lg shadow-violet/20 transition-all active:scale-[0.95]"
               >
                 {sending ? <Loader className="w-5 h-5 animate-spin text-white" /> : <Send className="w-5 h-5 text-white" />}
