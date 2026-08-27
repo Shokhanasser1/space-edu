@@ -9,6 +9,7 @@ import { DRACOLoader } from "three/addons/loaders/DRACOLoader.js";
 import { useSpaceRunHud } from "./spaceRunHudStore";
 import { useSpaceArcadeStore } from "./spaceArcadeStore";
 import { playCoinSound, playExplosionSound } from "./spaceRunSounds";
+import { SHIELD_SAVE_INVULN, resolveMeteorStrike } from "./spaceRunCollision";
 
 const SKIN_COLORS = {
   default: "#38bdf8",
@@ -131,7 +132,6 @@ function resetObstacleObject(o) {
   o.rz = 0;
   o.rs = 0;
   o.scale = 0;
-  o.damage = 0;
   o.waveX = 0;
   o.waveY = 0;
   o.waveF = 0;
@@ -1223,7 +1223,7 @@ function EnemyScoutShip({ speedRef }) {
 }
 
 /** Shuttle stack: orbiter + rust ET + twin SRBs. Y-flipped so bow faces −Z (ahead into the lane). */
-function PlayerShipDetailed({ rocketScene, hullColor, boostingRef, shipVxRef, shipVyRef, healthRef }) {
+function PlayerShipDetailed({ rocketScene, hullColor, boostingRef, shipVxRef, shipVyRef, shieldRef, invulnRef }) {
   const rootRef = useRef(null);
   const glowRef = useRef(null);
   const thrL = useRef(null);
@@ -1256,29 +1256,28 @@ function PlayerShipDetailed({ rocketScene, hullColor, boostingRef, shipVxRef, sh
 
     const g = glowRef.current;
     if (g && g.material) {
-      const h = THREE.MathUtils.clamp((healthRef?.current ?? 100) / 100, 0, 1);
+      const shielded = (shieldRef?.current ?? 0) > 0;
+      const saved = (invulnRef?.current ?? 0) > 0;
       const boosting = !!boostingRef?.current;
       const pulse = 0.85 + Math.sin(state.clock.elapsedTime * 6.5) * 0.15;
 
-      let color = "#22c55e";
-      let baseOpacity = 0.26;
-      let baseScale = 1.0;
+      let color = "#ef4444";
+      let baseOpacity = 0.3;
+      let baseScale = 1.02;
 
-      if (h > 0.6) {
-        color = "#22c55e";
-        baseOpacity = 0.32;
-        baseScale = 1.02;
-      } else if (h > 0.3) {
-        color = "#f59e0b";
-        baseOpacity = 0.38;
-        baseScale = 1.03;
-      } else {
-        color = "#ef4444";
-        baseOpacity = 0.52;
-        baseScale = 1.07;
+      if (saved) {
+        // The moment right after a save: bright, obviously temporary.
+        color = "#f8fafc";
+        baseOpacity = 0.62;
+        baseScale = 1.09;
+      } else if (shielded) {
+        color = "#22d3ee";
+        baseOpacity = 0.4;
+        baseScale = 1.05;
       }
 
-      const dangerBoost = h <= 0.3 ? pulse : 1;
+      // Unshielded is the dangerous state now, so that is what pulses.
+      const dangerBoost = shielded || saved ? 1 : pulse;
       const mult = boosting ? 1.5 : 1;
 
       // MeshBasicMaterial supports color/opacity
@@ -1495,8 +1494,11 @@ export function SpaceRunScene({ inputRef, runningRef }) {
   const shipVy = useRef(0);
   const speedRef = useRef(16);
   const boostRef = useRef(100);
-  const healthRef = useRef(100);
+  /** The ship has no hit points any more: it is flying or the run is over. */
+  const aliveRef = useRef(true);
   const shieldRef = useRef(0);
+  /** Seconds of grace left after a shield save; 0 means a meteor is lethal. */
+  const invulnRef = useRef(0);
   const distanceRef = useRef(0);
   const shakeRef = useRef(0);
   const obstacles = useRef([]);
@@ -1734,12 +1736,11 @@ export function SpaceRunScene({ inputRef, runningRef }) {
       survivalSec: e,
       distance: distanceRef.current,
       difficulty: diff,
-      health: THREE.MathUtils.clamp(healthRef.current, 0, 100),
       shield: THREE.MathUtils.clamp(shieldRef.current, 0, 100),
       boost: THREE.MathUtils.clamp(boostRef.current, 0, 100),
       activePower:
         shieldRef.current > 0
-          ? `shield ${Math.round(shieldRef.current)}%`
+          ? "shield"
           : slowT.current > 0
             ? "slow-mo"
             : magnetT.current > 0
@@ -1818,10 +1819,9 @@ export function SpaceRunScene({ inputRef, runningRef }) {
     shipX.current = THREE.MathUtils.clamp(shipX.current + shipVx.current * dt, -SHIP_BOUNDS.x, SHIP_BOUNDS.x);
     shipY.current = THREE.MathUtils.clamp(shipY.current + shipVy.current * dt, -SHIP_BOUNDS.y, SHIP_BOUNDS.y);
 
-    // Automatic health drain removed as requested - health only decreases on collision
-
     if (slowT.current > 0) slowT.current -= dt;
     if (magnetT.current > 0) magnetT.current -= dt;
+    if (invulnRef.current > 0) invulnRef.current -= dt;
 
     if (boosting) {
       boostRef.current = Math.max(0, boostRef.current - BOOST_DRAIN * dt);
@@ -1873,7 +1873,6 @@ export function SpaceRunScene({ inputRef, runningRef }) {
           o.rz = Math.random() * Math.PI * 2;
           o.rs = randomRange(1.1, 2.5);
           o.scale = randomRange(0.28, 0.72);
-          o.damage = randomRange(65, 95);
           o.waveX = randomRange(0.12, 0.9);
           o.waveY = randomRange(0.08, 0.62);
           o.waveF = randomRange(0.75, 1.85);
@@ -1979,7 +1978,7 @@ export function SpaceRunScene({ inputRef, runningRef }) {
         keep = false;
       } else {
         const zDepth = Math.abs(o.z);
-        if (healthRef.current > 0 && zDepth <= Z_NEAR) {
+        if (aliveRef.current && zDepth <= Z_NEAR) {
           const dx = o.x - sx;
           const dy = o.y - sy;
           const d2 = dx * dx + dy * dy;
@@ -1993,22 +1992,20 @@ export function SpaceRunScene({ inputRef, runningRef }) {
             if (hitX && hitY && hitZ) {
               shakeRef.current = Math.max(shakeRef.current, 1);
               playExplosionSound();
-              const incoming = Math.min(100, Math.max(25, o.damage ?? 60));
-              let hpLoss = incoming;
-              if (shieldRef.current > 0) {
-                const absorbCap = incoming * 0.72;
-                const absorb = Math.min(shieldRef.current, absorbCap);
-                shieldRef.current = Math.max(0, shieldRef.current - absorb);
-                hpLoss = Math.max(0, hpLoss - absorb * 0.62);
-              }
-              healthRef.current = Math.max(0, healthRef.current - hpLoss);
-              if (healthRef.current <= 0) {
-                healthRef.current = 0;
+
+              const strike = resolveMeteorStrike({
+                shield: shieldRef.current,
+                invuln: invulnRef.current,
+              });
+              if (strike === "absorbed") {
+                shieldRef.current = 0;
+                invulnRef.current = SHIELD_SAVE_INVULN;
+              } else if (strike === "fatal") {
+                aliveRef.current = false;
                 useSpaceRunHud.getState().setHud({
                   gameOver: true,
                   activePower: null,
-                  health: 0,
-                  shield: shieldRef.current,
+                  shield: 0,
                   boost: boostRef.current,
                   score: Math.floor(e * 2) + coinScore.current,
                   survivalSec: e,
@@ -2025,7 +2022,6 @@ export function SpaceRunScene({ inputRef, runningRef }) {
               const pts = o.special ? 35 : 12;
               coinScore.current += pts;
               playCoinSound();
-              healthRef.current = Math.min(100, healthRef.current + (o.special ? 8 : 3));
               boostRef.current = Math.min(100, boostRef.current + (o.special ? 16 : 8));
               useSpaceArcadeStore.getState().addWallet(o.special ? 10 : 4);
               useSpaceRunHud.getState().setHud({
@@ -2038,7 +2034,7 @@ export function SpaceRunScene({ inputRef, runningRef }) {
             const zHalf = SHIP_Z_HALF + 0.25;
             if (zDepth < zHalf && d2 < xyR * xyR) {
               playCoinSound();
-              if (o.power === "shield") shieldRef.current = Math.min(100, shieldRef.current + 40);
+              if (o.power === "shield") shieldRef.current = 100;
               if (o.power === "slow") slowT.current = Math.max(slowT.current, 5);
               if (o.power === "magnet") magnetT.current = Math.max(magnetT.current, 6);
               useSpaceRunHud.getState().setHud({
@@ -2182,7 +2178,8 @@ export function SpaceRunScene({ inputRef, runningRef }) {
           boostingRef={boostingRef}
           shipVxRef={shipVx}
           shipVyRef={shipVy}
-          healthRef={healthRef}
+          shieldRef={shieldRef}
+          invulnRef={invulnRef}
         />
       </group>
 
