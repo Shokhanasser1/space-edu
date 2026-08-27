@@ -8,6 +8,7 @@ import { useSolarStore } from '@/solar/clock';
 import LabelLayer from '@/solar/scene/LabelLayer';
 import SolarScene from '@/solar/scene/SolarScene';
 import InfoPanel, { SatellitePanel } from '@/solar/ui/InfoPanel';
+import QuizPanel from '@/solar/ui/QuizPanel';
 import { BodyList, EventsPanel, LayersPanel } from '@/solar/ui/SidePanels';
 import TimeBar from '@/solar/ui/TimeBar';
 
@@ -93,7 +94,7 @@ export default function SolarSystemView() {
           <Globe2 className="h-6 w-6 text-neon-purple" aria-hidden="true" />
           {t('title')}
         </h1>
-        <p className="mt-1 hidden max-w-sm text-[11px] leading-snug text-white/55 md:block">{t('subtitle')}</p>
+        <p className="mt-1 hidden max-w-sm text-[11px] leading-snug text-white/55 lg:block">{t('subtitle')}</p>
       </div>
 
       {/* Overview + Esc */}
@@ -116,10 +117,11 @@ export default function SolarSystemView() {
       </div>
 
       {/* Left column (desktop) */}
-      <div className="pointer-events-none absolute bottom-28 left-4 top-48 z-10 hidden w-64 flex-col justify-end gap-2 overflow-y-auto md:flex md:left-6">
+      <div className="pointer-events-none absolute bottom-28 left-4 top-44 z-10 hidden w-64 flex-col gap-2 overflow-y-auto md:flex md:left-6 [scrollbar-width:none]">
         <BodyList t={t} names={names} selectedId={selectedId} onSelect={select} />
-        <EventsPanel t={t} names={names} onJump={jumpToEvent} />
         <LayersPanel t={t} />
+        <EventsPanel t={t} names={names} onJump={jumpToEvent} />
+        <QuizPanel t={t} names={names} onSelectBody={select} />
       </div>
 
       {/* Mobile drawer */}
@@ -129,6 +131,7 @@ export default function SolarSystemView() {
             <div className="space-y-2">
               <BodyList t={t} names={names} selectedId={selectedId} onSelect={select} />
               <EventsPanel t={t} names={names} onJump={jumpToEvent} />
+              <QuizPanel t={t} names={names} onSelectBody={select} />
             </div>
           ) : (
             <LayersPanel t={t} />

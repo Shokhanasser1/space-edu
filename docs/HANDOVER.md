@@ -605,9 +605,16 @@ migrations against a real Postgres 16 as a separate step.
   stops at 1800/2200, satellites hide beyond ±30 days of their element sets,
   probes hide outside the fetched Horizons window.
 
-Known gaps: the planet maps are still the old ones (see ATTRIBUTION.md for the
-drop-in upgrade), probes are markers rather than NASA's 3D models, and the
-three `ProfileView` tests were already red on `main` before this work.
+Second pass the same night: Solar System Scope maps (8k → 4k WebP, CC BY 4.0,
+every file under the 2 MB CI limit — `public/textures/ATTRIBUTION.md` has the
+list), the Milky Way panorama behind the catalogue stars (`SkyDome.jsx`, in
+galactic coordinates), NASA VTAD models for Voyager, New Horizons, Parker and
+Juno (`public/models/probes/`, Draco + 512 px WebP, 0.1–0.3 MB each), and a
+"check yourself" quiz (`src/solar/quiz.js`) whose five questions are generated
+from the sky at the simulation's date. KTX2 was judged and skipped: UASTC at
+4k is ~5 MB a file against the 2 MB budget, and WebP already cuts JPEG 4–5×.
+JWST has no NASA model and stays a marker. The three `ProfileView` tests were
+already red on `main` before this work.
 
 ---
 

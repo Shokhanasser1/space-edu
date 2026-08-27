@@ -329,7 +329,34 @@
           "inclination": "Inclination",
           "position": "Above (lat, lon)"
         },
-        "loading": "Loading textures…"
+        "loading": "Loading textures…",
+          "quiz": {
+            "title": "Check yourself",
+            "intro": "Five questions the sky answers right now — the answers change with the date.",
+            "start": "Start",
+            "next": "Next",
+            "finish": "Finish",
+            "again": "Again",
+            "show": "show",
+            "question": "{i} / {n}",
+            "correct": "Correct.",
+            "wrong": "No — it is {answer}.",
+            "score": "You got {score} of {n}.",
+            "best": "best {best}",
+            "noXp": "Practice only — no XP for this yet.",
+            "unitsDays": "{n} days",
+            "q": {
+              "closestPlanet": "Which planet is closest to the Earth right now?",
+              "farthest": "Which of these is farthest from the Sun right now?",
+              "lightTime": "How long does sunlight take to reach {body} right now?",
+              "nextOpposition": "Which planet is next at opposition?",
+              "longestDay": "Which of these has the longest day?",
+              "retrograde": "Which of these spins backwards?",
+              "daysToFullMoon": "How many days until the next full Moon?"
+            }
+          },
+          "probeNote": "Trajectory: NASA/JPL Horizons. Model: NASA VTAD.",
+          "launched": "Launched"
       },
       "bodies": {
         "sun": "Sun",

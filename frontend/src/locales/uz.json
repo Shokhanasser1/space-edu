@@ -329,7 +329,34 @@
           "inclination": "Og'ish burchagi",
           "position": "Ustida (kenglik, uzunlik)"
         },
-        "loading": "Teksturalar yuklanmoqda…"
+        "loading": "Teksturalar yuklanmoqda…",
+          "quiz": {
+            "title": "O'zingizni sinang",
+            "intro": "Osmon hozir javob beradigan beshta savol — javoblar sana bilan o'zgaradi.",
+            "start": "Boshlash",
+            "next": "Keyingi",
+            "finish": "Tayyor",
+            "again": "Yana",
+            "show": "ko'rsatish",
+            "question": "{i} / {n}",
+            "correct": "To'g'ri.",
+            "wrong": "Yo'q — to'g'ri javob: {answer}.",
+            "score": "{n} tadan {score} tasi to'g'ri.",
+            "best": "eng yaxshi {best}",
+            "noXp": "Mashq — buning uchun XP hozircha berilmaydi.",
+            "unitsDays": "{n} kun",
+            "q": {
+              "closestPlanet": "Hozir Yerga eng yaqin sayyora qaysi?",
+              "farthest": "Bulardan qaysi biri hozir Quyoshdan eng uzoqda?",
+              "lightTime": "Quyosh yorug'ligi {body} sayyorasiga hozir qancha vaqtda yetib boradi?",
+              "nextOpposition": "Keyingi qarama-qarshi turish qaysi sayyorada?",
+              "longestDay": "Bulardan qaysi birida sutka eng uzun?",
+              "retrograde": "Bulardan qaysi biri teskari aylanadi?",
+              "daysToFullMoon": "Keyingi to'lin oygacha necha kun qoldi?"
+            }
+          },
+          "probeNote": "Traektoriya: NASA/JPL Horizons. Model: NASA VTAD.",
+          "launched": "Uchirilgan"
       },
       "bodies": {
         "sun": "Quyosh",

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import { BODIES, MOONS } from '../catalog';
+import { BODIES, MOONS, SPACECRAFT } from '../catalog';
 import { useSolarStore } from '../clock';
 import { upcomingEvents } from '../events';
 import { formatDateTime } from './format';
@@ -15,12 +15,13 @@ export function BodyList({ t, names, selectedId, onSelect }) {
     ],
     [],
   );
+  const probesOn = useSolarStore((s) => s.layers.spacecraft);
   const selected = selectedId && (BODIES.find((b) => b.id === selectedId) || MOONS.find((m) => m.id === selectedId));
   const parentId = selected?.parent || selected?.id;
   const moons = parentId ? MOONS.filter((m) => m.parent === parentId) : [];
 
   return (
-    <nav aria-label={t('bodies')} className="pointer-events-auto rounded-2xl border border-white/10 bg-black/50 p-3 backdrop-blur-md">
+    <nav aria-label={t('bodies')} className="pointer-events-auto shrink-0 rounded-2xl border border-white/10 bg-black/50 p-3 backdrop-blur-md">
       {groups.map((g) => (
         <div key={g.key} className="mb-2 last:mb-0">
           <div className="mb-1 text-[10px] font-bold uppercase tracking-widest text-white/45">{t(g.key)}</div>
@@ -41,6 +42,25 @@ export function BodyList({ t, names, selectedId, onSelect }) {
           </div>
         </div>
       ))}
+      {probesOn && (
+        <div className="mt-2 border-t border-white/10 pt-2">
+          <div className="mb-1 text-[10px] font-bold uppercase tracking-widest text-white/45">{t('layers.spacecraft')}</div>
+          <div className="flex flex-wrap gap-1">
+            {SPACECRAFT.map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => onSelect(c.id)}
+                className={`rounded-md px-2 py-0.5 text-[11px] transition-colors ${
+                  selectedId === c.id ? 'bg-white/20 text-white' : 'bg-white/5 text-white/70 hover:bg-white/12'
+                }`}
+              >
+                {c.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       {moons.length > 0 && (
         <div className="mt-2 border-t border-white/10 pt-2">
           <div className="mb-1 text-[10px] font-bold uppercase tracking-widest text-white/45">
@@ -85,7 +105,7 @@ export function LayersPanel({ t }) {
   return (
     <div className="pointer-events-auto rounded-2xl border border-white/10 bg-black/50 p-3 backdrop-blur-md">
       <div className="mb-1 text-[10px] font-bold uppercase tracking-widest text-white/45">{t('layers.title')}</div>
-      <div className="grid grid-cols-2 gap-x-3 gap-y-1 md:grid-cols-1">
+      <div className="grid grid-cols-1 gap-y-0.5">
         {LAYERS.map((name) => (
           <label key={name} className="flex cursor-pointer items-center gap-2 text-[12px] text-white/80">
             <input type="checkbox" checked={layers[name]} onChange={(e) => setLayer(name, e.target.checked)} className="accent-[#8b5cf6]" />
@@ -120,7 +140,7 @@ export function EventsPanel({ t, names, onJump }) {
     <div className="pointer-events-auto rounded-2xl border border-white/10 bg-black/50 p-3 backdrop-blur-md">
       <div className="mb-1 text-[10px] font-bold uppercase tracking-widest text-white/45">{t('events.title')}</div>
       <ul className="space-y-1">
-        {events.slice(0, 6).map((e) => (
+        {events.slice(0, 4).map((e) => (
           <li key={`${e.key}-${e.body || ''}-${e.ms}`}>
             <button
               type="button"

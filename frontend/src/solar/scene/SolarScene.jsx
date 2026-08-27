@@ -11,6 +11,7 @@ import MoonBody from './MoonBody';
 import OrbitLine from './OrbitLine';
 import Planet from './Planet';
 import Satellites from './Satellites';
+import SkyDome from './SkyDome';
 import SmallBodies from './SmallBodies';
 import Spacecraft from './Spacecraft';
 import StarField from './StarField';
@@ -67,6 +68,7 @@ export default function SolarScene({ onSelect, onSelectSatellite }) {
       <ambientLight intensity={0.035} />
       <ClockDriver />
 
+      <SkyDome visible={layers.stars} />
       <StarField visible={layers.stars} />
       <Sun entry={sun} onSelect={onSelect} />
       {planets.map((entry) => (
@@ -81,7 +83,7 @@ export default function SolarScene({ onSelect, onSelectSatellite }) {
       <SmallBodies set="mainBelt" color="#a89e90" visible={layers.asteroids} />
       <SmallBodies set="kuiper" color="#8fa3c4" visible={layers.asteroids} />
       <Satellites earth={bodyById.get('earth')} enabled={layers.satellites} onSelect={onSelectSatellite} />
-      <Spacecraft enabled={layers.spacecraft} />
+      <Spacecraft enabled={layers.spacecraft} onSelect={onSelect} />
 
       <OrbitControls
         ref={controlsRef}

@@ -68,3 +68,27 @@ scene ships with the maps that were already here.
 |---|---|---|
 | `stars-bsc5.json` | Yale Bright Star Catalogue, 5th ed. (Hoffleit & Warren 1991), via `tdc-www.harvard.edu/catalogs/bsc5.dat.gz`; 9 096 stars with J2000 RA/Dec, V and B−V | public domain |
 | `small-bodies.json` | NASA/JPL Small-Body Database Query API: 2 500 main-belt asteroids and 1 119 trans-Neptunian objects, osculating elements at JD 2461200.5 | public domain (US Government work) |
+
+## Solar System Scope maps (added 28 August 2026)
+
+`4k_sun.webp`, `4k_mercury.webp`, `4k_venus_atmosphere.webp`,
+`4k_earth_daymap.webp`, `4k_earth_nightmap.webp`, `2k_earth_clouds.webp`,
+`2k_earth_specular.webp`, `4k_mars.webp`, `4k_jupiter.webp`, `4k_saturn.webp`,
+`2k_saturn_ring_alpha.png`, `2k_uranus.webp`, `2k_neptune.webp`, `4k_moon.webp`,
+`2k_{ceres,eris,haumea,makemake}_fictional.webp`, `4k_stars_milky_way.webp`
+— **Solar System Scope**, https://www.solarsystemscope.com/textures/, licensed
+**CC BY 4.0**. Downloaded as the 8k/4k/2k JPEG/PNG/TIFF originals and re-encoded
+to WebP at 4096×2048 or 2048×1024 (quality 72–86) to sit under the 2 MB
+per-file CI budget; the cloud map's luminance became its alpha channel; the ring
+strip was resized to 2048 wide. The four dwarf-planet maps are the artist's
+"fictional" ones — nobody has imaged Eris, Haumea or Makemake at that detail.
+The Milky Way panorama is in galactic coordinates (centre at the middle of
+the image, longitude increasing to the left), which `SkyDome.jsx` relies on.
+
+## `public/models/probes/`
+
+`voyager.glb`, `new_horizons.glb`, `parker.glb`, `juno.glb` — NASA
+Visualization Technology Applications and Development (VTAD), from
+https://science.nasa.gov/3d-resources/ (public domain, NASA). Reduced with
+gltf-transform (Draco) and 512 px WebP textures from 3–9 MB to 0.1–0.3 MB each.
+JWST has no model on that site; it stays a marker.

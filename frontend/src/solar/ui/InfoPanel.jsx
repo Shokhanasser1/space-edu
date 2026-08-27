@@ -2,10 +2,12 @@ import { useMemo } from 'react';
 import { X } from 'lucide-react';
 import { motion } from 'motion/react';
 import { propagate, gstime, eciToGeodetic } from 'satellite.js';
-import { BODY_BY_ID, moonsOf, rotationHoursOf } from '../catalog';
+import { BODY_BY_ID, SPACECRAFT, moonsOf, rotationHoursOf } from '../catalog';
 import { useSolarStore } from '../clock';
 import { distanceAU, helioPositionAU, lightMinutes, moonOffsetAU } from '../ephemeris';
 import { orbitPeriodDays } from '../scene/OrbitLine';
+import { getWorld } from '../positions';
+import { AU_UNITS } from '../scale';
 import { formatAU, formatHours, formatInt, formatLightTime, formatMass, formatPeriod } from './format';
 
 /**
@@ -75,6 +77,32 @@ export function SatellitePanel({ sat, t, units, onClose }) {
   );
 }
 
+export function ProbePanel({ craft, t, units, onClose }) {
+  const epochMs = useSolarStore((s) => s.epochMs);
+  const live = useMemo(() => {
+    const p = getWorld(craft.id);
+    if (!p) return null;
+    // Scene → ecliptic au: x, y = -z, z = y (inverse of eclipticToScene).
+    const pos = [p.x / AU_UNITS, -p.z / AU_UNITS, p.y / AU_UNITS];
+    const earth = helioPositionAU(BODY_BY_ID.get('earth'), epochMs);
+    return { fromSun: distanceAU(pos, [0, 0, 0]), fromEarth: distanceAU(pos, earth) };
+  }, [craft.id, epochMs]);
+  return (
+    <Panel onClose={onClose} title={craft.name} kind={t('kind.spacecraft')} color={craft.color}>
+      {live ? (
+        <>
+          <Row label={t('live.distSun')} value={formatAU(live.fromSun, units)} />
+          <Row label={t('live.distEarth')} value={formatAU(live.fromEarth, units)} />
+          <Row label={t('live.light')} value={formatLightTime(lightMinutes(live.fromEarth), units)} />
+        </>
+      ) : (
+        <p className="text-xs text-amber-300">{t('craftStatus.loading')}</p>
+      )}
+      <p className="!mt-2 text-[11px] text-white/45">{t('probeNote')}</p>
+    </Panel>
+  );
+}
+
 function Panel({ onClose, title, kind, color, children }) {
   return (
     <motion.aside
@@ -101,8 +129,10 @@ function Panel({ onClose, title, kind, color, children }) {
 
 export default function InfoPanel({ id, t, names, units, onClose, onSelect }) {
   const entry = BODY_BY_ID.get(id);
+  const craft = SPACECRAFT.find((c) => c.id === id);
   const epochMs = useSolarStore((s) => s.epochMs);
   const live = useMemo(() => (entry ? bodyLive(entry, epochMs) : null), [entry, epochMs]);
+  if (craft) return <ProbePanel craft={craft} t={t} units={units} onClose={onClose} />;
   if (!entry) return null;
 
   const kind = entry.parent ? 'moon' : entry.kind;

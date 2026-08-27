@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useSolarStore } from '../clock';
+import { BODIES } from '../catalog';
 import { getRadius, getWorld } from '../positions';
 
 /**
@@ -58,7 +59,17 @@ export default function CameraRig({ controlsRef }) {
       controls.target.copy(p);
       controls.minDistance = Math.max(r * 1.6, scaleMode === 'true' ? 0.001 : 0.05);
       if (s.flying) {
-        const desired = Math.max(r * 5.5, scaleMode === 'true' ? 0.006 : 0.4);
+        let desired = Math.max(r * 5.5, scaleMode === 'true' ? 0.006 : 0.4);
+        if (r === 0) {
+          // A probe or satellite: at visual scale it may sit inside the
+          // inflated planet it orbits (Juno is 0.02 units from Jupiter's
+          // centre, Jupiter is drawn 1.9 wide). Back off to see both.
+          for (const body of BODIES) {
+            const bp = getWorld(body.id);
+            const br = getRadius(body.id);
+            if (bp && p.distanceTo(bp) < br * 1.6) desired = Math.max(desired, br * 3.2);
+          }
+        }
         dir.subVectors(camera.position, p);
         if (dir.lengthSq() < 1e-9) dir.set(0.3, 0.5, 1);
         dir.normalize();
