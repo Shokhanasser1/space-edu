@@ -35,6 +35,8 @@ class MarketCategory(models.Model):
 #  MARKET ITEM  —  product in the marketplace
 # ──────────────────────────────────────────────────────────────────────────────
 class MarketItem(models.Model):
+    # Every value here needs a `market.types.<value>` key in all three locale
+    # files, or the product modal prints the raw translation key at a child.
     ITEM_TYPES = [
         ('spaceship', 'Spaceship'),
         ('badge', 'Badge'),
@@ -50,8 +52,7 @@ class MarketItem(models.Model):
         ('other', 'Other'),
     ]
 
-    # Every value above needs a `market.types.<value>` key in all three locale
-    # files, or the product modal prints the raw translation key at a child.
+    # What the shops in `merchant` price in.
     CURRENCIES = [
         ('UZS', "So'm"),
         ('USD', 'US dollar'),
