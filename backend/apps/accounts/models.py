@@ -6,6 +6,33 @@ from apps.validators import image_upload_to
 
 
 class User(AbstractUser):
+    class Role(models.TextChoices):
+        """What a person is here. Not what they are allowed to do.
+
+        `is_staff` already exists and already means one thing: may reach the
+        Django admin and the admin API. Every gate in this project reads it --
+        IsAdminUser, AdminWriteOrReadOnly, the report queue, StaffRoute on the
+        front end. This is deliberately *not* wired into any of them.
+
+        The two are kept apart on purpose. Repointing those gates at `role` is
+        its own piece of work with its own test matrix, and doing it in half the
+        places is exactly how the answer key stayed readable in three endpoints
+        after being fixed in the fourth. And a role is a label an administrator
+        types; if setting it also granted admin access, a mislabelled pupil
+        would be an administrator.
+
+        So today `role` grants nothing. The day somebody wires it into a gate,
+        they will have to change a test that says a teacher can do nothing a
+        student cannot -- which is the point at which to think about it.
+        """
+
+        STUDENT = 'student', 'Student'
+        TEACHER = 'teacher', 'Teacher'
+        ADMIN = 'admin', 'Admin'
+
+    role = models.CharField(
+        max_length=10, choices=Role.choices, default=Role.STUDENT, db_index=True
+    )
     avatar = models.ImageField(upload_to=image_upload_to('avatars'), blank=True)
     astronaut_name = models.CharField(max_length=50, blank=True)
     bio = models.TextField(max_length=300, blank=True)

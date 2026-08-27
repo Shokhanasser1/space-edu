@@ -11,12 +11,14 @@ to the same address. These lock down the constraint that makes it true, the
 refusal that keeps the shared database from finding out the hard way, and the
 400 that would otherwise have become a 500.
 """
+import importlib
+from contextlib import contextmanager
 from io import StringIO
 from unittest.mock import patch
 
+from django.apps import apps as app_registry
 from django.core.management import call_command
 from django.db import IntegrityError, connection, transaction
-from django.db.migrations.executor import MigrationExecutor
 from django.test import TestCase, TransactionTestCase
 from rest_framework import status
 from rest_framework.test import APIClient
@@ -26,8 +28,36 @@ from .models import User
 
 VALID_PW = 'Str0ngPassw0rd!x'
 
-BEFORE = '0004_image_upload_paths'
-AFTER = '0005_user_email_ci_unique'
+CONSTRAINT = 'accounts_user_email_ci_unique'
+
+MIGRATION = importlib.import_module('apps.accounts.migrations.0005_user_email_ci_unique')
+
+
+@contextmanager
+def _before_the_constraint():
+    """Drop the unique index for the length of a test, and put it back after.
+
+    Two accounts on one address is the state the dedupe command and the
+    migration guard were written for, and the only state in which they do
+    anything -- so a test has to be able to produce it.
+
+    The index goes, and nothing else. Migrating the app backwards would also
+    work and was tried first: it takes the `role` column with it, which the
+    model still has, so every create_user() in the suite failed on a column that
+    was not there. Twenty errors, none of them in the code being tested.
+    """
+    constraint = next(c for c in User._meta.constraints if c.name == CONSTRAINT)
+    with connection.cursor() as cursor:
+        cursor.execute(f'DROP INDEX IF EXISTS {CONSTRAINT}')
+    try:
+        yield
+    finally:
+        # Cleared before the index goes back, because several of these tests
+        # deliberately end with two accounts on one address, and re-creating a
+        # unique index over that fails. Assertions belong inside the block.
+        User.objects.all().delete()
+        with connection.schema_editor(atomic=False) as editor:
+            editor.add_constraint(User, constraint)
 
 
 class EmailUniquenessTests(TestCase):
@@ -103,28 +133,13 @@ class RegistrationRaceTests(TestCase):
         self.assertIn('email', r.data)
 
 
-class SharedAddressMigrationTests(TransactionTestCase):
-    """The state the shared database may actually be in, and what 0005 does
-    about it.
+class SharedAddressTests(TransactionTestCase):
+    """The state the shared database may be in, and what is done about it.
 
-    These migrate the accounts app back to before the constraint, because that
-    is the only state in which two accounts can hold one address -- and the only
-    state the migration and the dedupe command will ever meet. TransactionTestCase
-    because migrating is DDL, and DDL inside the transaction a TestCase holds
-    open is not something to rely on.
+    TransactionTestCase because these drop and re-create an index, which is DDL,
+    and DDL inside the transaction a TestCase holds open is not something to
+    rely on.
     """
-
-    def _migrate(self, target):
-        executor = MigrationExecutor(connection)
-        executor.loader.build_graph()
-        executor.migrate([('accounts', target)])
-
-    def setUp(self):
-        self._migrate(BEFORE)
-
-    def tearDown(self):
-        User.objects.all().delete()
-        self._migrate(AFTER)
 
     def _shared_address(self):
         """Two accounts on one address, differing only in case."""
@@ -132,93 +147,113 @@ class SharedAddressMigrationTests(TransactionTestCase):
         loser = User.objects.create_user('newer', email='SHARED@example.com', password=VALID_PW)
         return keeper, loser
 
-    # ── the migration ────────────────────────────────────────────────────
-    def test_the_migration_names_the_addresses_instead_of_failing_on_a_key(self):
+    def _run_the_migration_steps(self):
+        """The two RunPython steps of 0005, in the order the migration runs them.
+
+        The order is the point. Lower-casing is what makes `shared@` and
+        `SHARED@` the same address, and it is also what can *create* a collision
+        out of two rows that did not look like one -- so the check has to come
+        second. Calling the check alone finds nothing and proves nothing, which
+        is how this test was wrong the first time.
+        """
+        MIGRATION.normalise(app_registry, None)
+        MIGRATION.refuse_if_an_address_is_shared(app_registry, None)
+
+    # ── what the migration does when it finds them ───────────────────────
+    def test_it_names_the_addresses_instead_of_failing_on_a_key(self):
         """PostgreSQL's own message is "duplicate key value violates unique
         constraint", which says neither which accounts nor what to do about it.
-        Against the database eight people share, that is somebody's afternoon."""
-        self._shared_address()
+        This migration runs against the database eight people share, so that is
+        somebody's afternoon."""
+        with _before_the_constraint():
+            self._shared_address()
 
-        with self.assertRaises(RuntimeError) as raised:
-            self._migrate(AFTER)
+            with self.assertRaises(RuntimeError) as raised:
+                self._run_the_migration_steps()
 
-        message = str(raised.exception)
-        self.assertIn('shared@example.com', message)
-        self.assertIn('older', message)
-        self.assertIn('newer', message)
-        self.assertIn('dedupe_user_emails', message)
+            message = str(raised.exception)
+            self.assertIn('shared@example.com', message)
+            self.assertIn('older', message)
+            self.assertIn('newer', message)
+            self.assertIn('dedupe_user_emails', message)
 
-    def test_a_refused_migration_changes_nothing(self):
-        """It lower-cases every address before it checks, because that step can
-        create a collision of its own. If the check then refuses, the
-        lower-casing has to go back with it -- otherwise a failed migration has
-        quietly edited people's addresses."""
-        _, loser = self._shared_address()
+    def test_the_check_is_what_lower_casing_makes_possible(self):
+        """Two addresses that differ only in case are one address. Before the
+        lower-casing step they group as two, which is why the check runs after
+        it and not instead of it."""
+        with _before_the_constraint():
+            self._shared_address()
+            MIGRATION.refuse_if_an_address_is_shared(app_registry, None)  # sees nothing yet
 
-        with self.assertRaises(RuntimeError):
-            self._migrate(AFTER)
+            MIGRATION.normalise(app_registry, None)
+            with self.assertRaises(RuntimeError):
+                MIGRATION.refuse_if_an_address_is_shared(app_registry, None)
 
-        loser.refresh_from_db()
-        self.assertEqual(loser.email, 'SHARED@example.com')
-
-    def test_it_migrates_once_the_addresses_are_resolved(self):
-        self._shared_address()
-        call_command('dedupe_user_emails', stdout=StringIO())
-        self._migrate(AFTER)  # no raise
-        self.assertEqual(duplicate_email_groups(User), {})
-
-    def test_a_database_with_nothing_wrong_with_it_just_migrates(self):
-        User.objects.create_user('alone', email='Alone@example.com', password=VALID_PW)
-        self._migrate(AFTER)
+    def test_it_passes_over_a_database_with_nothing_wrong_with_it(self):
+        User.objects.create_user('alone', email='Alone@Example.com', password=VALID_PW)
+        self._run_the_migration_steps()  # no raise
         self.assertEqual(User.objects.get(username='alone').email, 'alone@example.com')
 
-    # ── the command ──────────────────────────────────────────────────────
+    # ── what the command does about them ─────────────────────────────────
     def test_it_finds_a_shared_address_whatever_the_case(self):
-        self._shared_address()
-        groups = duplicate_email_groups(User)
-        self.assertEqual(list(groups), ['shared@example.com'])
+        with _before_the_constraint():
+            self._shared_address()
+            self.assertEqual(list(duplicate_email_groups(User)), ['shared@example.com'])
 
     def test_a_blank_address_is_not_a_duplicate(self):
+        """Every superuser created without one holds '', and they are not
+        duplicates of each other in any sense that matters."""
         User.objects.create_user('nobody', password=VALID_PW)
         User.objects.create_user('nobody_else', password=VALID_PW)
         self.assertEqual(duplicate_email_groups(User), {})
 
     def test_the_dry_run_reports_and_writes_nothing(self):
-        _, loser = self._shared_address()
-        out = StringIO()
-        call_command('dedupe_user_emails', '--dry-run', stdout=out)
+        with _before_the_constraint():
+            _, loser = self._shared_address()
+            out = StringIO()
+            call_command('dedupe_user_emails', '--dry-run', stdout=out)
 
-        self.assertIn('shared@example.com', out.getvalue())
-        self.assertIn('newer', out.getvalue())
-        loser.refresh_from_db()
-        self.assertEqual(loser.email, 'SHARED@example.com')
+            self.assertIn('shared@example.com', out.getvalue())
+            self.assertIn('newer', out.getvalue())
+            loser.refresh_from_db()
+            self.assertEqual(loser.email, 'SHARED@example.com')
 
     def test_the_account_that_already_signs_in_keeps_the_address(self):
         """The keeper is the lowest id, which is the row LoginView's
         `.order_by('id').first()` resolves that address to today. Anything else
         moves somebody's identity without telling them."""
-        keeper, loser = self._shared_address()
-        call_command('dedupe_user_emails', stdout=StringIO())
+        with _before_the_constraint():
+            keeper, loser = self._shared_address()
+            call_command('dedupe_user_emails', stdout=StringIO())
 
-        keeper.refresh_from_db()
-        loser.refresh_from_db()
-        self.assertEqual(keeper.email, 'shared@example.com')
-        self.assertEqual(loser.email, '')
+            keeper.refresh_from_db()
+            loser.refresh_from_db()
+            self.assertEqual(keeper.email, 'shared@example.com')
+            self.assertEqual(loser.email, '')
 
     def test_nobody_is_deleted_or_locked_out(self):
         """These are children's accounts. The loser keeps its username, its
         password and its progress; it loses an address it was sharing anyway."""
-        _, loser = self._shared_address()
-        call_command('dedupe_user_emails', stdout=StringIO())
+        with _before_the_constraint():
+            _, loser = self._shared_address()
+            call_command('dedupe_user_emails', stdout=StringIO())
 
-        loser.refresh_from_db()
-        self.assertTrue(loser.is_active)
-        self.assertTrue(loser.check_password(VALID_PW))
-        self.assertEqual(User.objects.count(), 2)
+            loser.refresh_from_db()
+            self.assertTrue(loser.is_active)
+            self.assertTrue(loser.check_password(VALID_PW))
+            self.assertEqual(User.objects.count(), 2)
 
     def test_running_it_twice_is_the_same_as_running_it_once(self):
-        self._shared_address()
-        call_command('dedupe_user_emails', stdout=StringIO())
-        out = StringIO()
-        call_command('dedupe_user_emails', stdout=out)
-        self.assertIn('already belongs to one account', out.getvalue())
+        with _before_the_constraint():
+            self._shared_address()
+            call_command('dedupe_user_emails', stdout=StringIO())
+            out = StringIO()
+            call_command('dedupe_user_emails', stdout=out)
+            self.assertIn('already belongs to one account', out.getvalue())
+
+    def test_the_migration_goes_through_once_the_command_has_run(self):
+        """The whole point of the command: leave a database 0005 can migrate."""
+        with _before_the_constraint():
+            self._shared_address()
+            call_command('dedupe_user_emails', stdout=StringIO())
+            self._run_the_migration_steps()  # no raise
