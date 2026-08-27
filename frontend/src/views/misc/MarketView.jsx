@@ -234,8 +234,12 @@ function ItemCard({ item, onClick, onBuy, buying }) {
   };
 
   const accent = getAccent();
-  const { t, language } = useTranslation();
-  const title = item[`title_${language.toLowerCase()}`] || item.title_en;
+  const { t, i18n } = useTranslation();
+  // `language` is the store code (ENG/UZB/RUS); the model columns are title_en /
+  // title_uz / title_ru. Lower-casing the store code asked for `title_uzb`,
+  // which does not exist, so every product fell back to English in every
+  // language. `i18n.language` is the ISO code these columns are named after.
+  const title = item[`title_${i18n.language}`] || item.title_en;
 
   return (
     <div 
@@ -314,10 +318,10 @@ function ItemCard({ item, onClick, onBuy, buying }) {
 
 // Product Modal Component
 function ProductModal({ item, onClose, onBuy, buying }) {
-  const { t, language } = useTranslation();
+  const { t, i18n } = useTranslation();
   if (!item) return null;
-  const title = item[`title_${language.toLowerCase()}`] || item.title_en;
-  const description = item[`description_${language.toLowerCase()}`] || item.description_en;
+  const title = item[`title_${i18n.language}`] || item.title_en;
+  const description = item[`description_${i18n.language}`] || item.description_en;
 
   return (
     <AnimatePresence>
@@ -384,15 +388,22 @@ function ProductModal({ item, onClose, onBuy, buying }) {
               </button>
             </div>
 
-            <h4 className="text-sm font-[800] uppercase tracking-wider text-white/40 mb-4">{t('market', 'specs')}</h4>
-            <div className="space-y-3">
-              {Object.entries(item.specs || {}).map(([key, val]) => (
-                <div key={key} className="flex justify-between items-center border-b border-white/5 pb-2">
-                  <span className="text-sm text-white/50 capitalize">{t('market', `specLabels.${key}`) || key}</span>
-                  <span className="text-sm font-medium text-white/90">{val}</span>
+            {/* `specs` only exists on the offline sample list — MarketItem has no
+                such column — so a catalogue served by the API rendered a SPECS
+                heading with nothing under it. */}
+            {Object.keys(item.specs || {}).length > 0 && (
+              <>
+                <h4 className="text-sm font-[800] uppercase tracking-wider text-white/40 mb-4">{t('market', 'specs')}</h4>
+                <div className="space-y-3">
+                  {Object.entries(item.specs).map(([key, val]) => (
+                    <div key={key} className="flex justify-between items-center border-b border-white/5 pb-2">
+                      <span className="text-sm text-white/50 capitalize">{t('market', `specLabels.${key}`) || key}</span>
+                      <span className="text-sm font-medium text-white/90">{val}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </>
+            )}
           </div>
         </motion.div>
       </motion.div>
@@ -423,7 +434,7 @@ export async function fetchAllPages(url) {
 
 
 export default function MarketView() {
-  const { t, language } = useTranslation();
+  const { t } = useTranslation();
   const { isAuthenticated } = useAuthStore();
 
   const [items, setItems] = useState([]);

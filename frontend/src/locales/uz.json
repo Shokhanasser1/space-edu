@@ -703,9 +703,15 @@
     "purchaseSuccess": "Xarid muvaffaqiyatli!",
     "purchaseFailed": "Xaridda xatolik.",
     "types": {
+      "spaceship": "Kosmik kema",
+      "badge": "Nishon",
+      "boost": "XP kuchaytirgich",
       "book": "Kitob",
       "rocket_module": "Raketa moduli",
       "satellite": "Sun'iy yo'ldosh",
+      "avatar": "Avatar",
+      "theme": "Mavzu",
+      "tool": "Asbob",
       "other": "Boshqa"
     },
     "specLabels": {

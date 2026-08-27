@@ -703,9 +703,15 @@
     "purchaseSuccess": "Покупка успешно завершена!",
     "purchaseFailed": "Ошибка при покупке.",
     "types": {
+      "spaceship": "Космический корабль",
+      "badge": "Значок",
+      "boost": "Ускоритель XP",
       "book": "Книга",
       "rocket_module": "Ракетный модуль",
       "satellite": "Спутник",
+      "avatar": "Аватар",
+      "theme": "Тема",
+      "tool": "Прибор",
       "other": "Другое"
     },
     "specLabels": {
