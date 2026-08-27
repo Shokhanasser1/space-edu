@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useRef, useState, Suspense } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Satellite, Gauge, Crosshair, Search, Activity } from 'lucide-react';
+import { Satellite, Gauge, Crosshair, Search, Activity, PlayCircle } from 'lucide-react';
 import { Canvas, useFrame, useLoader } from '@react-three/fiber';
 import { OrbitControls, Stars, Line } from '@react-three/drei';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
-import { twoline2satrec, propagate, gstime, eciToEcf, eciToGeodetic } from 'satellite.js';
+import { propagate, gstime, eciToEcf, eciToGeodetic } from 'satellite.js';
 import { ommToSatrec } from '@/solar/omm';
 import { useTranslation } from '@/hooks/useTranslation';
+import FeaturedSatellites from '@/components/live/FeaturedSatellites';
 import UpcomingLaunches from '@/components/live/UpcomingLaunches';
 import NasaApod from '@/components/live/NasaApod';
 
@@ -147,26 +148,6 @@ function RealEarth() {
       </mesh>
     </group>
   );
-}
-
-function orbitPointsFromSatrec(satrec) {
-  const points = [];
-  const base = new Date();
-  for (let i = 0; i <= 120; i++) {
-    const dt = new Date(base.getTime() + i * 90 * 1000);
-    const pv = propagate(satrec, dt);
-    if (!pv.position) continue;
-    const gmstValue = gstime(dt);
-    const ecf = eciToEcf(pv.position, gmstValue);
-    points.push(
-      new THREE.Vector3(
-        (ecf.x / EARTH_KM) * EARTH_RADIUS,
-        (ecf.z / EARTH_KM) * EARTH_RADIUS,
-        (ecf.y / EARTH_KM) * EARTH_RADIUS,
-      ),
-    );
-  }
-  return points;
 }
 
 function SelectedDirectionTrail({ sat }) {
@@ -449,6 +430,7 @@ export default function LiveSpaceView() {
   const [feedState, setFeedState] = useState('loading');
   const [satCatalog, setSatCatalog] = useState(null);
   const [catalogLoading, setCatalogLoading] = useState(false);
+  const [streamOpen, setStreamOpen] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -687,40 +669,84 @@ export default function LiveSpaceView() {
       </section>
 
       <section className="relative z-20 px-4 sm:px-6 py-8 space-y-6 bg-gradient-to-b from-[#020205] to-black">
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          <div className="xl:col-span-2 rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl p-4">
-            <h3 className="text-sm font-bold tracking-wider uppercase text-cyan-300 mb-3">NASA Live</h3>
-            <div className="w-full aspect-video rounded-xl overflow-hidden border border-white/10">
-              <iframe
-                src="https://www.youtube.com/embed/live_stream?channel=UCLA_DiR1FfKNvjuUpBHmylQ&autoplay=1&mute=1"
-                title="NASA Live Stream"
-                className="w-full h-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                referrerPolicy="strict-origin-when-cross-origin"
-                allowFullScreen
-              />
+        <div>
+          <h2 className="text-xl font-black tracking-tight text-white sm:text-2xl">
+            {t('liveSpace', 'featuredTitle')}
+          </h2>
+          <p className="mt-1 max-w-2xl text-sm text-white/45">
+            {t('liveSpace', 'featuredSubtitle')}
+          </p>
+          <div className="mt-5">
+            <FeaturedSatellites />
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-black/40 p-4 backdrop-blur-xl sm:p-5">
+          <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-cyan-300">
+            {t('liveSpace', 'upcomingMissions')}
+          </h3>
+          <UpcomingLaunches />
+        </div>
+
+        <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
+          <div className="rounded-2xl border border-white/10 bg-black/40 p-4 backdrop-blur-xl sm:p-5 xl:col-span-2">
+            <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-cyan-300">
+              {t('liveSpace', 'nasaLive')}
+            </h3>
+            {/*
+              Click to load, and youtube-nocookie. The embed used to carry
+              `autoplay=1`, so opening this page opened a connection to
+              YouTube and set its cookies for every child who arrived,
+              whether or not they wanted the video. Nothing reaches a third
+              party now until somebody asks for it.
+            */}
+            <div className="aspect-video w-full overflow-hidden rounded-xl border border-white/10 bg-black/60">
+              {streamOpen ? (
+                <iframe
+                  src="https://www.youtube-nocookie.com/embed/live_stream?channel=UCLA_DiR1FfKNvjuUpBHmylQ&autoplay=1"
+                  title={t('liveSpace', 'nasaLive')}
+                  className="h-full w-full"
+                  allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  allowFullScreen
+                />
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setStreamOpen(true)}
+                  className="group flex h-full w-full flex-col items-center justify-center gap-3 px-4 text-center transition-colors hover:bg-white/[0.03]"
+                >
+                  <span className="flex h-14 w-14 items-center justify-center rounded-full border border-cyan-300/30 bg-cyan-400/10 transition-colors group-hover:bg-cyan-400/20">
+                    <PlayCircle className="h-7 w-7 text-cyan-300" />
+                  </span>
+                  <span className="text-sm font-bold text-white">
+                    {t('liveSpace', 'loadStream')}
+                  </span>
+                  <span className="max-w-xs text-xs text-white/40">
+                    {t('liveSpace', 'streamPrivacy')}
+                  </span>
+                </button>
+              )}
             </div>
-            <div className="mt-2 text-[11px] text-gray-400">
-              Agar stream ochilmasa, NASA TV ni to'g'ridan-to'g'ri oching:
-              {' '}
+            <div className="mt-3 text-[11px] text-white/40">
+              {t('liveSpace', 'streamNote')}{' '}
               <a
                 href="https://www.nasa.gov/nasatv/"
                 target="_blank"
                 rel="noreferrer"
-                className="text-cyan-300 hover:text-cyan-200 underline"
+                className="text-cyan-300 underline hover:text-cyan-200"
               >
                 nasa.gov/nasatv
               </a>
             </div>
           </div>
-          <div className="rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl p-4">
-            <h3 className="text-sm font-bold tracking-wider uppercase text-cyan-300 mb-3">NASA APOD</h3>
+
+          <div className="rounded-2xl border border-white/10 bg-black/40 p-4 backdrop-blur-xl sm:p-5">
+            <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-cyan-300">
+              {t('liveSpace', 'nasaApod')}
+            </h3>
             <NasaApod />
           </div>
-        </div>
-        <div className="rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl p-4">
-          <h3 className="text-sm font-bold tracking-wider uppercase text-cyan-300 mb-3">Upcoming Missions</h3>
-          <UpcomingLaunches />
         </div>
       </section>
     </div>
