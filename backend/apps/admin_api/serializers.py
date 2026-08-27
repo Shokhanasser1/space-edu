@@ -102,6 +102,16 @@ class AdminQuestionSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({
                 'correct_answer': f'Must be an index between 0 and {len(options) - 1}.'
             })
+        # A translated list is the same list in another language: same length,
+        # same order, or the right answer lands under a different letter.
+        for field in ('options_en', 'options_ru'):
+            translated = attrs.get(field)
+            if translated in (None, []):
+                continue
+            if not isinstance(translated, list) or len(translated) != len(options):
+                raise serializers.ValidationError({
+                    field: f'Give {len(options)} options, in the same order as `options`, or none.'
+                })
         return attrs
 
 

@@ -4,25 +4,11 @@ import { motion, AnimatePresence } from "motion/react";
 import { Home, ArrowRight, Hourglass, Trophy, Star, Target, Zap } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import api from "@/lib/api";
+import { questionOptions, questionText } from "@/lib/questionText";
 import { useGamificationStore } from "@/store/useGamificationStore";
 
 // Map store language codes to the suffixes the API uses
 const LANG_MAP = { ENG: "en", RUS: "ru", UZB: "uz" };
-
-/**
- * Read a question in the reader's language, falling back to the Uzbek original.
- *
- * The API sends `question`, `question_en` and `question_ru` as separate fields
- * rather than the nested object the static file used.
- */
-const localised = (question, lang) => {
-  if (!question) return "";
-  if (lang === "en") return question.question_en || question.question;
-  if (lang === "ru") return question.question_ru || question.question;
-  return question.question;
-};
-
-const optionsOf = (question) => (Array.isArray(question?.options) ? question.options : []);
 
 export default function QuizSessionView() {
   const { category } = useParams();
@@ -281,11 +267,11 @@ export default function QuizSessionView() {
               className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-3xl p-8 md:p-12 shadow-2xl"
             >
               <h3 className="text-2xl md:text-3xl font-medium leading-relaxed text-white mb-10">
-                {localised(currentQ, currentLang)}
+                {questionText(currentQ, currentLang)}
               </h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {optionsOf(currentQ).map((opt, i) => (
+                {questionOptions(currentQ, currentLang).map((opt, i) => (
                   <button
                     key={i}
                     onClick={() => handleAnswer(i)}

@@ -452,3 +452,34 @@ class DashboardPayloadContractTests(TestCase):
         )
         self.assertEqual(r.status_code, status.HTTP_201_CREATED, r.data)
         self.assertEqual(r.data['messages'], 0)
+
+
+class QuestionTranslationValidationTests(TestCase):
+    """`correct_answer` indexes into `options`; a translated list of a
+    different length would put the right answer under a different letter."""
+
+    def setUp(self):
+        self.staff = User.objects.create_user(
+            username='translator', email='tr@e.com', password='x', is_staff=True,
+        )
+        self.client = APIClient()
+        self.client.force_authenticate(self.staff)
+
+    def _post(self, **extra):
+        payload = {
+            'question': 'Savol?', 'category': 'general', 'difficulty': 'easy',
+            'options': ['Bir', 'Ikki', 'Uch', "To'rt"], 'correct_answer': 0,
+        }
+        payload.update(extra)
+        return self.client.post('/api/v1/admin-panel/questions/', payload, format='json')
+
+    def test_translated_options_must_line_up_with_the_originals(self):
+        r = self._post(options_ru=['Один', 'Два', 'Три'])
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('options_ru', r.data)
+
+    def test_translated_options_may_be_left_out(self):
+        r = self._post()
+        self.assertEqual(r.status_code, status.HTTP_201_CREATED, r.data)
+        r = self._post(question='Boshqa?', options_en=['One', 'Two', 'Three', 'Four'], options_ru=[])
+        self.assertEqual(r.status_code, status.HTTP_201_CREATED, r.data)

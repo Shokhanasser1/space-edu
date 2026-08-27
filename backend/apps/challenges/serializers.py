@@ -10,7 +10,7 @@ class ChallengeQuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChallengeQuestion
         fields = ('id', 'category', 'difficulty', 'question', 'question_en', 'question_ru',
-                  'options', 'time_seconds')
+                  'options', 'options_en', 'options_ru', 'time_seconds')
 
 
 # ── Question (admin — includes correct answer) ──
@@ -18,7 +18,8 @@ class ChallengeQuestionFullSerializer(serializers.ModelSerializer):
     class Meta:
         model = ChallengeQuestion
         fields = ('id', 'category', 'difficulty', 'question', 'question_en', 'question_ru',
-                  'options', 'correct_answer', 'explanation', 'time_seconds', 'is_active')
+                  'options', 'options_en', 'options_ru', 'correct_answer', 'explanation',
+                  'time_seconds', 'is_active')
 
 
 # ── Daily Challenge ──

@@ -171,3 +171,24 @@ describe('a lesson with no questions yet', () => {
     expect(bodies[1]).toEqual({ category: 'physics', count: 10 });
   });
 });
+
+describe('a Russian reader', () => {
+  it('sees the answers in Russian, not only the question', async () => {
+    const { useUserStore } = await import('@/store/useUserStore');
+    useUserStore.setState({ language: 'RUS' });
+    try {
+      startsWith([{
+        ...question(1, 'Tezlik nima?'), question_ru: 'Что такое скорость?',
+        options_ru: ['Один', 'Два', 'Три', 'Четыре'],
+      }]);
+      renderAt('/quiz/physics');
+
+      expect(await screen.findByText('Что такое скорость?')).toBeInTheDocument();
+      expect(screen.getByText('Четыре')).toBeInTheDocument();
+      expect(screen.queryByText('D')).not.toBeNull();
+      expect(screen.queryByText(/^A$/)).not.toBeNull();
+    } finally {
+      useUserStore.setState({ language: 'ENG' });
+    }
+  });
+});

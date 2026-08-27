@@ -418,3 +418,70 @@ class UserStreakTests(TestCase):
         self.streak.refresh_from_db()
         self.assertEqual(self.streak.current_streak, 1)
         self.assertEqual(self.streak.longest_streak, 7)
+
+
+class QuestionTranslationTests(TestCase):
+    """27 Aug 2026: the seed had Uzbek-only questions, and the model had no
+    room for translated answer options at all — so a Russian page could show
+    a Russian question over four Uzbek answers."""
+
+    def setUp(self):
+        cache.clear()
+        self.q = ChallengeQuestion.objects.create(
+            category='physics', difficulty='easy',
+            question='Tezlik nima?', question_en='What is velocity?',
+            question_ru='Что такое скорость?',
+            options=['a', 'b', 'c', 'd'],
+            options_en=['a-en', 'b-en', 'c-en', 'd-en'],
+            options_ru=['a-ru', 'b-ru', 'c-ru', 'd-ru'],
+            correct_answer=1,
+        )
+        self.client = APIClient()
+
+    def test_the_quiz_payload_carries_the_translated_options(self):
+        r = self.client.post(
+            '/api/v1/challenges/quiz/start/', {'category': 'physics', 'count': 5}, format='json',
+        )
+        self.assertEqual(r.status_code, status.HTTP_201_CREATED, r.data)
+        question = r.data['questions'][0]
+        self.assertEqual(question['options_en'], ['a-en', 'b-en', 'c-en', 'd-en'])
+        self.assertEqual(question['options_ru'], ['a-ru', 'b-ru', 'c-ru', 'd-ru'])
+        self.assertNotIn('correct_answer', question)
+
+    def test_translations_are_optional_and_default_to_empty(self):
+        q = ChallengeQuestion.objects.create(
+            category='physics', question='Savol', options=['a', 'b'], correct_answer=0,
+        )
+        self.assertEqual(q.options_en, [])
+        self.assertEqual(q.options_ru, [])
+
+
+class SeedTranslationTests(TestCase):
+    """The seed is the only content the pool has; every row it writes must
+    read in all three languages, with the answers under the same letters."""
+
+    def test_every_seeded_question_is_translated_and_lines_up(self):
+        from io import StringIO
+
+        from django.core.management import call_command
+
+        call_command('seed_challenges', stdout=StringIO())
+        rows = ChallengeQuestion.objects.filter(is_active=True)
+        self.assertGreaterEqual(rows.count(), 60)
+        for row in rows:
+            with self.subTest(question=row.question):
+                self.assertTrue(row.question_en.strip())
+                self.assertTrue(row.question_ru.strip())
+                self.assertEqual(len(row.options_en), len(row.options))
+                self.assertEqual(len(row.options_ru), len(row.options))
+                self.assertTrue(0 <= row.correct_answer < len(row.options))
+
+    def test_the_seed_is_idempotent(self):
+        from io import StringIO
+
+        from django.core.management import call_command
+
+        call_command('seed_challenges', stdout=StringIO())
+        first = ChallengeQuestion.objects.count()
+        call_command('seed_challenges', stdout=StringIO())
+        self.assertEqual(ChallengeQuestion.objects.count(), first)

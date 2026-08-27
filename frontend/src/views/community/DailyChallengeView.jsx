@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import api from '@/lib/api';
+import { questionOptions, questionText } from '@/lib/questionText';
 import { useGamificationStore } from '@/store/useGamificationStore';
 import { Timer, Award, Zap, ArrowRight, CheckCircle, XCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -167,13 +168,11 @@ export default function DailyChallengeView() {
           </div>
 
           <h2 className="text-2xl md:text-3xl font-bold mb-8 leading-tight">
-            {language === 'ru' ? (currentQ.question_ru || currentQ.question)
-              : language === 'en' ? (currentQ.question_en || currentQ.question)
-              : currentQ.question}
+            {questionText(currentQ, language)}
           </h2>
 
           <div className="space-y-4 mb-8">
-            {(Array.isArray(currentQ?.options) ? currentQ.options : []).map((option, idx) => {
+            {questionOptions(currentQ, language).map((option, idx) => {
               let btnClass = "glass hover:bg-white/10 border-transparent";
               if (isAnswerChecked) {
                 const correctIdx = correctAnswers?.[currentQ.id];

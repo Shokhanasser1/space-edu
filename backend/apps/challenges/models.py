@@ -32,6 +32,10 @@ class ChallengeQuestion(models.Model):
     question_en = models.TextField(blank=True, default='')
     question_ru = models.TextField(blank=True, default='')
     options = models.JSONField(help_text='List of 4 answer options')
+    # Same order as `options`, or empty — `correct_answer` indexes into all
+    # three. A translation that does not line up is ignored by the client.
+    options_en = models.JSONField(blank=True, default=list, help_text='Answer options in English, same order')
+    options_ru = models.JSONField(blank=True, default=list, help_text='Answer options in Russian, same order')
     correct_answer = models.PositiveSmallIntegerField(help_text='0-based index of correct option')
     explanation = models.TextField(blank=True, default='', help_text='Why this answer is correct')
     time_seconds = models.PositiveIntegerField(default=60, help_text='Time limit per question in seconds')
