@@ -142,3 +142,32 @@ describe('lesson quizzes', () => {
     );
   });
 });
+
+describe('a lesson with no questions yet', () => {
+  // 27 Aug 2026: the "Test" button on every lesson row links to
+  // `?lesson=<slug>`, and no lesson has questions attached yet — that is
+  // admin-panel work. Until it is done, the button must still open a test:
+  // the subject's pool, labelled as such rather than as the lesson's quiz.
+  it('falls back to the subject pool and says so', async () => {
+    api.post.mockImplementation((url, body) => {
+      if (url.includes('/quiz/start/') && body.lesson) {
+        return Promise.reject({ response: { status: 404, data: { detail: 'This lesson has no questions yet.' } } });
+      }
+      if (url.includes('/quiz/start/')) {
+        return Promise.resolve({
+          data: { session_id: 8, category: body.category, total: 1, questions: [question(1, 'Tezlik nima?')] },
+        });
+      }
+      return Promise.resolve({ data: {} });
+    });
+    renderAt('/quiz/physics?lesson=physics-kinematics-basic-concepts-in-mechanics');
+
+    expect(await screen.findByText('Tezlik nima?')).toBeInTheDocument();
+    expect(screen.queryByText(/lesson quiz|квиз по уроку/i)).toBeNull();
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent(/physics|физика/i);
+
+    const bodies = api.post.mock.calls.map(([, body]) => body);
+    expect(bodies[0]).toEqual({ lesson: 'physics-kinematics-basic-concepts-in-mechanics' });
+    expect(bodies[1]).toEqual({ category: 'physics', count: 10 });
+  });
+});

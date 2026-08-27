@@ -2,6 +2,7 @@ import { useParams, Navigate, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import SectionPageHeader from '@/components/layout/SectionPageHeader';
 import { useLearnTopics } from '@/hooks/useLearnTopics';
+import { quizPath } from '@/lib/learnContent';
 import { BookOpen, FlaskConical } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -49,7 +50,7 @@ function FuiButton({ icon: Icon, label, accentColor, onClick }) {
 }
 
 /* ─── Lesson row card ─── */
-function LessonBlock({ lesson, index, color, topicColor, onClick }) {
+function LessonBlock({ lesson, index, color, topicColor, onClick, onTest }) {
   const [hovered, setHovered] = useState(false);
   const { t } = useTranslation();
 
@@ -128,7 +129,7 @@ function LessonBlock({ lesson, index, color, topicColor, onClick }) {
           icon={BookOpen}
           label={t('learnViews', 'testButton') || 'Test'}
           accentColor={tealColor}
-          onClick={onClick}
+          onClick={onTest}
         />
         <FuiButton
           icon={FlaskConical}
@@ -173,6 +174,7 @@ export default function PhysicsTopicView() {
               index={i}
               color={topic.color}
               onClick={() => navigate(`/learn/physics/${topicId}/lesson/${i}`)}
+              onTest={() => navigate(quizPath('physics', lesson))}
             />
           ))}
         </div>

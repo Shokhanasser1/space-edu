@@ -93,6 +93,19 @@ export function adaptTree(tree) {
   return out;
 }
 
+/**
+ * Where the "Test" button on a lesson row goes.
+ *
+ * A lesson from the API carries a slug, and `/quiz/:category?lesson=<slug>`
+ * runs the questions attached to that one lesson. A lesson from the static
+ * file is a bare string with nothing to attach to, so the button opens the
+ * subject's whole pool instead of a page that says "not found".
+ */
+export function quizPath(subject, lesson) {
+  const slug = typeof lesson === 'object' ? lesson?.slug : null;
+  return slug ? `/quiz/${subject}?lesson=${encodeURIComponent(slug)}` : `/quiz/${subject}`;
+}
+
 /** For links that want a slug rather than a position. */
 export function findBySlug(topics, slug) {
   return Object.values(topics ?? {}).find((topic) => topic.slug === slug) ?? null;

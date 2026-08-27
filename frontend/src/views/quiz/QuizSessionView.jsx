@@ -49,6 +49,8 @@ export default function QuizSessionView() {
   const [sessionId, setSessionId] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [loadState, setLoadState] = useState("loading");
+  // True when `?lesson=` was asked for but the subject pool is what runs.
+  const [poolFallback, setPoolFallback] = useState(false);
   const [answers, setAnswers] = useState([]);
 
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -61,8 +63,24 @@ export default function QuizSessionView() {
   useEffect(() => {
     let cancelled = false;
     setLoadState("loading");
+    setPoolFallback(false);
 
-    api.post("/challenges/quiz/start/", lesson ? { lesson } : { category, count: 10 })
+    const start = (body) => api.post("/challenges/quiz/start/", body);
+    const startPool = () => start({ category, count: 10 });
+
+    // Every lesson row's "Test" button links here with `?lesson=`, and a
+    // lesson with nothing attached yet is a 404. That is content still to be
+    // written, not a reason to show a student "not found": run the subject's
+    // pool instead, and let the heading say which one it is.
+    const request = lesson
+      ? start({ lesson }).catch((err) => {
+          if (err?.response?.status !== 404) throw err;
+          if (!cancelled) setPoolFallback(true);
+          return startPool();
+        })
+      : startPool();
+
+    request
       .then(({ data }) => {
         if (cancelled) return;
         const list = data.questions ?? [];
@@ -230,7 +248,7 @@ export default function QuizSessionView() {
         {/* Header / Progress */}
         <div className="flex items-center justify-between mb-8 px-2">
           <h2 className="text-2xl font-bold uppercase tracking-widest text-white/80">
-            {lesson ? t('quiz', 'lessonQuiz') : t('quiz', category)}
+            {lesson && !poolFallback ? t('quiz', 'lessonQuiz') : t('quiz', category)}
           </h2>
           {!isCompleted && (
             <div className="text-sm font-medium text-white/50">
