@@ -353,12 +353,27 @@ export function FitToViewport({ height, radius, azimuth = 0.26, elevation = 0.04
  */
 export function ReleaseContextOnUnmount() {
   const gl = useThree((state) => state.gl);
+
   useEffect(
     () => () => {
-      gl?.forceContextLoss?.();
-      gl?.dispose?.();
+      // Deferred out of React's unmount pass on purpose. React runs child
+      // cleanups first, so killing the context here synchronously left
+      // react-three-fiber's own teardown reading a dead one:
+      // `getContextAttributes()` returns null on a lost context and the whole
+      // /lab route went to the error boundary with "cannot read properties of
+      // null (reading 'alpha')". A macrotask later, r3f has finished.
+      //
+      // `isConnected` covers the other direction: if the same canvas is still
+      // in the document the component was remounted, not removed, and its
+      // context is still wanted.
+      const canvas = gl?.domElement;
+      setTimeout(() => {
+        if (canvas?.isConnected) return;
+        gl?.forceContextLoss?.();
+      }, 0);
     },
     [gl],
   );
+
   return null;
 }

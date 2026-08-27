@@ -11,6 +11,7 @@ import { useTextures } from '@/hooks/useTextures';
 import { ApolloHologramModule } from './lab/ApolloModule';
 import { ApolloLaunchSimulator } from './lab/LaunchModule';
 import { ReleaseContextOnUnmount } from './lab/Hologram';
+import { Spacecraft } from './lab/Spacecraft';
 
 /*
  * Eight textures, served from this site.
@@ -216,8 +217,17 @@ const PlanetaryProcessesLab = () => {
         <Canvas shadows camera={{ position: [0, 0, 6], fov: 45 }} gl={{ antialias: false, toneMapping: THREE.ACESFilmicToneMapping }}>
           <ReleaseContextOnUnmount />
           <ambientLight intensity={0.05} />
+          {/* Noon used to be midnight. The angle was `timeOfDay / 24`, so at the
+              default 12:00 the sun sat at z = -10, directly behind the planet
+              from a camera at z = +6, and the module opened on a flat black
+              disc - the first thing anybody saw in it. Offsetting by 12 puts
+              the sun on the camera's side at noon and behind at midnight. */}
           <directionalLight
-            position={[Math.sin((timeOfDay / 24) * Math.PI * 2) * 10, 3, Math.cos((timeOfDay / 24) * Math.PI * 2) * 10]}
+            position={[
+              Math.sin(((timeOfDay - 12) / 24) * Math.PI * 2) * 10,
+              3,
+              Math.cos(((timeOfDay - 12) / 24) * Math.PI * 2) * 10,
+            ]}
             intensity={2}
             castShadow
           />
@@ -477,93 +487,7 @@ const OrbitalEarthAndVehicle = ({ altitude, inclination, solarPanelsDeployed, sa
       </mesh>
 
       <group ref={satelliteRef}>
-        {satelliteType === 'iss' && (
-          <group scale={0.55}>
-            <mesh castShadow receiveShadow>
-              <boxGeometry args={[4.4, 0.16, 0.18]} />
-              <meshPhysicalMaterial color="#cfd6df" metalness={0.86} roughness={0.18} />
-            </mesh>
-            <mesh position={[0, 0, 0.55]} rotation={[Math.PI / 2, 0, 0]} castShadow receiveShadow>
-              <cylinderGeometry args={[0.32, 0.32, 1.8, 28]} />
-              <meshPhysicalMaterial color="#f8fafc" metalness={0.55} roughness={0.4} />
-            </mesh>
-            <group position={[1.65, 0, 0]} rotation={[0, 0, solarPanelsDeployed ? 0 : Math.PI / 2]}>
-              <mesh castShadow receiveShadow position={[0, 0, 0.95]}>
-                <boxGeometry args={[1.0, 0.04, 2.3]} />
-                <meshPhysicalMaterial color="#123d74" metalness={0.94} roughness={0.1} />
-              </mesh>
-              <mesh castShadow receiveShadow position={[0, 0, -0.95]}>
-                <boxGeometry args={[1.0, 0.04, 2.3]} />
-                <meshPhysicalMaterial color="#123d74" metalness={0.94} roughness={0.1} />
-              </mesh>
-            </group>
-            <group position={[-1.65, 0, 0]} rotation={[0, 0, solarPanelsDeployed ? 0 : -Math.PI / 2]}>
-              <mesh castShadow receiveShadow position={[0, 0, 0.95]}>
-                <boxGeometry args={[1.0, 0.04, 2.3]} />
-                <meshPhysicalMaterial color="#123d74" metalness={0.94} roughness={0.1} />
-              </mesh>
-              <mesh castShadow receiveShadow position={[0, 0, -0.95]}>
-                <boxGeometry args={[1.0, 0.04, 2.3]} />
-                <meshPhysicalMaterial color="#123d74" metalness={0.94} roughness={0.1} />
-              </mesh>
-            </group>
-          </group>
-        )}
-
-        {satelliteType === 'tiangong' && (
-          <group scale={0.72}>
-            <mesh rotation={[0, 0, Math.PI / 2]} castShadow receiveShadow>
-              <cylinderGeometry args={[0.44, 0.44, 2.2, 32]} />
-              <meshPhysicalMaterial color="#ececec" metalness={0.65} roughness={0.32} />
-            </mesh>
-            <group rotation={[solarPanelsDeployed ? 0 : Math.PI / 2, 0, 0]}>
-              <mesh castShadow receiveShadow position={[0, 0, 1.35]}>
-                <boxGeometry args={[1.75, 0.05, 0.9]} />
-                <meshPhysicalMaterial color="#1a4b8c" metalness={0.92} roughness={0.12} />
-              </mesh>
-              <mesh castShadow receiveShadow position={[0, 0, -1.35]}>
-                <boxGeometry args={[1.75, 0.05, 0.9]} />
-                <meshPhysicalMaterial color="#1a4b8c" metalness={0.92} roughness={0.12} />
-              </mesh>
-            </group>
-          </group>
-        )}
-
-        {satelliteType === 'dragon' && (
-          <group scale={0.85}>
-            <mesh castShadow receiveShadow position={[0, 0.2, 0]}>
-              <coneGeometry args={[0.6, 1.2, 36]} />
-              <meshPhysicalMaterial color="#ffffff" metalness={0.35} roughness={0.2} />
-            </mesh>
-            <mesh castShadow receiveShadow position={[0, -0.62, 0]}>
-              <cylinderGeometry args={[0.6, 0.6, 1.05, 32]} />
-              <meshPhysicalMaterial color="#22272f" metalness={0.8} roughness={0.5} />
-            </mesh>
-            {solarPanelsDeployed && (
-              <mesh position={[0, -0.62, 0.66]}>
-                <planeGeometry args={[0.9, 0.9]} />
-                <meshPhysicalMaterial color="#143e75" metalness={0.92} roughness={0.1} />
-              </mesh>
-            )}
-          </group>
-        )}
-
-        {satelliteType === 'soyuz' && (
-          <group scale={0.85}>
-            <mesh castShadow receiveShadow position={[0, 1, 0]}>
-              <sphereGeometry args={[0.42, 30, 30]} />
-              <meshPhysicalMaterial color="#e1e1e1" metalness={0.55} roughness={0.45} />
-            </mesh>
-            <mesh castShadow receiveShadow position={[0, 0.4, 0]}>
-              <cylinderGeometry args={[0.3, 0.5, 0.65, 32]} />
-              <meshPhysicalMaterial color="#b2b2b2" metalness={0.65} roughness={0.52} />
-            </mesh>
-            <mesh castShadow receiveShadow position={[0, -0.45, 0]}>
-              <cylinderGeometry args={[0.5, 0.5, 1.1, 32]} />
-              <meshPhysicalMaterial color="#cecece" metalness={0.72} roughness={0.35} />
-            </mesh>
-          </group>
-        )}
+        <Spacecraft type={satelliteType} deployed={solarPanelsDeployed} />
       </group>
     </group>
   );
