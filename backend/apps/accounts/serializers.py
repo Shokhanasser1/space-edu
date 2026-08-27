@@ -90,13 +90,16 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     avatar_url = serializers.SerializerMethodField()
+    # The boolean, never the timestamp behind it: when a particular child was at
+    # a computer is not something a response needs to carry.
+    email_verified = serializers.BooleanField(source='is_email_verified', read_only=True)
 
     class Meta:
         model = User
         fields = (
             'id', 'username', 'first_name', 'last_name', 'email',
             'date_of_birth', 'avatar_url', 'astronaut_name', 'bio', 'language', 'date_joined',
-            'is_staff', 'role',
+            'is_staff', 'role', 'email_verified',
         )
         read_only_fields = fields
 

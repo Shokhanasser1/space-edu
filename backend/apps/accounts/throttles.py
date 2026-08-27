@@ -165,3 +165,35 @@ class CredentialRateThrottle(_AlwaysOnRateThrottle):
             'scope': self.scope,
             'ident': f'{self.get_ident(request)}|{email}',
         }
+
+
+class _AccountRateThrottle(SimpleRateThrottle):
+    """Keyed on the account when there is one, on the address when there is not.
+
+    A school reaches this API from a single public address, so an address-keyed
+    limit is shared by the whole building -- which is what locked a classroom
+    out of signing in once already. Everything below is something a signed-in
+    person asks for on their own behalf, so it is counted against them, and the
+    thirty people beside them are unaffected.
+    """
+
+    def get_cache_key(self, request, view):
+        user = getattr(request, 'user', None)
+        ident = (
+            f'user-{user.pk}' if user is not None and user.is_authenticated
+            else self.get_ident(request)
+        )
+        return self.cache_format % {'scope': self.scope, 'ident': ident}
+
+
+class EmailVerifyThrottle(_AccountRateThrottle):
+    """Asking for a confirmation code, and guessing at one.
+
+    Every request costs an e-mail or an attempt at a six-digit number, so every
+    request counts. Sized for a person who mistypes and asks again, not for a
+    person working through a million codes -- the code itself is single-use and
+    dies after five wrong guesses, so this is the outer bound rather than the
+    only one.
+    """
+
+    scope = 'email_verify'

@@ -38,6 +38,14 @@ class User(AbstractUser):
     bio = models.TextField(max_length=300, blank=True)
     selected_spaceship = models.CharField(max_length=50, default='rocket_basic')
     date_of_birth = models.DateField(null=True, blank=True)
+
+    # When the address was proved, not whether. A timestamp answers "when",
+    # survives being set a second time after the address changes, and is worth
+    # something in the admin; a boolean answers less for the same column. It is
+    # never put in a response -- `email_verified` there is the boolean, because
+    # a timestamp tells a reader when a particular child was at a computer and
+    # nothing needs to know that.
+    email_verified_at = models.DateTimeField(null=True, blank=True)
     language = models.CharField(
         max_length=2,
         choices=[('en', 'ENG'), ('uz', 'UZB'), ('ru', 'RUS')],
@@ -65,6 +73,10 @@ class User(AbstractUser):
                 name='accounts_user_email_ci_unique',
             ),
         ]
+
+    @property
+    def is_email_verified(self):
+        return self.email_verified_at is not None
 
     def __str__(self):
         return self.username

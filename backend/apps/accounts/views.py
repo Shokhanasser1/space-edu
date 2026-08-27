@@ -1,20 +1,21 @@
 import logging
 
-from django.conf import settings
 from django.contrib.auth import authenticate
-from django.core.mail import send_mail
 from django.db import IntegrityError, transaction
+from django.utils import timezone
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .email_code import store_code, verify_and_consume
+from .email_code import VERIFY_EMAIL, verify_and_consume
+from .emails import send_sign_in_code, send_verification_code
 from .models import User
 from .serializers import ProfileSerializer, RegisterSerializer, UserSerializer
 from .throttles import (
     CredentialRateThrottle,
+    EmailVerifyThrottle,
     LoginIpRateThrottle,
     LoginRateThrottle,
     RegisterDailyRateThrottle,
@@ -59,6 +60,16 @@ class RegisterView(generics.CreateAPIView):
                 {'email': ['This email is already registered.']},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+        # The account exists either way: a mail server that is down must not
+        # cost somebody the registration they just completed, and the code can
+        # be asked for again. Logged rather than swallowed, because "the child
+        # never got the code" is otherwise invisible (C-10).
+        try:
+            send_verification_code(user.email)
+        except Exception:
+            logger.exception('Registered %s but could not send a confirmation code', user.pk)
+
         return Response(
             {
                 'user': UserSerializer(user, context={'request': request}).data,
@@ -197,20 +208,7 @@ class EmailLoginCodeRequestView(APIView):
 
         user = User.objects.filter(email__iexact=email, is_active=True).first()
         if user is not None:
-            code = store_code(email)
-            try:
-                send_mail(
-                    subject='UZ COSMOS — sign-in code',
-                    message=f'Your sign-in code: {code}\n\nValid for 10 minutes.',
-                    from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', None) or 'noreply@localhost',
-                    recipient_list=[email],
-                    fail_silently=True,
-                )
-            except Exception:
-                logger.exception('Failed to send sign-in code')
-            if settings.DEBUG:
-                # Developer convenience without a response-body leak.
-                logger.warning('DEV sign-in code for %s: %s', email, code)
+            send_sign_in_code(email)
 
         return Response({'detail': self.GENERIC_DETAIL}, status=status.HTTP_200_OK)
 
@@ -246,3 +244,58 @@ class EmailLoginCodeVerifyView(APIView):
             'user': UserSerializer(user, context={'request': request}).data,
             **_get_tokens(user),
         })
+
+
+class EmailVerifyRequestView(APIView):
+    """POST — mails a fresh confirmation code to the caller's own address.
+
+    Nothing is taken from the body: the address is whatever the account holds.
+    Letting a caller name one would make this a way to send our mail to any
+    address in the world, signed with our name.
+    """
+
+    throttle_classes = [EmailVerifyThrottle]
+
+    def post(self, request):
+        user = request.user
+        if user.is_email_verified:
+            return Response({'detail': 'This address is already confirmed.'})
+        if not user.email:
+            return Response(
+                {'detail': 'This account has no e-mail address to confirm.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        send_verification_code(user.email)
+        return Response({'detail': 'A confirmation code has been sent.'})
+
+
+class EmailVerifyConfirmView(APIView):
+    """POST { code } — proves the caller can read mail sent to their address."""
+
+    throttle_classes = [EmailVerifyThrottle]
+
+    INVALID = 'That code is wrong or has expired.'
+
+    def post(self, request):
+        user = request.user
+        code = str(request.data.get('code') or '').strip()
+
+        if len(code) != 6 or not code.isdigit():
+            return Response(
+                {'detail': 'Code must be 6 digits.'}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if user.is_email_verified:
+            return Response(UserSerializer(user, context={'request': request}).data)
+
+        if not verify_and_consume(user.email, code, VERIFY_EMAIL):
+            # 400 and not 401, deliberately. The caller is signed in; the code is
+            # what is wrong. A 401 here would send the front end's interceptor
+            # off to refresh a perfectly good token and then sign the child out
+            # for mistyping a digit.
+            return Response({'detail': self.INVALID}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.email_verified_at = timezone.now()
+        user.save(update_fields=['email_verified_at'])
+        return Response(UserSerializer(user, context={'request': request}).data)

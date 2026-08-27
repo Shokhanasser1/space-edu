@@ -293,6 +293,14 @@ REST_FRAMEWORK = {
         'register': '60/min',
         'register_day': '300/day',
 
+        # Confirming an address, keyed on the account rather than the address it
+        # is asked from -- so a classroom confirming together is thirty separate
+        # budgets, not one shared. Person-sized: somebody who mistypes the code
+        # and asks for another has room to, somebody working through six-digit
+        # numbers does not. The code itself dies after five wrong guesses, so
+        # this is the outer bound rather than the only one.
+        'email_verify': '20/hour',
+
         'ai': '40/hour',
 
         # Chat is keyed on the account. Set for a classroom, not a newsroom:
