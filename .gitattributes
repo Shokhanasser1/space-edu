@@ -37,5 +37,7 @@
 # Do not hand-merge either of these: regenerate.
 #   package-lock.json         -> `npm install` on the merged package.json
 #   learn_content.json        -> `npm run content:export`
+#   skyCatalog.json           -> `npm run sky:build`
 frontend/package-lock.json                       linguist-generated=true
 backend/apps/courses/fixtures/learn_content.json linguist-generated=true
+frontend/src/data/skyCatalog.json                linguist-generated=true
