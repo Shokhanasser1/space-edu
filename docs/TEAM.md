@@ -9,74 +9,121 @@ overwriting each other.
 ## The shape of it
 
 ```
-you branch -> you push -> you open a PR -> CI runs -> the lead reviews -> it merges
+you pull -> you write it -> you run the checks -> you push to main -> the lead reads it
 ```
 
-Nobody pushes to `main`. Not as a courtesy — the branch is protected and the
-push is refused. That is the whole mechanism behind "one person cannot break
-another's work": everything reaching `main` has been through CI and through a
-second pair of eyes.
+**You push straight to `main`.** No branch to create, no pull request to open,
+nobody to wait for. That is deliberate: someone learning to program should spend
+the day on the code, not on the ceremony around it.
 
-**Branch names.** `type/short-description`, where type is one of the commit
-types: `feat fix refactor docs test chore perf ci`. So `fix/logout-401`,
-`feat/lesson-markdown`. One branch, one subject.
-
-**Keep branches short.** A branch that lives a day conflicts with nothing. A
-branch that lives three weeks conflicts with everything, and no process fixes
-that. If a piece of work is bigger than a few days, split it into merges that
-each stand on their own.
-
-**Rebase, do not merge, while your branch is open:**
+Your whole workflow, start to finish:
 
 ```bash
-git fetch origin
-git rebase origin/main
+git pull --rebase origin main    # start from what everybody else already has
+#  ... write the code, run the checks ...
+git add -A
+git commit -m "fix: the lesson page showed yesterday's progress"
+git push origin main
 ```
 
-That keeps `main` readable: every commit on it is a merged pull request rather
-than a thicket of "Merge branch 'main' into...".
+If the push is rejected as *behind*, somebody pushed while you were working:
+`git pull --rebase origin main`, run your tests again, push again. That is the
+only failure mode of this flow, and it is thirty seconds.
+
+**What this costs, said plainly.** Nothing now stands between a broken commit
+and everybody else's clone. The check did not disappear — it moved to *after*
+the push: the lead reads what lands and fixes or reverts it. A mistake is a
+five-minute conversation, not a disaster. Read "Before you push" below anyway;
+being trusted is the reason to be careful, not the reason to stop being.
+
+**Branches still exist, and are still the right tool** for anything large,
+anything you want read before it lands, and anything touching authentication,
+payments, personal data or migrations. Branch, push the branch, open a pull
+request, ask for eyes on it. `type/short-description` — `fix/logout-401`,
+`feat/lesson-markdown`. One branch, one subject. Rebase rather than merge while
+it is open (`git fetch origin && git rebase origin/main`), and keep it short: a
+branch that lives a day conflicts with nothing, one that lives three weeks
+conflicts with everything.
+
+## Before you push
+
+None of this is enforced by anything. The lead reads every commit by hand; this
+is the list that makes that reading short, and it is thirty seconds of care in
+exchange for nobody standing between you and five other people's work:
+
+1. **Run what CI runs** — the block in `CONTRIBUTING.md`, Part 3. Nothing stops
+   you pushing without it. It is how you find out you broke something before
+   five other people do.
+2. **Read your own diff.** `git diff --staged`. Half of all mistakes are visible
+   in it: a `console.log`, a commented-out block, a file you did not mean to add.
+3. **One thing per commit.** Small commits are easy to read and easy to revert on
+   their own when one of them turns out to be wrong.
+4. **Never `.env`, a password or a key.** GitHub blocks nothing here; that
+   mistake is the one that cannot be taken back. See
+   `docs/SECURITY-INCIDENT-2026-08-22.md`.
+5. **Never `git push --force`** to `main`. GitHub still refuses it, and the day
+   it does not, it destroys somebody else's work.
+6. **Say it in the daily message** when you push something big — and *before*
+   you generate a migration, always.
 
 ---
 
 ## What is protected, and what it means for you
 
-On `main`:
+Very little, on purpose. On `main`:
 
 | Rule | What you will see |
 |---|---|
-| Pull request required | `git push origin main` is refused. Branch and open a PR. |
-| One approval required, from a code owner | The PR says "Review required" until the lead approves. |
-| Stale approvals dismissed on new commits | Push a fix after approval and it needs approving again. |
-| CI must pass | "Backend tests", "Frontend build" and "Repository hygiene" must be green. |
-| Branches need not be up to date | Set on purpose: GitHub runs CI against your branch *merged into* `main`, so a semantic clash is caught anyway, and requiring a rebase before every merge puts six people in a queue. |
-| Conversations must be resolved | Every review comment answered or fixed before merge. |
-| No force-push, no deletion | `main` cannot be rewritten or removed. |
+| Anyone with write access may push | `git push origin main` simply works. No pull request, no approval, no waiting for CI. |
+| CI still runs on every push | It reports; it no longer blocks. Watch your own: `gh run watch`, or the tick next to your commit on GitHub. |
+| No force-push | `main` cannot be rewritten. This one stays, because this is the one that loses other people's work. |
+| No deletion | `main` cannot be removed. |
 
-**One exemption, and it is deliberate.** Administrators are not blocked by these
-rules (`enforce_admins: false`). With the lead as the only code owner, turning it
-on would leave the lead unable to merge anything at all — GitHub does not let
-anyone approve their own pull request, and there would be nobody else who could.
-So the rules bind the five; the lead is on their honour, and should still work
-through pull requests.
+Nothing else. Required pull requests, required approvals, required status checks
+and required conversation resolution were all switched off on 27 August 2026,
+when the team grew with people who are learning as they go. Two rules are left,
+and neither of them will ever refuse an ordinary push.
 
-The day a second person can review — a senior developer, or two area owners who
-cover each other — close the exemption:
+The process was costing more than the mistakes it caught, and a beginner blocked
+on "Review required" learns nothing while they wait. The checking did not stop
+— the lead now reads what lands, by hand.
+
+**The trade is real and worth naming.** Before this, everything on `main` had
+been through CI and a second pair of eyes. Now `main` can be red, and the person
+who notices is the next person to pull. If that starts happening weekly rather
+than rarely, put the checks back — the flow is a choice, not a law:
 
 ```bash
-gh api -X POST repos/Shokhanasser1/space-edu/branches/main/protection/enforce_admins
+gh api -X PUT repos/Shokhanasser1/space-edu/branches/main/protection --input - <<'JSON'
+{
+  "required_status_checks": { "strict": false,
+    "contexts": ["Backend tests", "Frontend build", "Repository hygiene"] },
+  "enforce_admins": false,
+  "required_pull_request_reviews": { "dismiss_stale_reviews": true,
+    "require_code_owner_reviews": true, "required_approving_review_count": 1 },
+  "restrictions": null,
+  "allow_force_pushes": false,
+  "allow_deletions": false,
+  "required_conversation_resolution": true
+}
+JSON
 ```
 
-To check what is set at any time:
+That is the exact state this repository ran on until 27 August 2026, so putting
+it back is one command and loses nothing.
+
+To see what is set at any time:
 
 ```bash
 gh api repos/Shokhanasser1/space-edu/branches/main/protection
 ```
 
-`.github/CODEOWNERS` decides whose approval counts. Today that is the lead on
-everything, with per-area owners to fill in as people take theirs. Settings,
-authentication, chat moderation, CI and migrations stay with the lead whoever
-else owns the area around them — a mistake in those is not visible in the diff,
-it is visible in what stops being true afterwards.
+`.github/CODEOWNERS` no longer gates anything — with no required review there is
+nothing for it to require. Read it as the map it now is: who owns which part,
+and therefore who to tell when you touch it. Settings, authentication, chat
+moderation, CI and migrations are the lead's whoever else works around them — a
+mistake in those is not visible in the diff, it is visible in what stops being
+true afterwards.
 
 ---
 
@@ -325,6 +372,8 @@ against the Three.js code specifically before switching them on.
 
 ## When something does go wrong on `main`
 
-Roll back first, diagnose second. `git revert` the merge commit, open a PR for
-it like anything else, then work out what happened. `main` being green matters
-more than anybody's afternoon.
+Roll back first, diagnose second. `git revert <sha>` — the revert is an ordinary
+commit, so it goes straight to `main` like anything else — then work out what
+happened. `main` being green matters more than anybody's afternoon, and
+reverting somebody's commit is not an insult. It is the cheapest tool here, and
+now that everybody pushes directly, it is the one that keeps the flow safe.

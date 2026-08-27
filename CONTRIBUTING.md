@@ -150,11 +150,11 @@ always what it does. A wrong comment is worse than no comment — the next reade
 trusts it instead of reading. Read every comment you keep. Delete the ones that
 restate the code. Write the *why* yourself.
 
-### AI-11. Say so in the PR.
+### AI-11. Say so — in the commit body, or in the PR if you opened one.
 
 One line: *"structure drafted with AI, reviewed and tested by me"*, or *"written
-by hand"*. Nobody is judged for either. It tells the reviewer where to look
-hardest, and that is worth more than the appearance of having done it all
+by hand"*. Nobody is judged for either. It tells whoever reads it next where to
+look hardest, and that is worth more than the appearance of having done it all
 yourself.
 
 ### AI-12. What it is genuinely good at — use it there.
@@ -373,11 +373,17 @@ by someone who assumes it works.
 2. **Reproduce** the bug, or write down exactly what the feature must do.
 3. **Write the test first.** Run it. It must fail, for the reason you expect.
 4. **Make it pass** with the smallest change. No unrelated tidying.
-5. **Open a PR.** One reviewer; the lead also reviews auth, currency and
-   personal data.
-6. **Merge** on green CI plus approval. Squash.
+5. **Run the checks below** — all of them, on your machine.
+6. **Push it to `main`:** `git pull --rebase origin main`, then `git push`.
 
-Branches: `fix/<slug>`, `feat/<slug>`, `chore/<slug>`. Never commit to `main`.
+No branch, no pull request, no waiting for an approval. The lead reads what
+lands and fixes or reverts anything wrong, so the worst case is a short
+conversation. The full sequence, and the short list to go through before every
+push, are in `docs/TEAM.md`.
+
+Branches and pull requests are still the right tool for anything large, anything
+you want read before it lands, and anything touching authentication, payments,
+personal data or migrations: `fix/<slug>`, `feat/<slug>`, `chore/<slug>`.
 
 Commits: `<type>: <what changed>` where type is one of
 `feat fix refactor docs test chore perf ci`. The body explains **why** and names
@@ -427,8 +433,10 @@ otherwise. `content:check` fails if `learn_content.json` has drifted from
 
 ## Review checklist
 
-The reviewer's job is not to admire the code. It is to find the thing that will
-break. If you approve without reading the diff, the bug is yours too.
+Most changes are read *after* they are pushed, not before, so this list is for
+two people: whoever is reading `main` today, and you, on your own diff, before
+you push it. The job is not to admire the code. It is to find the thing that
+will break. If you sign it off without reading the diff, the bug is yours too.
 
 - [ ] **Does a test fail without this change?** Check out the branch, revert the
       source file, run the test. If it still passes, the test is decoration.
@@ -466,9 +474,10 @@ Seven things. Six out of seven is not done.
    never rendered a page, and the bug lived in the gap between them.
 2. A test covers it, and fails without your change.
 3. CI is green: tests, migrations, build, locale parity.
-4. Someone else reviewed and approved the diff.
+4. You read your own diff before pushing it, against the review checklist above.
 5. New user-facing strings exist in all three locales.
-6. The PR body says why, and how AI was used if it was.
+6. The commit body — or the PR body, if you opened one — says why, and how AI was
+   used if it was.
 7. Anything found but not fixed is a new ticket.
 
 ## Releases and incidents
@@ -538,15 +547,18 @@ one person understands a part of the system.
 
 ## 4. Quality & release
 
-> You are allowed to block a merge, and you are expected to use that. You are the
-> reason a fixed bug stays fixed.
+> You are allowed to revert anything on `main`, and you are expected to use that.
+> Nothing blocks a bad commit from landing any more, so you are the thing that
+> catches it. You are the reason a fixed bug stays fixed.
 
 - **Owns:** the test suite and CI, releases and rollbacks once there is
   somewhere to release to, the asset pipeline and bundle size, incident notes.
-- **Every week:** confirm CI is green on `main`; check no test was quietly
-  deleted; watch the bundle and repo size; run a full manual pass of the site.
-- **Never:** approve a PR whose test you did not see fail; let a red build merge
-  "just this once"; deploy a change you cannot roll back.
+- **Every day, briefly:** read what landed on `main` and check its CI run went
+  green. Nobody else is now required to.
+- **Every week:** check no test was quietly deleted; watch the bundle and repo
+  size; run a full manual pass of the site.
+- **Never:** sign off a change whose test you did not see fail; leave `main` red
+  overnight "just this once"; deploy a change you cannot roll back.
 
 ## 5. Research & docs
 

@@ -1,9 +1,10 @@
-# Who has to approve what.
+# Who owns what, and who to tell when you touch it.
 #
 # GitHub requests a review from the owner of every path a pull request touches.
-# With "Require review from Code Owners" turned on in the branch protection
-# rule, that review is not optional — which is the mechanism behind "nothing
-# reaches main without being read by someone else".
+# That request is no longer required to merge: since 27 August 2026 work is
+# pushed straight to `main` and read afterwards (docs/TEAM.md). So read this
+# file as a map — it says whose area you are standing in, and therefore who
+# should hear about the change, in the daily message if not in a review.
 #
 # A username here must be a collaborator on the repository, or GitHub silently
 # ignores the line. Check with: gh api repos/:owner/:repo/collaborators

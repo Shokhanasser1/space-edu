@@ -1,3 +1,8 @@
+<!-- Pull requests are optional here — most work is pushed straight to `main`
+     (docs/TEAM.md). Open one when the change is large, when you want it read
+     before it lands, or when it touches authentication, payments, personal data
+     or migrations. -->
+
 ## What this changes, and why
 
 <!-- The why matters more than the what — the diff already says what. Name the
