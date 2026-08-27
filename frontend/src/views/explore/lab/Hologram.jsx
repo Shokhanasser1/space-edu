@@ -43,10 +43,12 @@ function useHologramMaterials(accent) {
         depthWrite: false,
       }),
       bodyActive: new THREE.MeshStandardMaterial({
-        color: tint.clone().multiplyScalar(0.55),
-        emissive: tint.clone().multiplyScalar(0.5),
+        // Bright enough to pick out, dim enough that bloom does not turn the
+        // selected stage into a white bar - which it did at 0.5 emissive.
+        color: tint.clone().multiplyScalar(0.5),
+        emissive: tint.clone().multiplyScalar(0.24),
         transparent: true,
-        opacity: 0.6,
+        opacity: 0.5,
         metalness: 0.1,
         roughness: 0.4,
         side: THREE.DoubleSide,
@@ -61,10 +63,10 @@ function useHologramMaterials(accent) {
         depthWrite: false,
       }),
       wireActive: new THREE.MeshBasicMaterial({
-        color: '#ffffff',
+        color: tint.clone().lerp(new THREE.Color('#ffffff'), 0.55),
         wireframe: true,
         transparent: true,
-        opacity: 0.5,
+        opacity: 0.34,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
       }),
@@ -110,11 +112,14 @@ function ScanShell({ radius, height, accent }) {
           uniform float uHalfHeight;
           varying vec3 vLocal;
           void main() {
-            float lines = sin(vLocal.y * 26.0 - uTime * 1.6) * 0.5 + 0.5;
+            // Normalised against the shell's own height, so a 110 m rocket and
+            // a 4 m satellite get the same number of lines rather than the
+            // taller one getting fifty.
+            float lines = sin((vLocal.y / uHalfHeight) * 11.0 - uTime * 1.6) * 0.5 + 0.5;
             lines = smoothstep(0.62, 1.0, lines);
             // Fade out at the top and bottom so the shell has no visible rim.
             float fade = 1.0 - clamp(abs(vLocal.y) / uHalfHeight, 0.0, 1.0);
-            gl_FragColor = vec4(uColor, lines * fade * 0.16);
+            gl_FragColor = vec4(uColor, lines * fade * 0.10);
           }
         `,
       }),
@@ -296,6 +301,44 @@ export function HoloLabel({ position, title, subtitle, accent = HOLO.accent, sid
       </Html>
     </group>
   );
+}
+
+/**
+ * Frames the model so the whole of it is on screen, at any shape of viewport.
+ *
+ * A camera position that suits a wide desktop viewer leaves the model a sliver
+ * on a phone, because the vertical field of view is fixed and the horizontal
+ * one shrinks with the width. This works out the distance both ways round and
+ * takes the larger, so a 110 m rocket fills a tall narrow canvas and a wide
+ * short one equally.
+ *
+ * It runs on resize rather than per frame, so OrbitControls still owns the
+ * camera afterwards - the controls read the live camera position on every
+ * update, which is exactly why the old chase camera lost its fight with them.
+ */
+export function FitToViewport({ height, radius, azimuth = 0.26, elevation = 0.04, margin = 1.3 }) {
+  const camera = useThree((state) => state.camera);
+  const size = useThree((state) => state.size);
+
+  useEffect(() => {
+    if (!camera?.isPerspectiveCamera || !size?.width) return;
+    const aspect = size.width / Math.max(1, size.height);
+    const vertical = (camera.fov * Math.PI) / 180;
+    const horizontal = 2 * Math.atan(Math.tan(vertical / 2) * aspect);
+    const distance = Math.max(
+      (height * margin) / (2 * Math.tan(vertical / 2)),
+      (radius * 2.6 * margin) / (2 * Math.tan(horizontal / 2)),
+    );
+    camera.position.set(
+      Math.sin(azimuth) * distance,
+      height * elevation,
+      Math.cos(azimuth) * distance,
+    );
+    camera.lookAt(0, 0, 0);
+    camera.updateProjectionMatrix();
+  }, [camera, size?.width, size?.height, height, radius, azimuth, elevation, margin]);
+
+  return null;
 }
 
 /**

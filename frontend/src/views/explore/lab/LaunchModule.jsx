@@ -14,7 +14,14 @@ import {
   missionClock,
   stageAt,
 } from './labFacts';
-import { HOLO, HologramStage, HoloLabel, HoloMesh, ReleaseContextOnUnmount } from './Hologram';
+import {
+  FitToViewport,
+  HOLO,
+  HologramStage,
+  HoloLabel,
+  HoloMesh,
+  ReleaseContextOnUnmount,
+} from './Hologram';
 
 /**
  * The Apollo 11 ascent, drawn as an altitude column.
@@ -49,7 +56,7 @@ function kmToY(km) {
 }
 
 /** The vehicle, small enough to read against the column it is climbing. */
-const VEHICLE_H = 1.05;
+const VEHICLE_H = 1.7;
 
 function Vehicle({ clockRef }) {
   const stackRef = useRef(null);
@@ -319,12 +326,13 @@ export const ApolloLaunchSimulator = () => {
         </div>
       </div>
 
-      <div className="w-full md:w-2/3 bg-space-900/50 rounded-3xl border border-white/10 overflow-hidden relative min-h-[400px]">
+      <div className="w-full md:w-2/3 bg-space-900/50 rounded-3xl border border-white/10 overflow-hidden relative h-[62vh] min-h-[360px] lg:h-full lg:min-h-[400px]">
         <Canvas
           camera={{ position: [4.2, 0, 12] }}
           gl={{ antialias: false, toneMapping: THREE.ACESFilmicToneMapping }}
         >
           <ReleaseContextOnUnmount />
+          <FitToViewport height={COLUMN} radius={RADIUS} />
           <Stars radius={100} depth={50} count={3000} factor={4} saturation={0} fade speed={0.6} />
           <AscentClock clockRef={clockRef} running={status === 'flight'} rate={rate} />
           <HologramStage height={COLUMN} radius={RADIUS} accent={HOLO.accent} spin={0} float={false}>
@@ -337,7 +345,7 @@ export const ApolloLaunchSimulator = () => {
           <EffectComposer>
             {/* 0.6, not 1: at 1 nothing was ever bright enough to bloom except
                 the additive plume, which then bloomed without limit. */}
-            <Bloom luminanceThreshold={0.6} mipmapBlur intensity={0.7} />
+            <Bloom luminanceThreshold={0.62} mipmapBlur intensity={0.5} />
             <Vignette eskil={false} offset={0.1} darkness={1.05} />
           </EffectComposer>
         </Canvas>

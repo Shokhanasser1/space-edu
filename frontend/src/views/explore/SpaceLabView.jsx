@@ -731,7 +731,11 @@ export default function SpaceLabView() {
 
   return (
     <div className="min-h-screen pt-24 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-      <div className="flex flex-col lg:flex-row gap-8 h-[calc(100vh-140px)] min-h-[600px]">
+      {/* The height is pinned to the viewport only where the panel and the
+          viewer sit side by side. Stacked on a phone they are taller than
+          that, and a fixed height made the Apollo panel overflow the
+          container and land on top of the footer. */}
+      <div className="flex flex-col lg:flex-row gap-8 lg:h-[calc(100vh-140px)] lg:min-h-[600px]">
         {/* Sidebar */}
         <div className="w-full lg:w-64 shrink-0 flex flex-row lg:flex-col gap-3 overflow-x-auto lg:overflow-visible pb-4 lg:pb-0">
           {modules.map(mod => (

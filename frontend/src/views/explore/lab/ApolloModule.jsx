@@ -14,7 +14,14 @@ import {
   explodeOffsetM,
   readFact,
 } from './labFacts';
-import { HOLO, HologramStage, HoloLabel, HoloMesh, ReleaseContextOnUnmount } from './Hologram';
+import {
+  FitToViewport,
+  HOLO,
+  HologramStage,
+  HoloLabel,
+  HoloMesh,
+  ReleaseContextOnUnmount,
+} from './Hologram';
 
 /**
  * Apollo, as a hologram you can take apart.
@@ -297,12 +304,18 @@ export const ApolloHologramModule = () => {
         </AnimatePresence>
       </div>
 
-      <div className="w-full md:w-2/3 bg-space-900/50 rounded-3xl border border-white/10 overflow-hidden relative min-h-[400px]">
+      <div className="w-full md:w-2/3 bg-space-900/50 rounded-3xl border border-white/10 overflow-hidden relative h-[62vh] min-h-[360px] lg:h-full lg:min-h-[400px]">
         <Canvas
           camera={{ position: [4, 1.5, 17], fov: 42 }}
           gl={{ antialias: false, toneMapping: THREE.ACESFilmicToneMapping }}
         >
           <ReleaseContextOnUnmount />
+          {/* The stack grows as it opens, so the framing has to grow with it,
+              or the escape tower leaves the top of the frame. */}
+          <FitToViewport
+            height={HEIGHT + explodeOffsetM(SATURN_V_STACK.length - 1, explode) * SCALE}
+            radius={RADIUS}
+          />
           <Stars radius={100} depth={50} count={3000} factor={4} saturation={0} fade speed={0.6} />
           <HologramStage height={HEIGHT} radius={RADIUS} accent={HOLO.accent} spin={0.1}>
             <SaturnV activePart={activePart} onSelect={setActivePart} explode={explode} />
@@ -316,7 +329,7 @@ export const ApolloHologramModule = () => {
             minPolarAngle={Math.PI / 6}
           />
           <EffectComposer>
-            <Bloom luminanceThreshold={0.35} mipmapBlur intensity={0.8} />
+            <Bloom luminanceThreshold={0.62} mipmapBlur intensity={0.5} />
             <Vignette eskil={false} offset={0.1} darkness={1.05} />
           </EffectComposer>
         </Canvas>
