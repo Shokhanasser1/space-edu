@@ -174,12 +174,12 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
 
 
 class PasswordChangeSerializer(serializers.Serializer):
-    """`current_password` is not required here, and is required by the view.
+    """`current_password` is optional here and required by the view.
 
-    An account that arrived through Google has no usable password, so there is
-    no current one to give and demanding it would leave that person unable ever
-    to set one. Whether it is needed depends on the account, which the
-    serializer does not have.
+    The view has the account, and an account with no usable password is refused
+    outright rather than let through without one -- see the reasoning there. The
+    field stays optional at this level so that refusal can carry an explanation
+    instead of a field error that does not fit the situation.
     """
 
     current_password = serializers.CharField(

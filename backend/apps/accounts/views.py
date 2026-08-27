@@ -397,15 +397,36 @@ class PasswordChangeView(APIView):
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
 
-        # An account that arrived through Google has no usable password. There
-        # is no current one to ask for, and demanding one would leave that
-        # person unable ever to set one.
-        if user.has_usable_password():
-            if not user.check_password(data.get('current_password') or ''):
-                return Response(
-                    {'current_password': ['That is not your current password.']},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+        # An account can have no usable password for two reasons, and only one
+        # of them is harmless. One: it arrived through Google and never had one.
+        # Two: `rotate_leaked_credentials` took it away, which is what this
+        # project does when a password is known to have leaked.
+        #
+        # Letting either set a new password on the strength of a bearer token
+        # alone reopens the second. That command blacklists every refresh token
+        # and clears every session, but an access token cannot be revoked and
+        # lives eight hours (apps/accounts/tokens.py) -- so for those eight
+        # hours whoever held the leaked account could have set a password of
+        # their own and kept it for good.
+        #
+        # So there is no password-free path through here. Setting a first
+        # password goes through the reset flow, which sends a code to the
+        # address on the account and therefore asks for something a stolen token
+        # does not carry.
+        if not user.has_usable_password():
+            return Response(
+                {
+                    'detail': 'This account has no password yet. Ask for a code at '
+                              '/auth/password/reset/request/ and set one with it.',
+                    'code': 'no_password_set',
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if not user.check_password(data.get('current_password') or ''):
+            return Response(
+                {'current_password': ['That is not your current password.']},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         check_new_password(data['password'], data['password2'], user=user)
         user.set_password(data['password'])
@@ -438,13 +459,28 @@ class EmailChangeRequestView(APIView):
         new_email = data['new_email'].strip().lower()
 
         # An unattended tab on a school computer must not be able to move the
-        # identity of the account it is signed in to.
-        if user.has_usable_password():
-            if not user.check_password(data.get('current_password') or ''):
-                return Response(
-                    {'current_password': ['That is not your current password.']},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+        # identity of the account it is signed in to, and neither must a bearer
+        # token that outlived the credential it came from. Both are the same
+        # hole: something that proves possession of a session, presented instead
+        # of something that proves possession of the account.
+        #
+        # An account with no usable password cannot pass that test at all, so it
+        # is sent to set one first -- through the reset flow, which proves the
+        # address rather than the session.
+        if not user.has_usable_password():
+            return Response(
+                {
+                    'detail': 'Set a password on this account before moving its address. '
+                              'Ask for a code at /auth/password/reset/request/.',
+                    'code': 'no_password_set',
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if not user.check_password(data.get('current_password') or ''):
+            return Response(
+                {'current_password': ['That is not your current password.']},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         if new_email == (user.email or '').lower():
             return Response(
@@ -529,3 +565,4 @@ class EmailChangeCancelView(APIView):
             user.pending_email = ''
             user.save(update_fields=['pending_email'])
         return Response(status=status.HTTP_204_NO_CONTENT)
+

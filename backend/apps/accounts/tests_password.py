@@ -217,15 +217,46 @@ class PasswordChangeTests(TestCase):
         self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('password', r.data)
 
-    def test_an_account_with_no_password_can_set_a_first_one(self):
-        """This is how somebody who arrived through Google gets a password. If
-        the current one were demanded, they could never have one."""
+    def test_an_account_with_no_password_is_sent_to_prove_its_address(self):
+        """A bearer token is not enough to set a first password.
+
+        An account has no usable password for one of two reasons, and only one
+        is harmless: it arrived through Google, or `rotate_leaked_credentials`
+        took the password away because it had leaked. That command blacklists
+        every refresh token and clears every session, but an access token cannot
+        be revoked and lives eight hours -- so a password-free path through here
+        would have handed a leaked account back to whoever held one, permanently,
+        for those eight hours.
+        """
         self.user.set_unusable_password()
         self.user.save(update_fields=['password'])
 
         r = self.client.post(
             '/api/v1/auth/password/change/',
             {'password': NEW_PW, 'password2': NEW_PW}, format='json',
+        )
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(r.data.get('code'), 'no_password_set')
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.has_usable_password())
+
+    def test_the_way_it_does_get_a_first_password(self):
+        """Through the reset flow, which sends a code to the address on the
+        account -- something a stolen token does not carry."""
+        self.user.set_unusable_password()
+        self.user.save(update_fields=['password'])
+        mail.outbox = []
+
+        self.client.post(
+            '/api/v1/auth/password/reset/request/',
+            {'email': 'pilot@example.com'}, format='json',
+        )
+        code = _code_from_the_last_message()
+        r = self.client.post(
+            '/api/v1/auth/password/reset/confirm/',
+            {'email': 'pilot@example.com', 'code': code,
+             'password': NEW_PW, 'password2': NEW_PW},
+            format='json',
         )
         self.assertEqual(r.status_code, status.HTTP_200_OK)
         self.user.refresh_from_db()
