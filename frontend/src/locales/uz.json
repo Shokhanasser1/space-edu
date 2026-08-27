@@ -791,13 +791,55 @@
   "history": {
     "title": "Kosmik",
     "titleHighlight": "Tarix",
-    "subtitle": "Kartani bosing - to'liq tarixiy ma'lumot, rasm va video bloklari bilan katta oynada ko'rasiz.",
+    "subtitle": "Insoniyatning qadimgi yulduz kuzatishlaridan zamonaviy kosmik tadqiqotlargacha bo'lgan sayohatini o'rganing — batafsil ma'lumot uchun davrni bosing.",
     "backBtn": "⬅ Tarixga qaytish",
     "viewMore": "Batafsil ko'rish",
     "videoBlock": "Video blok",
     "videoPlaceholder": "Video joyi (iframe uchun tayyor placeholder)",
     "imagePlaceholder": "Rasm o'rni",
-    "historicalImage": "Tarixiy rasm"
+    "historicalImage": "Tarixiy rasm",
+    "era1": {
+      "title": "Qadimgi astronomiya",
+      "period": "Mil.avv. 3000 – 100 yillar",
+      "summary": "Misr, Bobil, Amerika va Yunon olimlari taqvimlar, tutilish hisoblari va ilk koinot g'oyalari uchun asos yaratdilar.",
+      "details": "Mil.avv. 3000–2000 | Qadimgi Misr: Yulduzlar kuzatildi va birinchi 365 kunlik taqvim yaratildi. Quyosh soatlari (obelisklar) yordamida vaqt va masofa o'lchash rivojlandi.\n\nMil.avv. 1000–500 | Bobil tsivilizatsiyasi: Sayyoralar xaritalari chizildi va 12 burj belgisi shakllandi. Oy va Quyosh tutilishlarini bashorat qilish joriy etildi.\n\nMil.avv. 500–200 | Qadimgi Amerika xalqlari: Mayya va Inka ajdodlari Quyosh va Venera harakatlarini aniq hisobladilar va tosh rasadxonalar qurdilar.\n\nMil.avv. 300–100 | Qadimgi Yunoniston: Yer aylanasi deyarli aniq hisoblab chiqildi va geliosentrik g'oyaning dastlabki shakllari paydo bo'ldi."
+    },
+    "era2": {
+      "title": "Markaziy Osiyo oltin davri",
+      "period": "IX – XV asrlar",
+      "summary": "Al-Farg'oniydan va al-Xorazmiydan Ulug'bekning Samarqand rasadxonasigacha — Markaziy Osiyo olimlari matematika, astronomiya va yulduzlar xaritasini misli ko'rilmagan darajaga olib chiqdilar.",
+      "details": "IX asr | Ahmad al-Farg'oniy (Alfraganus): Farg'ona vodiysida tug'ilgan, u o'rta asrlarning eng ta'sirli astronomiya darsliklaridan birini yozgan — Ptolemey asarlarini islom olami va o'rta asr Yevropasi talabalari uchun soddalashtirib bayon qilgan.\n\nIX asr | Muhammad al-Xorazmiy: Xorazmda tug'ilgan matematik dunyoga «algoritm» so'zini berdi va algebrani asos soldi, Bag'doddan Kordobagacha foydalanilgan astronomik jadvallar yaratdi.\n\nXI asr | Abu Rayhon al-Beruniy: Xorazmlik qomusiy olim trigonometriya yordamida Yer radiusini aniq hisoblagan, astronomiya, geografiya va xronologiya bo'yicha ensiklopedik asarlar yozgan.\n\n1424–1449 | Mirzo Ulug'bek: Temuriy shahzoda va astronom, o'rta asrlarning eng ilg'or rasadxonalaridan birini — Samarqand rasadxonasini qurdirgan. Uning yulduzlar katalogi (Zij-i Sultoniy) 1018 ta yulduzni ajoyib aniqlik bilan qayd etgan va asrlar davomida astronomlar tomonidan foydalanilgan."
+    },
+    "era3": {
+      "title": "Ilmiy inqilob va teleskop",
+      "period": "XVI – XVIII asrlar",
+      "summary": "Kopernikdan Nyutongacha bo'lgan olimlar teleskop va fizika qonunlari orqali zamonaviy astronomiyaga asos yaratdilar.",
+      "details": "1500-yillar | Nikolay Kopernik: Quyosh, Yer emas, koinot markazida turgan inqilobiy geliosentrik tizimni ishlab chiqdi.\n\n1608 | Gans Lippershey: Gollandiyalik usta uzoqdagi narsalarni yaqinlashtiruvchi birinchi tarixiy teleskopni ixtiro qildi.\n\n1609 | Galileo Galiley: Teleskopni koinotga yo'naltirgan birinchi olim. U Oy kraterlarini va Yupiterning 4 ta yo'ldoshini kashf etib, Kopernik g'oyalarini tasdiqladi.\n\n1611 | Iogann Kepler: Sayyoralar harakatining asosiy qonunlarini kashf etdi va aniqroq astronomik teleskop yaratdi.\n\n1687 | Isaak Nyuton: Butun olam tortishish qonuni orqali sayyoralar nima uchun ma'lum orbitada harakatlanishini fizik jihatdan isbotladi."
+    },
+    "era4": {
+      "title": "Kosmik poyga va ilk qadamlar",
+      "period": "1950–1960-yillar",
+      "summary": "Sputnikdan Apollo 11gacha bo'lgan davrda insoniyat kosmosga chiqdi va Oyda birinchi qadamni qo'ydi.",
+      "details": "1957 | «Sputnik-1» va Layka: Inson tarixidagi birinchi sun'iy yo'ldosh orbitaga uchirildi. Ko'p o'tmay Layka ismli it kosmosga uchgan birinchi tirik mavjudot bo'ldi.\n\n1961-yil 12-aprel | Yuriy Gagarin: «Vostok-1» kemasida kosmosga uchgan birinchi inson. Bu butun insoniyat uchun ulkan tarixiy qadam bo'ldi.\n\n1963 va 1965 | Valentina Tereshkova kosmosga uchgan birinchi ayol bo'ldi. Aleksey Leonov ochiq kosmosga chiqqan birinchi inson bo'ldi (12 daqiqa).\n\n1969-yil 20-iyul | «Apollo-11»: Nil Armstrong va Baz Oldrin birinchi marta Oy yuzasiga qadam qo'ydilar. Armstrong mashhur iborasini aytdi: «Bu inson uchun kichik qadam, insoniyat uchun ulkan sakrash.»"
+    },
+    "era5": {
+      "title": "Sayyoralarni zabt etish",
+      "period": "1970–1990-yillar",
+      "summary": "Venera va Marsga qo'nishlardan Voyager, Shuttle, Mir va Hubblgacha — bu davrda insoniyat Yer orbitasidan tashqariga chiqdi.",
+      "details": "1970–1971 | «Venera-7» Venera sayyorasiga qo'ngan birinchi kosmik apparat bo'ldi. Bir yil keyin «Mars-3» Marsga muvaffaqiyatli qo'ndi.\n\n1977 | «Voyager» missiyasi: Voyager-1 va Voyager-2 kosmosning chegaralarini o'rganish uchun uchirildi. Ular hozirda insoniyat yaratgan eng uzoqdagi ob'ektlardir.\n\n1981–1986 | Ko'p marta foydalaniladigan «Space Shuttle» birinchi parvozini amalga oshirdi. Doimiy modulli «Mir» stansiyasi uzoq muddatli tadqiqotlar uchun uchirildi.\n\n1990–1997 | «Hubble» teleskopi orbitaga uchirildi va insoniyatning koinot haqidagi tasavvurini tubdan o'zgartirdi. Saturnni o'rganish uchun murakkab «Cassini-Huygens» missiyasi jo'natildi."
+    },
+    "era6": {
+      "title": "Xalqaro hamkorlik va tijorat kosmosi",
+      "period": "2000–2020-yillar",
+      "summary": "XKS, xususiy raketalar, Mars va Pluton missiyalari, va qora tuynukning birinchi surati bu davrni yangi bosqichga olib chiqdi.",
+      "details": "2000 | Xalqaro kosmik stansiya (XKS): Birinchi ekipaj bilan kosmosda doimiy inson yashashi va ishlashi boshlandi.\n\n2008 | SpaceX Falcon 1 raketasini muvaffaqiyatli uchirib yubordi — orbitaga yetgan birinchi xususiy kosmik apparat, tijorat kosmik parvozlari davrini boshladi.\n\n2012–2015 | «Curiosity» Marsga qo'ndi. «New Horizons» Plutonning birinchi aniq suratlarini yubordi. Birinchi marta kosmik apparat kometaga (67P) qo'ndi.\n\n2019 | Qora tuynukning (M87 galaktikasi) birinchi haqiqiy surati olinib, Eynshteynning nisbiylik nazariyasi yana bir bor tasdiqlandi."
+    },
+    "era7": {
+      "title": "Yangi ufqlar va O'zbekiston kosmik kelajagi",
+      "period": "2021–2028+",
+      "summary": "Jeyms Vebb, DART, Starship va O'zbekistonning «Samarqand-2028» sun'iy yo'ldoshi bilan — insoniyat Oy, Mars va milliy kosmik dasturlarning yangi davriga faol kirib bormoqda.",
+      "details": "2021–2022 | Jeyms Vebb kosmik teleskopi koinotning eng qadimgi galaktikalarini o'rganish uchun uchirildi. DART missiyasi sayyora himoyasini sinash uchun asteroidga zarba berdi.\n\n2023–2024 | Hindistonning «Chandrayaan-3» Oyning janubiy qutbiga qo'ndi. SpaceX tarixdagi eng katta raketa — Starship sinovlarini boshladi.\n\n2026 | O'zbekiston «Samarqand-2028» giperspektral sun'iy yo'ldoshini uchirib yubordi — mamlakatning orbitadagi birinchi sun'iy yo'ldoshi. Artemis II astronavtlari yarim asrlik tanaffusdan keyin Oy atrofida parvoz qildi.\n\n2028 | O'zbekiston «Mirzo Ulug'bek» ilmiy CubeSat sun'iy yo'ldoshini uchirishga, Samarqandda IAC 2028 kongressini o'tkazishga va birinchi o'zbek kosmonavtini kosmosga yuborishga tayyorlanmoqda."
+    }
   },
   "game": {
     "title": "Kosmik Poyga",
