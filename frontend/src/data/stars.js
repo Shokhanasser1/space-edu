@@ -1,6 +1,20 @@
+/**
+ * The twenty-five stars the finder tells a story about, with their pictures.
+ *
+ * `hr` is the Harvard Revised (Bright Star Catalogue) number, and it is what
+ * ties each of these hand-written records to a real position, magnitude and
+ * distance in `skyCatalog.json`. Nothing here carries coordinates of its own:
+ * one copy of a number is a fact, two copies are a future disagreement.
+ * `dataIntegrity.test.js` fails the build if an `hr` here is not in the
+ * catalogue.
+ *
+ * `locations` below has carried real `lat`/`lon` since the file was written
+ * and nothing read them until the sky view arrived.
+ */
 export const stars = [
   { 
-    id: 'polaris', 
+    id: 'polaris',
+    hr: 424,
     name: 'Polaris (North Star)', 
     constellation: 'Ursa Minor', 
     description: 'Always points North in the Northern Hemisphere.',
@@ -16,7 +30,8 @@ export const stars = [
     recommendedTime: '9:00 PM - 2:00 AM'
   },
   { 
-    id: 'sirius', 
+    id: 'sirius',
+    hr: 2491,
     name: 'Sirius', 
     constellation: 'Canis Major', 
     description: 'The brightest star in the night sky.',
@@ -32,7 +47,8 @@ export const stars = [
     recommendedTime: '10:00 PM - Midnight'
   },
   { 
-    id: 'betelgeuse', 
+    id: 'betelgeuse',
+    hr: 2061,
     name: 'Betelgeuse', 
     constellation: 'Orion', 
     description: 'A red supergiant star in the Orion constellation.',
@@ -48,7 +64,8 @@ export const stars = [
     recommendedTime: '8:30 PM - 11:00 PM'
   },
   { 
-    id: 'vega', 
+    id: 'vega',
+    hr: 7001,
     name: 'Vega', 
     constellation: 'Lyra', 
     description: 'The fifth-brightest star in the night sky.',
@@ -64,7 +81,8 @@ export const stars = [
     recommendedTime: '11:00 PM - 3:00 AM'
   },
   { 
-    id: 'rigel', 
+    id: 'rigel',
+    hr: 1713,
     name: 'Rigel', 
     constellation: 'Orion', 
     description: 'A blue supergiant, the brightest star in Orion.',
@@ -81,6 +99,7 @@ export const stars = [
   },
   {
     id: 'arcturus',
+    hr: 5340,
     name: 'Arcturus',
     constellation: 'Boötes',
     description: 'The brightest star in the northern celestial hemisphere.',
@@ -97,6 +116,7 @@ export const stars = [
   },
   {
     id: 'capella',
+    hr: 1708,
     name: 'Capella',
     constellation: 'Auriga',
     description: 'A brilliant yellow star, the sixth-brightest in the night sky.',
@@ -113,6 +133,7 @@ export const stars = [
   },
   {
     id: 'procyon',
+    hr: 2943,
     name: 'Procyon',
     constellation: 'Canis Minor',
     description: 'The eighth-brightest star in the night sky.',
@@ -129,6 +150,7 @@ export const stars = [
   },
   {
     id: 'altair',
+    hr: 7557,
     name: 'Altair',
     constellation: 'Aquila',
     description: 'The twelfth-brightest star in the night sky and part of the Summer Triangle.',
@@ -145,6 +167,7 @@ export const stars = [
   },
   {
     id: 'aldebaran',
+    hr: 1457,
     name: 'Aldebaran',
     constellation: 'Taurus',
     description: 'A large, orange giant star, the brightest in the constellation Taurus.',
@@ -161,6 +184,7 @@ export const stars = [
   },
   {
     id: 'spica',
+    hr: 5056,
     name: 'Spica',
     constellation: 'Virgo',
     description: 'The brightest star in Virgo and the 16th brightest in the night sky.',
@@ -177,6 +201,7 @@ export const stars = [
   },
   {
     id: 'antares',
+    hr: 6134,
     name: 'Antares',
     constellation: 'Scorpius',
     description: 'A massive red supergiant star at the heart of the scorpion.',
@@ -193,6 +218,7 @@ export const stars = [
   },
   {
     id: 'pollux',
+    hr: 2990,
     name: 'Pollux',
     constellation: 'Gemini',
     description: 'An orange giant star, the brightest in Gemini.',
@@ -209,6 +235,7 @@ export const stars = [
   },
   {
     id: 'deneb',
+    hr: 7924,
     name: 'Deneb',
     constellation: 'Cygnus',
     description: 'A blue-white supergiant, the brightest star in Cygnus.',
@@ -225,6 +252,7 @@ export const stars = [
   },
   {
     id: 'regulus',
+    hr: 3982,
     name: 'Regulus',
     constellation: 'Leo',
     description: 'The brightest star in Leo, a multiple star system.',
@@ -241,6 +269,7 @@ export const stars = [
   },
   {
     id: 'castor',
+    hr: 2891,
     name: 'Castor',
     constellation: 'Gemini',
     description: 'The second-brightest star in Gemini, a complex sextuple star system.',
@@ -257,6 +286,7 @@ export const stars = [
   },
   {
     id: 'bellatrix',
+    hr: 1790,
     name: 'Bellatrix',
     constellation: 'Orion',
     description: 'The third-brightest star in Orion.',
@@ -273,6 +303,7 @@ export const stars = [
   },
   {
     id: 'elnath',
+    hr: 1791,
     name: 'Elnath',
     constellation: 'Taurus',
     description: 'The second-brightest star in Taurus.',
@@ -289,6 +320,7 @@ export const stars = [
   },
   {
     id: 'mirach',
+    hr: 337,
     name: 'Mirach',
     constellation: 'Andromeda',
     description: 'A prominent red giant star in Andromeda.',
@@ -305,6 +337,7 @@ export const stars = [
   },
   {
     id: 'algol',
+    hr: 936,
     name: 'Algol',
     constellation: 'Perseus',
     description: 'The famous "Demon Star," an eclipsing binary system.',
@@ -321,6 +354,7 @@ export const stars = [
   },
   {
     id: 'mizar',
+    hr: 5054,
     name: 'Mizar',
     constellation: 'Ursa Major',
     description: 'A famous double star in the handle of the Big Dipper.',
@@ -337,6 +371,7 @@ export const stars = [
   },
   {
     id: 'alkaid',
+    hr: 5191,
     name: 'Alkaid',
     constellation: 'Ursa Major',
     description: 'The star at the very end of the Big Dipper\'s handle.',
@@ -353,6 +388,7 @@ export const stars = [
   },
   {
     id: 'dubhe',
+    hr: 4301,
     name: 'Dubhe',
     constellation: 'Ursa Major',
     description: 'One of the "pointer stars" of the Big Dipper.',
@@ -369,6 +405,7 @@ export const stars = [
   },
   {
     id: 'merak',
+    hr: 4295,
     name: 'Merak',
     constellation: 'Ursa Major',
     description: 'The second "pointer star" of the Big Dipper.',
@@ -385,6 +422,7 @@ export const stars = [
   },
   {
     id: 'kochab',
+    hr: 5563,
     name: 'Kochab',
     constellation: 'Ursa Minor',
     description: 'The brightest star in the bowl of the Little Dipper.',
