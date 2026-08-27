@@ -9,6 +9,7 @@ ceiling: none of this replaces a human reading the report queue.
 """
 from django.core.cache import cache
 from django.test import TestCase, override_settings
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
 
@@ -16,6 +17,21 @@ from apps.accounts.models import User
 
 from .models import ChatMessage, ChatRoom, Conversation, DirectMessage, MessageReport, UserBlock
 from .moderation import contains_profanity, find_profanity, normalise
+
+
+def _user(*args, **kwargs):
+    """An account that is allowed to write.
+
+    Posting needs a confirmed e-mail address (tests_verification_gate.py), and
+    every test in this file is about a rule that comes after that one --
+    suspension, profanity, blocking, consent. Creating the accounts unconfirmed
+    would make each of those failures read as a moderation bug when it is a
+    fixture, so they are confirmed here once and the gate is tested where it
+    belongs.
+    """
+    kwargs.setdefault('email_verified_at', timezone.now())
+    return User.objects.create_user(*args, **kwargs)
+
 
 
 def _client(user=None):
@@ -81,9 +97,9 @@ class RoomMessageTests(TestCase):
     def setUp(self):
         cache.clear()
         self.room = ChatRoom.objects.create(slug='general', name='General')
-        self.user = User.objects.create_user(username='aziz', email='a@e.com', password='x')
-        self.other = User.objects.create_user(username='bek', email='b@e.com', password='x')
-        self.staff = User.objects.create_user(
+        self.user = _user(username='aziz', email='a@e.com', password='x')
+        self.other = _user(username='bek', email='b@e.com', password='x')
+        self.staff = _user(
             username='mod', email='m@e.com', password='x', is_staff=True,
         )
         self.client = _client(self.user)
@@ -162,8 +178,8 @@ class BlockingTests(TestCase):
     def setUp(self):
         cache.clear()
         self.room = ChatRoom.objects.create(slug='general', name='General')
-        self.me = User.objects.create_user(username='aziz', email='a@e.com', password='x')
-        self.pest = User.objects.create_user(username='pest', email='p@e.com', password='x')
+        self.me = _user(username='aziz', email='a@e.com', password='x')
+        self.pest = _user(username='pest', email='p@e.com', password='x')
         self.client = _client(self.me)
 
     def _block(self):
@@ -184,7 +200,7 @@ class BlockingTests(TestCase):
         self.assertEqual(r.data, [])
 
     def test_everyone_else_still_sees_both(self):
-        third = User.objects.create_user(username='c', email='c@e.com', password='x')
+        third = _user(username='c', email='c@e.com', password='x')
         ChatMessage.objects.create(room=self.room, user=self.pest, content='hello there')
         self._block()
         r = _client(third).get(f'/api/v1/chat/rooms/{self.room.slug}/messages/')
@@ -221,9 +237,9 @@ class ReportingTests(TestCase):
     def setUp(self):
         cache.clear()
         self.room = ChatRoom.objects.create(slug='general', name='General')
-        self.author = User.objects.create_user(username='author', email='a@e.com', password='x')
-        self.reporter = User.objects.create_user(username='rep', email='r@e.com', password='x')
-        self.staff = User.objects.create_user(
+        self.author = _user(username='author', email='a@e.com', password='x')
+        self.reporter = _user(username='rep', email='r@e.com', password='x')
+        self.staff = _user(
             username='mod', email='m@e.com', password='x', is_staff=True,
         )
         self.message = ChatMessage.objects.create(
@@ -253,7 +269,7 @@ class ReportingTests(TestCase):
 
     def test_two_different_people_can_report_the_same_message(self):
         self._report()
-        other = User.objects.create_user(username='o', email='o@e.com', password='x')
+        other = _user(username='o', email='o@e.com', password='x')
         self.assertEqual(self._report(client=_client(other)).status_code,
                          status.HTTP_201_CREATED)
 
@@ -328,8 +344,8 @@ class DirectMessagesOffTests(TestCase):
 
     def setUp(self):
         cache.clear()
-        self.user = User.objects.create_user(username='a', email='a@e.com', password='x')
-        self.other = User.objects.create_user(username='b', email='b@e.com', password='x')
+        self.user = _user(username='a', email='a@e.com', password='x')
+        self.other = _user(username='b', email='b@e.com', password='x')
         self.client = _client(self.user)
 
     def test_every_dm_endpoint_is_refused(self):
@@ -365,11 +381,11 @@ class DirectMessagesOffTests(TestCase):
 class DirectMessageConsentTests(TestCase):
     def setUp(self):
         cache.clear()
-        self.sender = User.objects.create_user(
+        self.sender = _user(
             username='sender', email='s@e.com', password='x',
             first_name='Aziz', last_name='Karimov',
         )
-        self.recipient = User.objects.create_user(
+        self.recipient = _user(
             username='recipient', email='r@e.com', password='x',
             first_name='Bek', last_name='Toshev',
         )
@@ -457,12 +473,12 @@ class DirectMessageConsentTests(TestCase):
 class DirectMessageModerationTests(TestCase):
     def setUp(self):
         cache.clear()
-        self.a = User.objects.create_user(
+        self.a = _user(
             username='aziz', email='a@e.com', password='x',
             first_name='Aziz', last_name='Karimov',
         )
-        self.b = User.objects.create_user(username='bek', email='b@e.com', password='x')
-        self.staff = User.objects.create_user(
+        self.b = _user(username='bek', email='b@e.com', password='x')
+        self.staff = _user(
             username='mod', email='m@e.com', password='x', is_staff=True,
         )
         self.convo = Conversation.objects.create(
@@ -516,7 +532,7 @@ class DirectMessageModerationTests(TestCase):
         the id space to learn who is talking to whom."""
         self._send('private')
         message = DirectMessage.objects.get()
-        outsider = User.objects.create_user(username='nosy', email='n@e.com', password='x')
+        outsider = _user(username='nosy', email='n@e.com', password='x')
         r = _client(outsider).post(
             '/api/v1/chat/reports/',
             {'message_type': 'direct', 'message_id': message.id, 'reason': 'abuse'},
@@ -536,7 +552,7 @@ class DirectMessageModerationTests(TestCase):
     def test_a_stranger_cannot_hide_a_message_or_learn_it_exists(self):
         self._send('private')
         message = DirectMessage.objects.get()
-        outsider = User.objects.create_user(username='nosy', email='n@e.com', password='x')
+        outsider = _user(username='nosy', email='n@e.com', password='x')
         r = _client(outsider).delete(f'/api/v1/chat/dm/messages/{message.id}/')
         self.assertEqual(r.status_code, status.HTTP_404_NOT_FOUND)
 
@@ -559,12 +575,12 @@ class UserSearchTests(TestCase):
 
     def setUp(self):
         cache.clear()
-        self.me = User.objects.create_user(username='searcher', email='s@e.com', password='x')
-        self.target = User.objects.create_user(
+        self.me = _user(username='searcher', email='s@e.com', password='x')
+        self.target = _user(
             username='aziz2010', email='a@e.com', password='x',
             first_name='Aziz', last_name='Karimov',
         )
-        User.objects.create_user(
+        _user(
             username='azamat', email='az@e.com', password='x', first_name='Azamat',
         )
         self.client = _client(self.me)
@@ -607,9 +623,9 @@ class SuspensionTests(TestCase):
     def setUp(self):
         cache.clear()
         self.room = ChatRoom.objects.create(slug='general', name='General')
-        self.author = User.objects.create_user(username='author', email='a@e.com', password='x')
-        self.reporter = User.objects.create_user(username='rep', email='r@e.com', password='x')
-        self.staff = User.objects.create_user(
+        self.author = _user(username='author', email='a@e.com', password='x')
+        self.reporter = _user(username='rep', email='r@e.com', password='x')
+        self.staff = _user(
             username='mod', email='m@e.com', password='x', is_staff=True,
         )
         self.client = _client(self.author)
@@ -692,9 +708,9 @@ class SuspendFromTheReportQueueTests(TestCase):
     def setUp(self):
         cache.clear()
         self.room = ChatRoom.objects.create(slug='general', name='General')
-        self.author = User.objects.create_user(username='author', email='a@e.com', password='x')
-        self.reporter = User.objects.create_user(username='rep', email='r@e.com', password='x')
-        self.staff = User.objects.create_user(
+        self.author = _user(username='author', email='a@e.com', password='x')
+        self.reporter = _user(username='rep', email='r@e.com', password='x')
+        self.staff = _user(
             username='mod', email='m@e.com', password='x', is_staff=True,
         )
         self.message = ChatMessage.objects.create(
