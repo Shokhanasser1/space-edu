@@ -23,6 +23,14 @@ that blocks either host.
 Four of the eight were already in this directory. Only the view had not been
 told.
 
+Two more views were fetching five of the same files from
+`raw.githubusercontent.com` and were missed on 24 August: the home page's
+`Earth3D` (which also loaded Three.js itself from cdnjs, so the planet was a
+black circle wherever that host is slow or blocked) and `LiveSpaceView`'s
+`RealEarth`. Both read from here since 26 August 2026. A test in
+`RouteErrorBoundary.test.jsx` fails if any of the three files names an outside
+host again.
+
 **Provenance.** Both sets are NASA imagery — Blue Marble and the associated
 elevation, water, cloud and night-lights layers — redistributed in the
 `three-globe` and three.js repositories. NASA imagery is not copyrighted.

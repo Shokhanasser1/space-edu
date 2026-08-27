@@ -150,4 +150,21 @@ describe('textures', () => {
     expect(code).not.toMatch(/https?:\/\//);
     expect(code).toMatch(/'\/textures\//);
   });
+
+  it('nor does any other Earth on the site', async () => {
+    // The home page's Earth3D and LiveSpaceView's RealEarth were fetching the
+    // same five files from raw.githubusercontent.com until 26 Aug 2026 — the
+    // home page one on top of Three.js itself from cdnjs. LiveSpaceView keeps
+    // its Celestrak and NASA URLs; those are the point of the page.
+    const files = {
+      Earth3D: () => import('@/components/3d/Earth3D.jsx?raw'),
+      LiveSpaceView: () => import('@/views/community/LiveSpaceView.jsx?raw'),
+    };
+    for (const [name, load] of Object.entries(files)) {
+      const source = await load().then((m) => m.default);
+      const code = source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+      expect(code, name).not.toMatch(/raw\.githubusercontent\.com|unpkg\.com|cdnjs\.cloudflare\.com/);
+      expect(code, name).toMatch(/'\/textures\//);
+    }
+  });
 });

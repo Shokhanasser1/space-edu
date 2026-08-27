@@ -49,6 +49,9 @@ vi.mock('@react-three/postprocessing', () => ({
 }));
 
 const VIEWS = [
+  // Not large, but it is the front door: its Earth used to arrive from a CDN
+  // and left a black circle when it did not (26 Aug 2026).
+  { name: 'HomeView', load: () => import('./home/HomeView') },
   { name: 'SpaceLabView', load: () => import('./explore/SpaceLabView') },
   { name: 'ProfileView', load: () => import('./profile/ProfileView') },
   { name: 'MarketView', load: () => import('./misc/MarketView') },

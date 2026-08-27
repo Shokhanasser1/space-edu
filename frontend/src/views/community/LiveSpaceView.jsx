@@ -86,11 +86,11 @@ function RealEarth() {
   const earthRef = useRef(null);
   const cloudRef = useRef(null);
   const [dayMap, bumpMap, specMap, nightMap, cloudMap] = useLoader(THREE.TextureLoader, [
-    'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_atmos_2048.jpg',
-    'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_normal_2048.jpg',
-    'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_specular_2048.jpg',
-    'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_lights_2048.png',
-    'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_clouds_1024.png',
+    '/textures/earth_atmos_2048.jpg',
+    '/textures/earth_normal_2048.jpg',
+    '/textures/earth_specular_2048.jpg',
+    '/textures/earth_lights_2048.png',
+    '/textures/earth_clouds_1024.png',
   ]);
 
   useFrame((_, delta) => {
