@@ -9,7 +9,7 @@ from rest_framework.test import APIClient
 
 from apps.accounts.models import User
 
-from .models import ChallengeQuestion, DailyChallenge, QuizSession
+from .models import ChallengeQuestion, DailyChallenge, QuizSession, UserStreak
 
 
 def _question(i=0, category='physics', difficulty='easy', correct=1):
@@ -698,3 +698,62 @@ class SeedExplanationTests(TestCase):
             min(r.time_seconds for r in calculations),
             'naming the Red Planet is given as long as a two-step calculation',
         )
+
+
+class StreakGoesStaleTests(TestCase):
+    """A streak the child has already lost was still being shown to them.
+
+    `update_streak()` runs only on a submission, so the stored number keeps
+    whatever it reached. Miss Thursday and the app still says "7 days" on
+    Friday and on Saturday; it becomes 1 only when the child plays again — the
+    screen congratulating them for something that ended two days ago.
+    """
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='streaky', email='s@e.com', password='x',
+        )
+        self.today = timezone.localdate()
+
+    def _streak(self, days_ago, current=7):
+        return UserStreak.objects.create(
+            user=self.user,
+            current_streak=current,
+            longest_streak=9,
+            last_completed=self.today - timezone.timedelta(days=days_ago),
+        )
+
+    def test_a_streak_finished_today_still_stands(self):
+        self.assertEqual(self._streak(0).live_streak, 7)
+
+    def test_a_streak_finished_yesterday_still_stands(self):
+        """Today is not over — the child can still keep it."""
+        self.assertEqual(self._streak(1).live_streak, 7)
+
+    def test_a_missed_day_ends_it(self):
+        self.assertEqual(self._streak(2).live_streak, 0)
+
+    def test_a_long_absence_ends_it(self):
+        self.assertEqual(self._streak(40).live_streak, 0)
+
+    def test_a_child_who_never_played_has_no_streak(self):
+        streak = UserStreak.objects.create(user=self.user, last_completed=None)
+        self.assertEqual(streak.live_streak, 0)
+
+    def test_the_record_is_not_rewritten(self):
+        """`longest_streak` is history, and the column keeps what it reached."""
+        streak = self._streak(5)
+        self.assertEqual(streak.live_streak, 0)
+        streak.refresh_from_db()
+        self.assertEqual(streak.current_streak, 7)
+        self.assertEqual(streak.longest_streak, 9)
+
+    def test_the_api_reports_the_streak_the_child_actually_has(self):
+        self._streak(4)
+        client = APIClient()
+        client.force_authenticate(User.objects.get(pk=self.user.pk))
+
+        body = client.get('/api/v1/gamification/profile/full/').data['daily_challenges']
+
+        self.assertEqual(body['current_streak'], 0)
+        self.assertEqual(body['longest_streak'], 9)

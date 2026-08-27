@@ -101,6 +101,10 @@ class UserStreakSerializer(serializers.ModelSerializer):
         model = UserStreak
         fields = ('current_streak', 'longest_streak', 'last_completed')
 
+    # A broken streak reads as 0 here rather than as the number it reached
+    # before the day was missed — see `UserStreak.live_streak`.
+    current_streak = serializers.IntegerField(source='live_streak', read_only=True)
+
 
 class LeaderboardEntrySerializer(serializers.Serializer):
     username = serializers.CharField()

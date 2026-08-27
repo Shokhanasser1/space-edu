@@ -223,6 +223,28 @@ class UserStreak(models.Model):
     def __str__(self):
         return f'{self.user.username}: {self.current_streak} days'
 
+    @property
+    def live_streak(self):
+        """The streak as it stands today, not as it stood when it was written.
+
+        `update_streak()` only runs when a challenge is submitted, so the stored
+        number keeps whatever it reached until the next submission. A child who
+        held a seven-day streak and then missed Thursday was still told "7" on
+        Friday, and on Saturday, and it only became 1 the moment they played
+        again — the app congratulating them for a streak they had already lost.
+
+        The column stays as it is: it is the history `update_streak()` reads to
+        decide whether today continues yesterday. This is the answer to the
+        different question the screen actually asks.
+        """
+        if self.last_completed is None:
+            return 0
+        today = timezone.localdate()
+        # Yesterday still counts: today is not over, and they can still keep it.
+        if self.last_completed >= today - timezone.timedelta(days=1):
+            return self.current_streak
+        return 0
+
     def update_streak(self):
         """Call after completing today's challenge.
 
