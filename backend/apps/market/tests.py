@@ -1,4 +1,5 @@
 """Regression tests for findings from the 2026-08-22 audit."""
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APIClient
@@ -122,3 +123,203 @@ class PurchaseTests(TestCase):
         self.client.post('/api/v1/market/purchase/', {'item_slug': 'ship'}, format='json')
         self.item.refresh_from_db()
         self.assertEqual(self.item.sold_count, 1)
+
+
+class ExternalProductTests(TestCase):
+    """A product with an `external_url` is a real thing another shop sells for
+    money — a book at Asaxiy, a rocket kit at Estes. Fuel is what a child earns
+    by finishing lessons, and it buys nothing at those shops.
+
+    So the purchase endpoint has to refuse the trade itself. Hiding the button
+    in MarketView is not the protection: a stale tab, a replayed request or the
+    next person to write a client all reach this endpoint directly, and the
+    child who loses their fuel and receives nothing has no way to get it back.
+    """
+
+    def setUp(self):
+        self.real = _item(
+            slug='carl-sagan-cosmos',
+            item_type='book',
+            cost_fuel=0,
+            price=0,
+            external_url='https://asaxiy.uz/product/carl-sagan-cosmos',
+            merchant='Asaxiy',
+        )
+        self.virtual = _item(slug='ship', cost_fuel=50)
+        self.user = User.objects.create_user(username='alice', email='a@e.com', password='x')
+        self.profile = self.user.gamification
+        self.profile.fuel = 500
+        self.profile.save(update_fields=['fuel'])
+        self.client = APIClient()
+        self.client.force_authenticate(self.user)
+
+    def _buy(self, slug):
+        return self.client.post('/api/v1/market/purchase/', {'item_slug': slug}, format='json')
+
+    def test_a_real_product_cannot_be_bought_with_fuel(self):
+        response = self._buy(self.real.slug)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertFalse(UserInventory.objects.filter(user=self.user, item=self.real).exists())
+
+    def test_the_refusal_leaves_the_balance_alone(self):
+        """cost_fuel is 0 on these rows, so a debit would be invisible in the
+        balance. Assert it anyway: the day somebody types a fuel price into a
+        real product, this is the test that says what happens next."""
+        self._buy(self.real.slug)
+        self.profile.refresh_from_db()
+        self.assertEqual(self.profile.fuel, 500)
+
+    def test_the_refusal_is_not_counted_as_a_sale(self):
+        self._buy(self.real.slug)
+        self.real.refresh_from_db()
+        self.assertEqual(self.real.sold_count, 0)
+
+    def test_the_refusal_says_where_the_product_is_actually_sold(self):
+        """A child who somehow reaches this has to be told what to do instead."""
+        response = self._buy(self.real.slug)
+        self.assertIn('Asaxiy', response.data['detail'])
+        self.assertEqual(response.data['external_url'], self.real.external_url)
+
+    def test_a_real_product_with_a_fuel_price_is_still_refused(self):
+        """The guard is on `external_url`, not on cost_fuel being zero — a typo
+        in the admin panel must not turn a real product into a fuel purchase."""
+        self.real.cost_fuel = 10
+        self.real.save(update_fields=['cost_fuel'])
+        self.assertEqual(self._buy(self.real.slug).status_code, status.HTTP_400_BAD_REQUEST)
+        self.profile.refresh_from_db()
+        self.assertEqual(self.profile.fuel, 500)
+
+    def test_a_virtual_item_is_still_sold_for_fuel(self):
+        response = self._buy(self.virtual.slug)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.profile.refresh_from_db()
+        self.assertEqual(self.profile.fuel, 450)
+
+    def test_the_catalogue_says_which_products_are_real(self):
+        """The front end decides between a fuel button and a link out of these
+        fields, so they belong in the anonymous list response."""
+        response = APIClient().get('/api/v1/market/items/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        by_slug = {row['slug']: row for row in response.data['results']}
+
+        real = by_slug[self.real.slug]
+        self.assertTrue(real['is_external'])
+        self.assertEqual(real['external_url'], 'https://asaxiy.uz/product/carl-sagan-cosmos')
+        self.assertEqual(real['merchant'], 'Asaxiy')
+
+        self.assertFalse(by_slug[self.virtual.slug]['is_external'])
+
+
+class ExternalProductDataTests(TestCase):
+    """Half-filled real products mislead: the reader cannot tell whether 59.99
+    is dollars or soums, and a fuel price on a real product renders a button
+    that can only ever fail. `clean()` catches both in the admin panel, which is
+    where the product data is actually typed in."""
+
+    def _clean(self, **over):
+        fields = dict(slug='kit', item_type='model_kit', cost_fuel=0)
+        fields.update(over)
+        _item(**fields).full_clean(exclude=['image'])
+
+    def test_a_shop_price_without_a_currency_is_rejected(self):
+        with self.assertRaises(DjangoValidationError) as caught:
+            self._clean(external_url='https://estesrockets.com/', external_price='59.99')
+        self.assertIn('currency', caught.exception.message_dict)
+
+    def test_a_shop_price_on_a_virtual_item_is_rejected(self):
+        with self.assertRaises(DjangoValidationError) as caught:
+            self._clean(external_price='59.99', currency='USD')
+        self.assertIn('external_price', caught.exception.message_dict)
+
+    def test_a_fuel_price_on_a_real_product_is_rejected(self):
+        with self.assertRaises(DjangoValidationError) as caught:
+            self._clean(external_url='https://estesrockets.com/', cost_fuel=25)
+        self.assertIn('cost_fuel', caught.exception.message_dict)
+
+    def test_a_real_product_priced_in_dollars_is_accepted(self):
+        self._clean(
+            external_url='https://estesrockets.com/',
+            merchant='Estes Rockets',
+            external_price='59.99',
+            currency='USD',
+        )
+
+    def test_a_real_product_with_no_price_yet_is_accepted(self):
+        """The normal state of these rows until somebody checks the shop."""
+        self._clean(external_url='https://estesrockets.com/', merchant='Estes Rockets')
+
+
+class ExternalProductAdminApiTests(TestCase):
+    """The same rules, through the other door.
+
+    `MarketItem.clean()` is run by the admin panel's form. The admin API is a
+    DRF serializer, and DRF does not call `Model.clean()` — so every row the
+    panel refused could still be created over HTTP, and which rules applied
+    depended on which screen the staff member happened to use. These are the
+    three combinations `ExternalProductDataTests` rejects, sent as requests.
+    """
+
+    def setUp(self):
+        self.staff = User.objects.create_user(
+            username='admin', email='admin@e.com', password='x', is_staff=True,
+        )
+        self.client = APIClient()
+        self.client.force_authenticate(self.staff)
+
+    def _post(self, **over):
+        body = dict(
+            slug='probe', title_en='X', title_uz='X', title_ru='X',
+            description_en='x', description_uz='x', description_ru='x',
+            item_type='book', price=0, cost_fuel=0,
+        )
+        body.update(over)
+        return self.client.post('/api/v1/market/items/', body, format='json')
+
+    def test_a_real_product_with_a_fuel_price_is_refused(self):
+        response = self._post(
+            cost_fuel=500,
+            external_url='https://asaxiy.uz/product/carl-sagan-cosmos',
+            merchant='Asaxiy',
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('cost_fuel', response.data)
+        self.assertFalse(MarketItem.objects.filter(slug='probe').exists())
+
+    def test_a_shop_price_without_a_currency_is_refused(self):
+        response = self._post(
+            external_url='https://asaxiy.uz/product/carl-sagan-cosmos',
+            merchant='Asaxiy',
+            external_price='59.99',
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('currency', response.data)
+
+    def test_a_shop_price_on_a_virtual_item_is_refused(self):
+        response = self._post(cost_fuel=100, external_price='10.00', currency='USD')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('external_price', response.data)
+
+    def test_a_well_formed_real_product_is_still_accepted(self):
+        response = self._post(
+            external_url='https://estesrockets.com/',
+            merchant='Estes Rockets',
+            external_price='59.99',
+            currency='USD',
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_a_well_formed_virtual_item_is_still_accepted(self):
+        response = self._post(cost_fuel=250)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_patching_one_field_still_reads_the_whole_row(self):
+        """A PATCH sends what changed; the rule needs what the row will become."""
+        _item(slug='kit', item_type='model_kit', cost_fuel=0,
+              external_url='https://estesrockets.com/', merchant='Estes Rockets')
+
+        response = self.client.patch(
+            '/api/v1/market/items/kit/', {'cost_fuel': 300}, format='json',
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('cost_fuel', response.data)

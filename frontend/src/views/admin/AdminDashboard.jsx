@@ -377,14 +377,22 @@ const MARKET_FIELDS = [
   { name: 'description_en', label: 'Description (EN)', type: 'textarea' }, { name: 'description_uz', label: 'Description (UZ)', type: 'textarea' }, { name: 'description_ru', label: 'Description (RU)', type: 'textarea' },
   { name: 'item_type', label: 'Type', type: 'select', options: [
     {value:'spaceship',label:'Spaceship'},{value:'badge',label:'Badge'},{value:'boost',label:'XP Boost'},
-    {value:'book',label:'Book'},{value:'rocket_module',label:'Rocket Module'},{value:'satellite',label:'Satellite'},
+    {value:'book',label:'Book'},{value:'model_kit',label:'Model Kit'},{value:'apparel',label:'Clothing'},
+    {value:'rocket_module',label:'Rocket Module'},{value:'satellite',label:'Satellite'},
     {value:'avatar',label:'Avatar'},{value:'theme',label:'Theme'},{value:'tool',label:'Tool'},{value:'other',label:'Other'}
   ]},
   { name: 'price', label: 'Price (UZS)', type: 'number' }, { name: 'cost_fuel', label: 'Cost Fuel', type: 'number' },
+  // A product page here makes the row a real product: the shop button becomes a
+  // link and the server refuses to sell it for fuel.
+  { name: 'external_url', label: 'Shop product page (real products only)' }, { name: 'merchant', label: 'Shop name' },
+  { name: 'external_price', label: 'Shop price (leave empty unless checked)', type: 'number' },
+  { name: 'currency', label: 'Shop currency', type: 'select', options: [
+    {value:'',label:'—'},{value:'UZS',label:'UZS'},{value:'USD',label:'USD'},{value:'EUR',label:'EUR'}
+  ]},
   { name: 'stock', label: 'Stock (0=unlimited)', type: 'number' },
   { name: 'is_active', label: 'Active', type: 'checkbox' }, { name: 'is_bestseller', label: 'Bestseller', type: 'checkbox' }
 ];
-const MARKET_DEFAULT = { slug:'', title_en:'', title_uz:'', title_ru:'', description_en:'', description_uz:'', description_ru:'', item_type:'other', price:0, cost_fuel:0, stock:0, is_active:true, is_bestseller:false };
+const MARKET_DEFAULT = { slug:'', title_en:'', title_uz:'', title_ru:'', description_en:'', description_uz:'', description_ru:'', item_type:'other', price:0, cost_fuel:0, external_url:'', merchant:'', external_price:'', currency:'', stock:0, is_active:true, is_bestseller:false };
 
 export default function AdminDashboard() {
   const { user } = useAuthStore();

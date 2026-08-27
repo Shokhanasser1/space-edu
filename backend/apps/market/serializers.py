@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 
 from .models import MarketItem, MarketCategory, UserInventory, Wishlist, ItemReview
@@ -19,6 +20,9 @@ class MarketItemSerializer(serializers.ModelSerializer):
     is_discount_active = serializers.BooleanField(read_only=True)
     effective_price = serializers.IntegerField(read_only=True)
     in_stock = serializers.BooleanField(read_only=True)
+    # The client has to be able to tell a real product from a virtual one
+    # without guessing from a URL string.
+    is_external = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = MarketItem
@@ -29,6 +33,7 @@ class MarketItemSerializer(serializers.ModelSerializer):
             'price', 'original_price', 'discount_percent',
             'discount_start', 'discount_end', 'is_discount_active', 'effective_price',
             'cost_fuel', 'is_bestseller', 'is_new', 'is_featured', 'is_limited',
+            'external_url', 'merchant', 'external_price', 'currency', 'is_external',
             'stock', 'sold_count', 'in_stock',
             'rating_avg', 'rating_count',
             'tags', 'image_url', 'is_active', 'created_at',
@@ -49,9 +54,36 @@ class MarketItemWriteSerializer(serializers.ModelSerializer):
             'description_en', 'description_uz', 'description_ru',
             'item_type', 'price', 'original_price', 'discount_percent',
             'discount_start', 'discount_end',
+            'external_url', 'merchant', 'external_price', 'currency',
             'cost_fuel', 'is_bestseller', 'is_new', 'is_featured', 'is_limited',
             'stock', 'tags', 'image', 'is_active',
         )
+
+    def validate(self, attrs):
+        """Apply the model's own rules, which DRF would otherwise skip.
+
+        `MarketItem.clean()` refuses the contradictions that mislead a child: a
+        real product carrying a fuel price, a shop price with no currency to
+        read it in. The admin panel runs it through a form; the admin API does
+        not, so until now the very row the panel rejected could be created over
+        HTTP. Call the model rather than restate it, so the rule has one home.
+        """
+        if self.instance is None:
+            candidate = MarketItem(**attrs)
+        else:
+            # PATCH sends a few fields; the rules read the whole row, so start
+            # from what is stored and lay the incoming changes over it.
+            candidate = MarketItem(**{
+                f.attname: getattr(self.instance, f.attname)
+                for f in MarketItem._meta.concrete_fields
+            })
+            for field, value in attrs.items():
+                setattr(candidate, field, value)
+        try:
+            candidate.clean()
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError(serializers.as_serializer_error(exc))
+        return attrs
 
 
 # ── Inventory ──

@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
@@ -34,17 +35,28 @@ class MarketCategory(models.Model):
 #  MARKET ITEM  —  product in the marketplace
 # ──────────────────────────────────────────────────────────────────────────────
 class MarketItem(models.Model):
+    # Every value here needs a `market.types.<value>` key in all three locale
+    # files, or the product modal prints the raw translation key at a child.
     ITEM_TYPES = [
         ('spaceship', 'Spaceship'),
         ('badge', 'Badge'),
         ('boost', 'XP Boost'),
         ('book', 'Book'),
+        ('model_kit', 'Model Kit'),
+        ('apparel', 'Clothing'),
         ('rocket_module', 'Rocket Module'),
         ('satellite', 'Satellite'),
         ('avatar', 'Avatar'),
         ('theme', 'Theme'),
         ('tool', 'Tool'),
         ('other', 'Other'),
+    ]
+
+    # What the shops in `merchant` price in.
+    CURRENCIES = [
+        ('UZS', "So'm"),
+        ('USD', 'US dollar'),
+        ('EUR', 'Euro'),
     ]
     slug = models.SlugField(unique=True)
     category = models.ForeignKey(MarketCategory, on_delete=models.SET_NULL, null=True, blank=True, related_name='items')
@@ -65,6 +77,33 @@ class MarketItem(models.Model):
     # Discount scheduling
     discount_start = models.DateTimeField(null=True, blank=True, help_text='When discount becomes active')
     discount_end = models.DateTimeField(null=True, blank=True, help_text='When discount expires')
+
+    # Real products sold by somebody else
+    #
+    # An external_url is what makes a row real: the thing exists, another shop
+    # sells it for money, and this app can do nothing but send the child there.
+    # PurchaseView refuses to take fuel for such a row — see the guard in it.
+    external_url = models.URLField(
+        blank=True, default='',
+        help_text='Product page at the shop that sells it. Set = a real product, bought with money.',
+    )
+    merchant = models.CharField(
+        max_length=80, blank=True, default='',
+        help_text='Name of that shop: Asaxiy, LEGO, Estes Rockets, Uzum Market…',
+    )
+    # Deliberately not `price`: that column is whole soums, and most of these
+    # shops price in dollars and cents. Rounding $59.99 into a soum column would
+    # put a wrong number in front of a child, so the shop's own price lives in
+    # its own field with its own currency.
+    external_price = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True,
+        help_text="The shop's own price. Leave empty unless somebody has checked it — the UI then "
+                  'sends the child to the shop for the price instead of inventing one.',
+    )
+    currency = models.CharField(
+        max_length=3, choices=CURRENCIES, blank=True, default='',
+        help_text='Currency of the shop price.',
+    )
 
     # Badges / flags
     is_bestseller = models.BooleanField(default=False)
@@ -114,6 +153,34 @@ class MarketItem(models.Model):
     @property
     def in_stock(self):
         return self.stock == 0 or self.stock > self.sold_count
+
+    @property
+    def is_external(self):
+        """A real product, sold for money by the shop in `merchant`."""
+        return bool(self.external_url)
+
+    def clean(self):
+        """Refuse the half-filled rows that would mislead a child.
+
+        Only reached through a form — the admin panel, which is where the real
+        product data is typed in. The purchase guard in PurchaseView is what
+        actually protects the fuel balance; this protects the shop window.
+        """
+        if self.is_external and self.cost_fuel:
+            raise ValidationError(
+                {'cost_fuel': 'A real product is not sold for fuel. Leave this at 0.'},
+            )
+        if self.external_price is not None:
+            if not self.is_external:
+                raise ValidationError(
+                    {'external_price': 'Only a product sold at another shop has a shop price.'},
+                )
+            if not self.currency:
+                # A bare number on a page written in soums reads as soums, and
+                # most of these shops price in dollars.
+                raise ValidationError(
+                    {'currency': 'Say which currency the shop price is in.'},
+                )
 
 
 # ──────────────────────────────────────────────────────────────────────────────
