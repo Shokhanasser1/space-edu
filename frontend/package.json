@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "check:locales": "node ./scripts/check-locales.mjs",
+    "sky:build": "node ./scripts/build-sky-catalog.mjs",
     "test": "vitest run",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
