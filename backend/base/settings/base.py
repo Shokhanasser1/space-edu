@@ -313,6 +313,10 @@ REST_FRAMEWORK = {
         'password_change': '20/hour',
         'email_change': '10/hour',
 
+        # Google sign-in. Address-keyed and therefore machine-sized, and every
+        # request counts because every one of them verifies a signature.
+        'google': '60/min',
+
         'ai': '40/hour',
 
         # Chat is keyed on the account. Set for a classroom, not a newsroom:
@@ -414,6 +418,17 @@ if 'smtp' in EMAIL_BACKEND and EMAIL_HOST_USER and not EMAIL_HOST_PASSWORD:
 # child. `apps.links.frontend_link` refuses anything that is not one of our own
 # front ends — see the reasoning there.
 FRONTEND_URL = _text('FRONTEND_URL').rstrip('/')
+
+# ── Sign in with Google ───────────────────────────────────────────────────────
+# The OAuth *client id*, which is public by design -- it is in the page source of
+# every site that offers this. There is no client secret in this flow at all: the
+# browser receives a signed assertion from Google and the server checks the
+# signature, so nothing here is a credential.
+#
+# Empty means the endpoint refuses. That is not a nicety: the audience check is
+# the only thing standing between "a token minted for us" and "any Google token
+# for any application", and google-auth accepts audience=None without complaint.
+GOOGLE_CLIENT_ID = _text('GOOGLE_OAUTH_CLIENT_ID')
 
 # ── Direct messages ───────────────────────────────────────────────────────────
 # Off by default, and deliberately so. The product is used by 10-to-18-year-olds

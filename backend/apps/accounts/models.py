@@ -88,3 +88,49 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.username
+
+
+class SocialAccount(models.Model):
+    """An account somewhere else that signs in to an account here.
+
+    A table rather than a `google_sub` column on User, for three reasons. The
+    provider's id is a credential, and keeping it off the user row means no
+    ModelSerializer listing fields can ever put it in a response -- which is the
+    exact shape of the finding that once published `correct_answer` and
+    children's real names. It keeps what the provider asserted about a child
+    away from the child's own profile row. And a second provider later is a row
+    here instead of another nullable column and another migration.
+
+    The key is the provider's subject id, never the e-mail address: people
+    change the address on their Google account, and following that by silently
+    moving which account somebody signs in to is not a thing to do quietly.
+    """
+
+    GOOGLE = 'google'
+    PROVIDERS = [(GOOGLE, 'Google')]
+
+    provider = models.CharField(max_length=20, choices=PROVIDERS)
+    uid = models.CharField(max_length=255)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='social_accounts')
+    # What the provider said the address was when the link was made. Kept for
+    # the admin to look at when somebody asks why they are in the wrong account,
+    # and deliberately not used for anything.
+    email_at_link = models.EmailField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_used_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [
+            # One provider account signs in to one account here...
+            models.UniqueConstraint(
+                fields=['provider', 'uid'], name='social_provider_uid_unique',
+            ),
+            # ...and one account here has at most one of each provider, so
+            # "which Google account is this" has an answer.
+            models.UniqueConstraint(
+                fields=['provider', 'user'], name='social_provider_user_unique',
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.provider}:{self.uid} -> {self.user_id}'

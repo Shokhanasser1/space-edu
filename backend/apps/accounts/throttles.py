@@ -241,3 +241,15 @@ class EmailChangeThrottle(_AccountRateThrottle):
     """
 
     scope = 'email_change'
+
+
+class GoogleAuthThrottle(_AlwaysOnRateThrottle):
+    """Signing in with Google.
+
+    Address-keyed, so machine-sized: a whole school arrives through one public
+    address and a person-sized number would lock the class out on the second
+    lesson. Every request counts, including the ones that work -- each verifies
+    a signature and may reach Google for its keys.
+    """
+
+    scope = 'google'

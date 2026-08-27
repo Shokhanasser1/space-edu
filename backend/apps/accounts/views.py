@@ -17,6 +17,12 @@ from .emails import (
     send_sign_in_code,
     send_verification_code,
 )
+from .google import (
+    GoogleNotConfigured,
+    GoogleRefused,
+    resolve_google_user,
+    verify_google_id_token,
+)
 from .models import User
 from .serializers import (
     EmailChangeConfirmSerializer,
@@ -33,6 +39,7 @@ from .throttles import (
     CredentialRateThrottle,
     EmailChangeThrottle,
     EmailVerifyThrottle,
+    GoogleAuthThrottle,
     LoginIpRateThrottle,
     LoginRateThrottle,
     PasswordChangeThrottle,
@@ -566,3 +573,60 @@ class EmailChangeCancelView(APIView):
             user.save(update_fields=['pending_email'])
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
+class GoogleAuthView(APIView):
+    """POST { credential } — sign in with the ID token Google's button returned.
+
+    The same response shape as `LoginView`, plus three flags the client acts on:
+    whether the account was just created, whether it has to set a password
+    before it can do anything else, and whether its profile is still missing
+    what registration would have asked for.
+    """
+
+    permission_classes = [AllowAny]
+    throttle_classes = [GoogleAuthThrottle]
+
+    def post(self, request):
+        credential = str(request.data.get('credential') or '').strip()
+        if not credential:
+            return Response(
+                {'detail': 'No sign-in was received from Google.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            claims = verify_google_id_token(credential)
+        except GoogleNotConfigured:
+            return Response(
+                {
+                    'detail': 'Signing in with Google is not set up on this server.',
+                    'code': 'google_unconfigured',
+                },
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        except ValueError as exc:
+            # Everything google-auth rejects arrives as this: a bad signature, an
+            # expired token, one minted for somebody else's application. The
+            # reason is logged and not returned -- and the credential itself is
+            # never logged, because it is a bearer token until it expires.
+            logger.warning('Google sign-in refused: %s', exc)
+            return Response(
+                {'detail': 'That Google sign-in could not be verified.'},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        try:
+            user, created, password_reset_required = resolve_google_user(claims)
+        except GoogleRefused as refusal:
+            return Response(
+                {'detail': refusal.detail, 'code': refusal.code},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        return Response({
+            'user': UserSerializer(user, context={'request': request}).data,
+            **_get_tokens(user),
+            'created': created,
+            'password_reset_required': password_reset_required,
+            'profile_complete': user.date_of_birth is not None,
+        })

@@ -164,7 +164,7 @@ class ThrottleSizingTests(SimpleTestCase):
     PERIOD_SECONDS = {'s': 1, 'm': 60, 'h': 3600, 'd': 86400}
 
     # Keyed on the caller's address, so shared by everyone behind it.
-    ADDRESS_KEYED = ('anon', 'problem_check_anon', 'register')
+    ADDRESS_KEYED = ('anon', 'problem_check_anon', 'register', 'google')
 
     def _rates(self):
         from django.conf import settings
