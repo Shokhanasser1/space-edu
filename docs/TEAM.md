@@ -286,6 +286,23 @@ cd frontend
 copy .env.example .env.local
 ```
 
+### Two things that are not in `.env.team`, on purpose
+
+**The mailbox password.** The site sends real e-mail now — confirmation codes,
+password resets — through Gmail with an app password, and only the lead has it.
+Leave `EMAIL_HOST_PASSWORD` blank and every message is printed to your
+`runserver` console instead, which is what you want on a laptop: you can read
+the code, and you cannot accidentally send mail to a real child from a test.
+`EMAIL_CONFIG_NOTE` in the settings says which mode you are in.
+
+**The Google client id.** `GOOGLE_OAUTH_CLIENT_ID` on the back end and
+`VITE_GOOGLE_CLIENT_ID` on the front. Both blank means the Google button is not
+rendered and `/auth/google/` answers 503 — nothing breaks, the feature is simply
+not there. The client id is *public*, not a secret; it is the client **secret**
+that would be one, and this project deliberately uses the flow that has none, so
+if anything ever asks you to put a Google secret in a file here, something is
+wrong with what you are reading.
+
 ### The rules around it
 
 - **`.env` never goes in a commit.** It is in `.gitignore`, and the `hygiene`

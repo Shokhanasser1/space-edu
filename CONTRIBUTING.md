@@ -388,14 +388,22 @@ the ticket.
 CI runs all of this; run it yourself first, it is faster than waiting:
 
 ```bash
-cd backend  && python manage.py test apps base        # 322/322
+cd backend  && python manage.py test apps base
 cd backend  && python manage.py makemigrations --check --dry-run
 cd frontend && npm run build                          # before the tests, see below
 cd frontend && npm run lint
-cd frontend && npm test                               # 224/224
+cd frontend && npm test
 cd frontend && npm run check:locales
 cd frontend && npm run content:check
 ```
+
+**Three frontend tests fail on a machine whose locale is not English**, and pass
+in CI. `ProfileView.test.jsx` expects `#4,951`; the code calls
+`toLocaleString()` with no argument, so on a Russian-locale machine it renders
+`4 951`. Thirteen places do that, which also means a page in Russian shows
+English number formatting to anyone whose computer is set to English. It belongs
+in the helper that is already in `src/lib/utils.js`, and it is nobody's ticket
+yet.
 
 Build **before** you test: `src/bundleSecrets.test.js` reads `dist/` to check
 that no answer key or credential reached the browser, and has nothing to read

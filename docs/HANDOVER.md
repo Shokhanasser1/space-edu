@@ -325,14 +325,10 @@ second address.
 `base/tests.py` has three tests that hold the rule rather than the numbers, so
 a future edit that reintroduces a person-sized address limit fails the build.
 
-**Known limit, and the way out.** 300 accounts a day from one address is
-generous for a school and not nothing for an abuser. The real answer is
-verifying the e-mail address before an account is worth anything. The machinery
-already exists — `apps/accounts/email_code.py` sends and verifies six-digit
-codes, and `/auth/email-code/request/` and `/verify/` both work — but **nothing
-in the front end calls either of them**, and registration does not require
-verification. That is the next thing to do here, and it would let the ceiling
-come back down.
+**Known limit, and the way out — done, 28 August 2026.** 300 accounts a day from
+one address is generous for a school and not nothing for an abuser, and the real
+answer was always to make an unproved address worth nothing. It now is: see
+"Accounts, end to end" below.
 
 ---
 
@@ -612,3 +608,88 @@ migrations against a real Postgres 16 as a separate step.
 Known gaps: the planet maps are still the old ones (see ATTRIBUTION.md for the
 drop-in upgrade), probes are markers rather than NASA's 3D models, and the
 three `ProfileView` tests were already red on `main` before this work.
+
+---
+
+## 28 August 2026 — accounts, end to end
+
+Registering, signing in and signing out were solid after five passes of audit,
+and nothing else about an account worked at all. There was no way to confirm an
+address, no way to reset a forgotten password, and no way to change a password —
+not through the API, not through the profile, not anywhere. `ProfileSerializer`
+accepts neither `email` nor `password` and `UserSerializer` is read-only
+throughout, so a child who forgot their password had lost the account. The only
+recovery in the system was the passwordless sign-in code, and nothing in the
+front end called it.
+
+Ten commits, `62ad026` through `4208c73`. What is true now:
+
+**Mail leaves the building.** `EMAIL_*` and `FRONTEND_URL` are read from the
+environment in `base.py` instead of being pinned in `development.py`, which
+overrides everything and made "set it in .env" a lie. The project sends through
+Gmail with an app password; blank credentials fall back to printing the message
+to the console and say why in `EMAIL_CONFIG_NOTE`, so the seven people who do
+not hold the password are not silently losing mail. Messages are written in
+Uzbek, English and Russian, one under the other: most of the readers do not read
+English, and a code they cannot read the instructions for is a code they do not
+use.
+
+**One address is one account.** `User.email` was never unique — the check that
+looks like it enforces that is a `filter().exists()`, which two requests arriving
+together both pass, and `LoginView` has always resolved an address with
+`.order_by('id').first()` because there might be two rows. Migration 0005 adds a
+partial unique constraint on `LOWER(email)`. Not `unique=True`: that is
+case-sensitive on PostgreSQL, so it would allow what every lookup here treats as
+the same address, and it collides on the `''` that every address-less superuser
+holds. `dedupe_user_emails` is the way through if the constraint ever refuses;
+run against the shared database it reported nothing to do.
+
+**An address has to be proved.** Registration sends a six-digit code;
+`email_verified_at` records when one was used. Until it is, everything works
+except writing to another child — chat and direct messages refuse with
+`email_unverified`, and reading, reporting and blocking stay open, because
+putting the safety controls behind an e-mail a child may not be able to reach
+today is the wrong trade in the wrong direction.
+
+**A forgotten password is recoverable**, and a password and an address can both
+be changed. Codes for all four flows come out of the same tested module, and the
+purpose is part of the cache key — a code mailed out to confirm an address
+cannot be presented at the sign-in endpoint to get a token pair. An address does
+not move until a code sent *to the new one* comes back, and the address being
+left is told, with no code in it and nothing to click.
+
+**Sign in with Google**, by ID token. No client secret exists in this flow at
+all. An unset `GOOGLE_OAUTH_CLIENT_ID` refuses before the library is called,
+because `audience=None` means "accept a token minted for anybody" and
+google-auth does not complain about it. Linking to an account whose address we
+have never proved clears that account's password: registration hands out tokens
+immediately, so anybody can make an account on a victim's address and wait, and
+this is the one branch where that would otherwise pay off.
+
+**`role`** is student, teacher or admin, set by a superuser. It grants nothing —
+every gate still reads `is_staff` — and a test says so, which is the test that
+fails on the day somebody joins the two.
+
+### What is not done
+
+- **The client id.** `GOOGLE_OAUTH_CLIENT_ID` and `VITE_GOOGLE_CLIENT_ID` are
+  empty. Until they are set the Google button is not rendered and the endpoint
+  answers 503. Google Cloud Console → Credentials → OAuth client ID → Web
+  application, with `http://localhost:3000` as an authorised origin.
+- **Migrations 0005 to 0009 have not been applied to the shared database.** Only
+  the owner migrates it, from `main`.
+- **Access tokens still cannot be revoked.** Every "everything else is signed
+  out" in this work means the refresh tokens were blacklisted, which caps whoever
+  holds an access token at eight more hours rather than throwing them out.
+  `apps/accounts/tokens.py` says so in its docstring and nothing claims more.
+  Closing it needs a claim checked against the account on every request, which is
+  a change to how every endpoint authenticates.
+- **A Google account has no date of birth.** Registration requires one and Google
+  does not give one, so those accounts carry `profile_complete: false` and
+  nothing yet asks them to fill it in.
+- **Numbers are formatted with the machine's locale.** Thirteen calls to
+  `toLocaleString()` with no argument, so a Russian-language page on an English
+  machine reads `4,951` and the same page elsewhere reads `4 951`. Three tests in
+  `ProfileView.test.jsx` fail on any machine whose locale is not English —
+  including every developer here — and pass in CI. `src/lib/utils.js` already has
+  the helper this belongs in.
