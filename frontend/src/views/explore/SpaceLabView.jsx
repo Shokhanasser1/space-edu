@@ -10,7 +10,11 @@ import { useGamificationStore } from '@/store/useGamificationStore';
 import { useTextures } from '@/hooks/useTextures';
 import { ApolloHologramModule } from './lab/ApolloModule';
 import { ApolloLaunchSimulator } from './lab/LaunchModule';
-import { ReleaseContextOnUnmount } from './lab/Hologram';
+import {
+  HOLO,
+  HologramStage,
+  ReleaseContextOnUnmount,
+} from './lab/Hologram';
 import { Spacecraft } from './lab/Spacecraft';
 
 /*
@@ -213,7 +217,7 @@ const PlanetaryProcessesLab = () => {
         </div>
       </div>
 
-      <div className="w-full md:w-2/3 bg-space-900/50 rounded-3xl border border-white/10 overflow-hidden relative min-h-[400px]">
+      <div className="w-full md:w-2/3 bg-space-900/50 rounded-3xl border border-white/10 overflow-hidden relative h-[62vh] min-h-[360px] lg:h-full lg:min-h-[400px]">
         <Canvas shadows camera={{ position: [0, 0, 6], fov: 45 }} gl={{ antialias: false, toneMapping: THREE.ACESFilmicToneMapping }}>
           <ReleaseContextOnUnmount />
           <ambientLight intensity={0.05} />
@@ -234,6 +238,15 @@ const PlanetaryProcessesLab = () => {
           <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
 
           <Suspense fallback={null}>
+            <HologramStage
+              height={4.6}
+              radius={2.2}
+              accent={HOLO.accent}
+              spin={0}
+              float={false}
+              plinth={false}
+              lighting={false}
+            >
             {activeEvent === 'none' ? (
               <RealisticEarth radius={2} position={[0, 0, 0]} />
             ) : (
@@ -262,6 +275,7 @@ const PlanetaryProcessesLab = () => {
                 </mesh>
               </group>
             )}
+            </HologramStage>
           </Suspense>
 
           {/* Meteor Shower */}
@@ -359,12 +373,21 @@ const UniverseChangesSimulator = () => {
         </div>
       </div>
 
-      <div className="w-full md:w-2/3 bg-space-900/50 rounded-3xl border border-white/10 overflow-hidden relative min-h-[400px]">
+      <div className="w-full md:w-2/3 bg-space-900/50 rounded-3xl border border-white/10 overflow-hidden relative h-[62vh] min-h-[360px] lg:h-full lg:min-h-[400px]">
         <Canvas camera={{ position: [0, 0, 12], fov: 45 }} gl={{ antialias: false, toneMapping: THREE.ACESFilmicToneMapping }}>
           <ReleaseContextOnUnmount />
           <ambientLight intensity={0.05} />
           <Stars radius={100} depth={50} count={10000} factor={4} saturation={0.5} fade speed={1} />
 
+          <HologramStage
+            height={9}
+            radius={4.4}
+            accent={HOLO.accent}
+            spin={0}
+            float={false}
+            plinth={false}
+            lighting={false}
+          >
           {stage === 'nebula' && (
             <group>
               <ParticleSystem count={10000} color="#b026ff" size={0.05} radius={5} />
@@ -412,6 +435,7 @@ const UniverseChangesSimulator = () => {
               </mesh>
             </group>
           )}
+          </HologramStage>
 
           <OrbitControls enablePan={false} autoRotate autoRotateSpeed={1} />
           <EffectComposer>
@@ -593,7 +617,7 @@ const SatelliteControlSimulator = () => {
         </div>
       </div>
 
-      <div className="w-full md:w-2/3 bg-space-900/50 rounded-3xl border border-white/10 overflow-hidden relative min-h-[400px]">
+      <div className="w-full md:w-2/3 bg-space-900/50 rounded-3xl border border-white/10 overflow-hidden relative h-[62vh] min-h-[360px] lg:h-full lg:min-h-[400px]">
         <Canvas shadows camera={{ position: [0, 2.1, 8.4], fov: 44 }} gl={{ antialias: false, toneMapping: THREE.ACESFilmicToneMapping }}>
           <ReleaseContextOnUnmount />
           <ambientLight intensity={0.16} />
@@ -602,12 +626,22 @@ const SatelliteControlSimulator = () => {
           <Stars radius={120} depth={60} count={7000} factor={3.2} saturation={0} fade speed={0.8} />
 
           <Suspense fallback={null}>
-            <OrbitalEarthAndVehicle
-              altitude={altitude}
-              inclination={inclination}
-              solarPanelsDeployed={solarPanelsDeployed}
-              satelliteType={satelliteType}
-            />
+            <HologramStage
+              height={6.4}
+              radius={3.1}
+              accent={HOLO.accent}
+              spin={0}
+              float={false}
+              plinth={false}
+              lighting={false}
+            >
+              <OrbitalEarthAndVehicle
+                altitude={altitude}
+                inclination={inclination}
+                solarPanelsDeployed={solarPanelsDeployed}
+                satelliteType={satelliteType}
+              />
+            </HologramStage>
           </Suspense>
 
           <OrbitControls enablePan={false} autoRotate autoRotateSpeed={0.35} />

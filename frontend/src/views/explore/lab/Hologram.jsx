@@ -146,12 +146,15 @@ function ScanSweep({ radius, height, accent }) {
     const cycle = (state.clock.elapsedTime * 0.22) % 1;
     ref.current.position.y = -height / 2 + cycle * height;
     // Dim at both ends so it appears and disappears rather than jumping.
-    ref.current.material.opacity = 0.5 * Math.sin(cycle * Math.PI);
+    ref.current.material.opacity = 0.3 * Math.sin(cycle * Math.PI);
   });
 
   return (
     <mesh ref={ref} rotation={[-Math.PI / 2, 0, 0]}>
-      <ringGeometry args={[radius * 0.2, radius * 1.06, 64]} />
+      {/* A narrow band at the edge. Filled in to the middle it was a lit
+          saucer passing through whatever it was scanning, which on a planet
+          looked like a ring system nobody had asked for. */}
+      <ringGeometry args={[radius * 0.9, radius * 1.03, 72]} />
       <meshBasicMaterial
         color={accent}
         transparent
@@ -208,6 +211,16 @@ export function HologramStage({
   accent = HOLO.accent,
   spin = 0.12,
   float = true,
+  /**
+   * The projector base. On for something that stands on a stage - a rocket, a
+   * spacecraft. Off for a planet or a star, which would look wrong resting on
+   * a plinth. The look everything shares is the shell, the sweep, the
+   * wireframe glow and the labels; these two knobs are about being right, not
+   * about being different.
+   */
+  plinth = true,
+  /** Off where the module lights its own model from a real sun. */
+  lighting = true,
   children,
 }) {
   const materials = useHologramMaterials(accent);
@@ -224,10 +237,20 @@ export function HologramStage({
   return (
     <HologramContext.Provider value={context}>
       {/* The light the hologram is made of, rather than a light in the room. */}
-      <ambientLight intensity={0.55} />
-      <pointLight position={[0, height * 0.6, radius * 3]} intensity={radius * 6} color={accent} />
+      {lighting ? (
+        <>
+          <ambientLight intensity={0.55} />
+          <pointLight
+            position={[0, height * 0.6, radius * 3]}
+            intensity={radius * 6}
+            color={accent}
+          />
+        </>
+      ) : null}
 
-      <Plinth radius={radius * 1.1} y={-height / 2 - height * 0.04} accent={accent} />
+      {plinth ? (
+        <Plinth radius={radius * 1.1} y={-height / 2 - height * 0.04} accent={accent} />
+      ) : null}
       <ScanShell radius={radius * 1.25} height={height * 1.08} accent={accent} />
       <ScanSweep radius={radius * 1.25} height={height * 1.08} accent={accent} />
 
