@@ -46,6 +46,14 @@ class User(AbstractUser):
     # a timestamp tells a reader when a particular child was at a computer and
     # nothing needs to know that.
     email_verified_at = models.DateTimeField(null=True, blank=True)
+
+    # An address asked for but not yet proved. It lives on the row rather than
+    # in the cache because the profile screen has to show "waiting on a@b.uz --
+    # resend, or cancel", and a cache eviction must not strand somebody halfway
+    # through moving their account. `email` itself is not touched until the code
+    # comes back: a typo written straight into it would lock a child out of
+    # their own account with no way to prove which address was really theirs.
+    pending_email = models.EmailField(blank=True)
     language = models.CharField(
         max_length=2,
         choices=[('en', 'ENG'), ('uz', 'UZB'), ('ru', 'RUS')],

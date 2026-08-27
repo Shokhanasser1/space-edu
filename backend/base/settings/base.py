@@ -301,6 +301,17 @@ REST_FRAMEWORK = {
         # this is the outer bound rather than the only one.
         'email_verify': '20/hour',
 
+        # Nobody is signed in for a password reset, so it is keyed on the pair
+        # (address it came from, account it is aimed at) the way the sign-in
+        # codes are. Every request sends an e-mail or guesses six digits.
+        'password_reset': '20/hour',
+
+        # These two are keyed on the account. A person changes their password
+        # or their address a handful of times in a lifetime; the room is for
+        # mistyping, not for working through possibilities.
+        'password_change': '20/hour',
+        'email_change': '10/hour',
+
         'ai': '40/hour',
 
         # Chat is keyed on the account. Set for a classroom, not a newsroom:

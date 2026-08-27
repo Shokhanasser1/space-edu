@@ -9,19 +9,39 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .email_code import VERIFY_EMAIL, verify_and_consume
-from .emails import send_sign_in_code, send_verification_code
+from .email_code import CHANGE_EMAIL, PASSWORD_RESET, VERIFY_EMAIL, verify_and_consume
+from .emails import (
+    send_email_change_code,
+    send_email_change_notice,
+    send_password_reset_code,
+    send_sign_in_code,
+    send_verification_code,
+)
 from .models import User
-from .serializers import ProfileSerializer, RegisterSerializer, UserSerializer
+from .serializers import (
+    EmailChangeConfirmSerializer,
+    EmailChangeRequestSerializer,
+    PasswordChangeSerializer,
+    PasswordResetConfirmSerializer,
+    PasswordResetRequestSerializer,
+    ProfileSerializer,
+    RegisterSerializer,
+    UserSerializer,
+    check_new_password,
+)
 from .throttles import (
     CredentialRateThrottle,
+    EmailChangeThrottle,
     EmailVerifyThrottle,
     LoginIpRateThrottle,
     LoginRateThrottle,
+    PasswordChangeThrottle,
+    PasswordResetThrottle,
     RegisterDailyRateThrottle,
     RegisterRateThrottle,
     record_credential_failure,
 )
+from .tokens import revoke_refresh_tokens
 
 
 logger = logging.getLogger(__name__)
@@ -299,3 +319,213 @@ class EmailVerifyConfirmView(APIView):
         user.email_verified_at = timezone.now()
         user.save(update_fields=['email_verified_at'])
         return Response(UserSerializer(user, context={'request': request}).data)
+
+
+class PasswordResetRequestView(APIView):
+    """POST { email } — mails a code that can set a new password.
+
+    Answers the same 200 whether or not there is an account, exactly as the
+    sign-in code endpoint does. Anything else is a list of which children have
+    accounts here, readable by anybody who can type addresses.
+    """
+
+    permission_classes = [AllowAny]
+    throttle_classes = [PasswordResetThrottle]
+
+    GENERIC_DETAIL = 'If an account exists for that address, a code has been sent.'
+
+    def post(self, request):
+        serializer = PasswordResetRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data['email']
+
+        user = User.objects.filter(email__iexact=email, is_active=True).first()
+        if user is not None:
+            send_password_reset_code(user.email)
+
+        return Response({'detail': self.GENERIC_DETAIL})
+
+
+class PasswordResetConfirmView(APIView):
+    """POST { email, code, password, password2 } — set a new password.
+
+    No tokens come back. The code arrived by e-mail, and there is already an
+    endpoint that turns an e-mailed code into a session; a second door into the
+    same room is one more than is needed. Whoever just set the password can sign
+    in with it.
+    """
+
+    permission_classes = [AllowAny]
+    throttle_classes = [PasswordResetThrottle]
+
+    INVALID = 'That code is wrong or has expired.'
+
+    def post(self, request):
+        serializer = PasswordResetConfirmSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        user = User.objects.filter(email__iexact=data['email'], is_active=True).first()
+        if user is None or not verify_and_consume(data['email'], data['code'], PASSWORD_RESET):
+            # One message for "no such account" and "wrong code", because
+            # telling them apart is the enumeration oracle again.
+            return Response({'detail': self.INVALID}, status=status.HTTP_401_UNAUTHORIZED)
+
+        check_new_password(data['password'], data['password2'], user=user)
+        user.set_password(data['password'])
+        user.save(update_fields=['password'])
+
+        revoked = revoke_refresh_tokens(user)
+        logger.info('Password reset for user %s; %s refresh tokens revoked', user.pk, revoked)
+
+        return Response({'detail': 'Your password has been changed. You can sign in with it now.'})
+
+
+class PasswordChangeView(APIView):
+    """POST { current_password, password, password2 } — change it from inside.
+
+    A fresh token pair comes back, because everything else this account had open
+    has just been revoked and that would otherwise include the tab doing the
+    changing.
+    """
+
+    throttle_classes = [PasswordChangeThrottle]
+
+    def post(self, request):
+        user = request.user
+        serializer = PasswordChangeSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        # An account that arrived through Google has no usable password. There
+        # is no current one to ask for, and demanding one would leave that
+        # person unable ever to set one.
+        if user.has_usable_password():
+            if not user.check_password(data.get('current_password') or ''):
+                return Response(
+                    {'current_password': ['That is not your current password.']},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        check_new_password(data['password'], data['password2'], user=user)
+        user.set_password(data['password'])
+        user.save(update_fields=['password'])
+
+        revoked = revoke_refresh_tokens(user)
+        logger.info('Password changed for user %s; %s refresh tokens revoked', user.pk, revoked)
+
+        return Response({
+            'user': UserSerializer(user, context={'request': request}).data,
+            **_get_tokens(user),
+        })
+
+
+class EmailChangeRequestView(APIView):
+    """POST { new_email, current_password } — start moving the account.
+
+    `email` does not move yet. A typo written straight into it locks a child out
+    of their own account with nothing left to prove which address was theirs, so
+    the new one waits in `pending_email` until a code sent *to it* comes back.
+    """
+
+    throttle_classes = [EmailChangeThrottle]
+
+    def post(self, request):
+        user = request.user
+        serializer = EmailChangeRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        new_email = data['new_email'].strip().lower()
+
+        # An unattended tab on a school computer must not be able to move the
+        # identity of the account it is signed in to.
+        if user.has_usable_password():
+            if not user.check_password(data.get('current_password') or ''):
+                return Response(
+                    {'current_password': ['That is not your current password.']},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        if new_email == (user.email or '').lower():
+            return Response(
+                {'new_email': ['That is already the address on this account.']},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if User.objects.filter(email__iexact=new_email).exclude(pk=user.pk).exists():
+            return Response(
+                {'new_email': ['That address already belongs to an account.']},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user.pending_email = new_email
+        user.save(update_fields=['pending_email'])
+
+        send_email_change_code(new_email)
+        if user.email:
+            # To the address being left, with no code in it and nothing to
+            # click. Somebody finding out their address is being moved while
+            # they can still do something about it is the whole of this message.
+            send_email_change_notice(user.email, new_email)
+
+        return Response({'pending_email': new_email})
+
+
+class EmailChangeConfirmView(APIView):
+    """POST { code } — finish moving the account to the address that got the code."""
+
+    throttle_classes = [EmailChangeThrottle]
+
+    INVALID = 'That code is wrong or has expired.'
+
+    def post(self, request):
+        user = request.user
+        serializer = EmailChangeConfirmSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        if not user.pending_email:
+            return Response(
+                {'detail': 'No address change was asked for.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not verify_and_consume(
+            user.pending_email, serializer.validated_data['code'], CHANGE_EMAIL
+        ):
+            return Response({'detail': self.INVALID}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Checked again here and not only at request time: somebody may have
+        # registered that address in the half hour since, and the constraint
+        # would refuse this with a 500 rather than an explanation.
+        if User.objects.filter(email__iexact=user.pending_email).exclude(pk=user.pk).exists():
+            user.pending_email = ''
+            user.save(update_fields=['pending_email'])
+            return Response(
+                {'detail': 'That address was taken while you were confirming it.'},
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        user.email = user.pending_email
+        user.pending_email = ''
+        user.email_verified_at = timezone.now()
+        user.save(update_fields=['email', 'pending_email', 'email_verified_at'])
+
+        revoked = revoke_refresh_tokens(user)
+        logger.info('Address changed for user %s; %s refresh tokens revoked', user.pk, revoked)
+
+        return Response({
+            'user': UserSerializer(user, context={'request': request}).data,
+            **_get_tokens(user),
+        })
+
+
+class EmailChangeCancelView(APIView):
+    """POST — forget an address change that was started and not finished."""
+
+    throttle_classes = [EmailChangeThrottle]
+
+    def post(self, request):
+        user = request.user
+        if user.pending_email:
+            user.pending_email = ''
+            user.save(update_fields=['pending_email'])
+        return Response(status=status.HTTP_204_NO_CONTENT)

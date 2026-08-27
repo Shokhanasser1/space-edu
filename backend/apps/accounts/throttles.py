@@ -197,3 +197,47 @@ class EmailVerifyThrottle(_AccountRateThrottle):
     """
 
     scope = 'email_verify'
+
+
+class PasswordResetThrottle(_AlwaysOnRateThrottle):
+    """Asking for a password-reset code, and answering with one.
+
+    Every request counts: each one either sends an e-mail or is a guess at a
+    six-digit number. Keyed on the address it came from *and* the account it is
+    aimed at, like the sign-in codes, so hammering one account from many places
+    and many accounts from one place are both bounded. It cannot be keyed on the
+    account alone -- nobody is signed in here, which is the whole point of it.
+    """
+
+    scope = 'password_reset'
+
+    def get_cache_key(self, request, view):
+        email = ''
+        if hasattr(request, 'data') and isinstance(request.data, dict):
+            email = str(request.data.get('email') or '').strip().lower()
+        return self.cache_format % {
+            'scope': self.scope,
+            'ident': f'{self.get_ident(request)}|{email}',
+        }
+
+
+class PasswordChangeThrottle(_AccountRateThrottle):
+    """Changing a password from inside the account.
+
+    Counts every attempt, including the ones that work: the cost being bounded
+    is guesses at the *current* password, and a person changing their password
+    repeatedly is not a thing that needs room.
+    """
+
+    scope = 'password_change'
+
+
+class EmailChangeThrottle(_AccountRateThrottle):
+    """Moving an account to another address.
+
+    Sends mail to an address the caller chose, which is the part that needs a
+    limit: without one this is a way to send messages signed with our name to
+    anybody, a few an hour, for as long as somebody cares to.
+    """
+
+    scope = 'email_change'

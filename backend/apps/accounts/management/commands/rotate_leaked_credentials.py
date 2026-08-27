@@ -22,6 +22,8 @@ from django.contrib.sessions.models import Session
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
+from apps.accounts.tokens import revoke_refresh_tokens
+
 # The rows read out of the leaked file, from the incident report. Superusers are
 # listed separately because they need a human to choose a new password.
 LEAKED_USERNAMES = [
@@ -94,22 +96,17 @@ class Command(BaseCommand):
         if not dry_run:
             Session.objects.all().delete()
 
-        try:
-            from rest_framework_simplejwt.token_blacklist.models import (
-                BlacklistedToken, OutstandingToken,
-            )
-        except ImportError:  # pragma: no cover — the app is in INSTALLED_APPS
-            return session_count, 0
-
-        outstanding = OutstandingToken.objects.exclude(
-            id__in=BlacklistedToken.objects.values_list('token_id', flat=True)
+        # The counting half of revoke_refresh_tokens(), because a dry run has to
+        # report the number without writing it.
+        from rest_framework_simplejwt.token_blacklist.models import (
+            BlacklistedToken, OutstandingToken,
         )
-        token_count = outstanding.count()
+
+        token_count = OutstandingToken.objects.exclude(
+            id__in=BlacklistedToken.objects.values_list('token_id', flat=True)
+        ).count()
         if not dry_run:
-            BlacklistedToken.objects.bulk_create(
-                [BlacklistedToken(token=token) for token in outstanding],
-                ignore_conflicts=True,
-            )
+            token_count = revoke_refresh_tokens()
         return session_count, token_count
 
     # ──────────────────────────────────────────────────────────────────
