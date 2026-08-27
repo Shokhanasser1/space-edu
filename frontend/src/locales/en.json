@@ -703,9 +703,15 @@
     "purchaseSuccess": "Purchase successful!",
     "purchaseFailed": "Purchase failed.",
     "types": {
+      "spaceship": "Spaceship",
+      "badge": "Badge",
+      "boost": "XP Boost",
       "book": "Book",
       "rocket_module": "Rocket Module",
       "satellite": "Satellite",
+      "avatar": "Avatar",
+      "theme": "Theme",
+      "tool": "Tool",
       "other": "Other"
     },
     "specLabels": {
