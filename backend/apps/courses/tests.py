@@ -187,6 +187,31 @@ class SphereTreeTests(TestCase):
         # more than double between them.
         self.assertEqual(count('creativity'), count('astronomy'))
 
+    def test_a_lesson_carries_its_text_in_all_three_languages(self):
+        """#23 wrote ten kinematics lessons in Uzbek, English and Russian and
+        added the two translations to the model and to TopicLessonSerializer —
+        but this endpoint assembles its nodes by hand and did not pass them
+        on, so a Russian reader opened a Russian title over an Uzbek lesson.
+        The frontend test could not see it: it mocks this response."""
+        r = self.anon.get('/api/v1/courses/spheres/physics/tree/')
+        self.assertEqual(r.status_code, status.HTTP_200_OK)
+
+        def walk(nodes):
+            for node in nodes:
+                yield node
+                yield from walk(node.get('children', []))
+
+        lesson = next(
+            node for topic in r.data['topics'] for node in walk(topic['lessons'])
+            if node['slug'] == 'physics-kinematics-basic-concepts-in-mechanics'
+        )
+        for field in ('content', 'content_en', 'content_ru'):
+            self.assertIn(field, lesson)
+            self.assertTrue(lesson[field], f'{field} is empty in the tree')
+        # Three different texts, not one copied three times.
+        self.assertNotEqual(lesson['content_ru'], lesson['content'])
+        self.assertNotEqual(lesson['content_en'], lesson['content'])
+
     def test_a_child_appears_once_under_its_parent_and_not_at_the_root(self):
         r = self.anon.get('/api/v1/courses/spheres/interviews/tree/')
         topic = next(t for t in r.data['topics'] if t['slug'] == 'interviews-professors')

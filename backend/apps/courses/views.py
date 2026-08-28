@@ -83,7 +83,14 @@ class SphereViewSet(viewsets.ModelViewSet):
                     'name_en': lesson.name_en,
                     'name_ru': lesson.name_ru,
                     'video_url': lesson.video_url,
+                    # All three, like `name` above. #23 added the two
+                    # translations to the model and the serializer but not
+                    # here, which is the one path the learn screens read —
+                    # so a Russian reader got the Uzbek lesson under a
+                    # Russian title. Found in a browser, 28 Aug 2026.
                     'content': lesson.content,
+                    'content_en': lesson.content_en,
+                    'content_ru': lesson.content_ru,
                     'xp_reward': lesson.xp_reward,
                     'fuel_reward': lesson.fuel_reward,
                     # Whether to offer a quiz on this lesson (ADR 0001, step 5).
