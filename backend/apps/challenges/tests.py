@@ -757,3 +757,101 @@ class StreakGoesStaleTests(TestCase):
 
         self.assertEqual(body['current_streak'], 0)
         self.assertEqual(body['longest_streak'], 9)
+
+
+class LessonTestCoverageTests(TestCase):
+    """Doc item 4, "testlar ham ishlashi shart" — the Test button on a lesson
+    row has to have something behind it.
+
+    PR #14 pinned the button to `/quiz/:category?lesson=<slug>` and the route
+    was sound, but `ChallengeQuestion.objects.exclude(lesson=None).count()` was
+    0: not one of the 95 seeded questions named a lesson, so every press fell
+    through to the subject pool. The FK had been there since ADR 0001 step 5 and
+    nobody had used it.
+
+    These run the two seeds the way `docs/TEAM.md` says to run them, because
+    the link only exists once both have.
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        from io import StringIO
+
+        from django.core.management import call_command
+
+        call_command('seed_learn_content', stdout=StringIO(), stderr=StringIO())
+        call_command('seed_challenges', stdout=StringIO())
+
+    def setUp(self):
+        self.client = APIClient()
+
+    def test_the_seeded_pool_attaches_questions_to_lessons(self):
+        attached = ChallengeQuestion.objects.exclude(lesson=None)
+        self.assertGreater(attached.count(), 0, 'no question names a lesson')
+        self.assertGreater(
+            attached.values('lesson').distinct().count(), 10,
+            'a handful of lessons is not a subject',
+        )
+
+    def test_a_lesson_with_questions_serves_exactly_its_own(self):
+        from apps.courses.models import TopicLesson
+
+        lesson = TopicLesson.objects.get(slug='physics-dynamics-newtons-second-law')
+        wanted = set(lesson.questions.values_list('id', flat=True))
+        self.assertTrue(wanted, 'the lesson this test names has no questions')
+
+        r = self.client.post(
+            '/api/v1/challenges/quiz/start/',
+            {'lesson': lesson.slug, 'count': 50}, format='json',
+        )
+        self.assertEqual(r.status_code, status.HTTP_201_CREATED, r.data)
+        self.assertEqual({q['id'] for q in r.data['questions']}, wanted)
+        # A lesson quiz is still a quiz: the answer key stays on the server.
+        for question in r.data['questions']:
+            self.assertNotIn('correct_answer', question)
+            self.assertNotIn('explanation', question)
+
+    def test_a_lesson_with_no_questions_degrades_honestly(self):
+        from apps.courses.models import TopicLesson
+
+        bare = (
+            TopicLesson.objects
+            .filter(questions__isnull=True, topic__sphere__slug='physics')
+            .first()
+        )
+        self.assertIsNotNone(bare, 'every physics lesson has questions — pick another')
+
+        r = self.client.post(
+            '/api/v1/challenges/quiz/start/', {'lesson': bare.slug}, format='json',
+        )
+        # Honest means the server says "not here" rather than quietly handing
+        # back the subject pool dressed as this lesson's test. The screen is
+        # what turns that into a sentence a child can read.
+        self.assertEqual(r.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertNotIn('questions', r.data)
+        self.assertEqual(QuizSession.objects.count(), 0)
+
+    def test_every_attached_question_stays_in_its_category_pool(self):
+        # Attaching must add a lesson quiz, not move a question out of the
+        # subject quiz it was written for.
+        physics = ChallengeQuestion.objects.filter(category='physics', is_active=True)
+        self.assertTrue(physics.exclude(lesson=None).exists())
+        r = self.client.post(
+            '/api/v1/challenges/quiz/start/',
+            {'category': 'physics', 'count': 50}, format='json',
+        )
+        self.assertEqual(r.data['total'], min(50, physics.count()))
+
+    def test_re_seeding_keeps_the_links(self):
+        from io import StringIO
+
+        from django.core.management import call_command
+
+        before = dict(
+            ChallengeQuestion.objects.exclude(lesson=None).values_list('question', 'lesson_id')
+        )
+        call_command('seed_challenges', stdout=StringIO())
+        after = dict(
+            ChallengeQuestion.objects.exclude(lesson=None).values_list('question', 'lesson_id')
+        )
+        self.assertEqual(before, after)

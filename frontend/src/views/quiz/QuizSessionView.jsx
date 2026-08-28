@@ -57,7 +57,10 @@ export default function QuizSessionView() {
     // Every lesson row's "Test" button links here with `?lesson=`, and a
     // lesson with nothing attached yet is a 404. That is content still to be
     // written, not a reason to show a student "not found": run the subject's
-    // pool instead, and let the heading say which one it is.
+    // pool instead, and say on the page that that is what happened. Most
+    // lessons still have no questions of their own, so this is the path most
+    // children take, and the notice is the whole difference between an honest
+    // stand-in and a subject-wide quiz posing as the lesson's test.
     const request = lesson
       ? start({ lesson }).catch((err) => {
           if (err?.response?.status !== 404) throw err;
@@ -182,9 +185,13 @@ export default function QuizSessionView() {
   }
 
   if (loadState === "empty" || questions.length === 0) {
+    // The child pressed Test on a lesson; "Category not found or empty" answers
+    // a question they never asked. Name what they actually opened.
     return (
       <div className="min-h-screen pt-32 text-center">
-        <h2 className="text-3xl text-red-400">{t("quiz", "categoryEmpty")}</h2>
+        <h2 className="text-3xl text-red-400">
+          {t("quiz", lesson ? "lessonNoTest" : "categoryEmpty")}
+        </h2>
         <button onClick={() => navigate("/quiz")} className="mt-6 px-6 py-2 bg-white/10 rounded-lg">{t("quiz", "goBack")}</button>
       </div>
     );
@@ -242,6 +249,19 @@ export default function QuizSessionView() {
             </div>
           )}
         </div>
+
+        {/* The lesson had no questions of its own and this is the subject's
+            pool standing in. Said out loud, in the reader's language, because
+            a child who is not told will read a wrong answer about orbits as a
+            gap in the lesson they just finished. */}
+        {poolFallback && (
+          <div
+            role="status"
+            className="mb-8 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-400/30 text-sm text-amber-200/90"
+          >
+            {t("quiz", "lessonPoolFallback")}
+          </div>
+        )}
 
         {/* Progress bar */}
         {!isCompleted && (

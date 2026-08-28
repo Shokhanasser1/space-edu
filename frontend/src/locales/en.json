@@ -931,6 +931,8 @@
     "savingScore": "Saving your score…",
     "lessonQuiz": "Lesson quiz",
     "categoryEmpty": "Category not found or empty.",
+    "lessonNoTest": "This lesson has no test yet.",
+    "lessonPoolFallback": "This lesson has no test of its own yet, so these questions come from the whole subject.",
     "goBack": "Go Back"
   },
   "market": {
