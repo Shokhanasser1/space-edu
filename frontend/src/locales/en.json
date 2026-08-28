@@ -1425,6 +1425,7 @@
     "interviewsDesc": "Exclusive interviews with scientists, astronauts, and experts",
     "problemsTitle": "Problems",
     "problemsDesc": "Total {count} problems — solve each one and strengthen your knowledge",
+    "problemNumber": "Problem #{n}",
     "solvedOf": "{solved} / {total} solved",
     "questionHeader": "QUESTION",
     "enterAnswer": "Enter your answer...",

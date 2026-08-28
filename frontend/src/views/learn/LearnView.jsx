@@ -504,8 +504,13 @@ export default function LearnView() {
           lineHeight: 1.1,
           margin: '0 0 16px 0',
         }}>
-          <span style={{ color: 'rgba(255, 255, 255, 0.85)' }}>KOINOTNI </span>
-          <span style={{ color: '#a78bfa', textShadow: '0 0 30px rgba(167, 139, 250, 0.4)' }}>O'RGAN</span>
+          {/* `headerTitle` and `headerHighlight` were translated in all three
+              locale files and read by nothing; the heading was an Uzbek literal
+              over a subtitle that did read its key. Two spans because the second
+              half is coloured, which is the same reason the sign-in screen
+              splits its heading. */}
+          <span style={{ color: 'rgba(255, 255, 255, 0.85)' }}>{t('learnPage', 'headerTitle')} </span>
+          <span style={{ color: '#a78bfa', textShadow: '0 0 30px rgba(167, 139, 250, 0.4)' }}>{t('learnPage', 'headerHighlight')}</span>
         </h1>
 
         {/* Subtitle text */}

@@ -1425,6 +1425,7 @@
     "interviewsDesc": "Эксклюзивные беседы с учеными, космонавтами и экспертами",
     "problemsTitle": "Задачи",
     "problemsDesc": "Всего {count} задач — решите каждую и закрепите свои знания",
+    "problemNumber": "Задача №{n}",
     "solvedOf": "{solved} из {total} решено",
     "questionHeader": "УСЛОВИЕ",
     "enterAnswer": "Введите ваш ответ...",

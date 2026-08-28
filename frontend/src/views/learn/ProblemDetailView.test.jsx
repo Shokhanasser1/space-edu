@@ -155,3 +155,27 @@ describe('the problems list header', () => {
     expect(screen.queryByText(/solved/i)).toBeNull();
   });
 });
+
+/**
+ * Two Uzbek literals left on every Learn screen, both found by opening the
+ * section in Russian against a running server.
+ *
+ * `Masala #{id}` was the heading of every problem page in every language.
+ * "Orqaga" is the back button in SectionPageHeader — twelve views use that
+ * component, so it was the one word on every screen in the section that never
+ * changed language. `common.back` was already translated and unread.
+ */
+describe('the last Uzbek literals', () => {
+  it('titles the problem in the reader\'s language', async () => {
+    renderIn('RUS');
+    expect(await screen.findAllByText('Задача №3')).not.toHaveLength(0);
+    expect(screen.queryByText('Masala #3')).toBeNull();
+  });
+
+  it('translates the back button too', async () => {
+    renderIn('RUS');
+    await screen.findAllByText('Задача №3');
+    expect(screen.getByRole('button', { name: 'Назад' })).toBeInTheDocument();
+    expect(screen.queryByText('Orqaga')).toBeNull();
+  });
+});

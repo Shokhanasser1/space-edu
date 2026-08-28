@@ -100,7 +100,11 @@ export default function ProblemDetailView() {
 
   return (
     <div className="pt-24 pb-20" style={{ minHeight: '100vh', background: 'transparent' }}>
-      <SectionPageHeader title={`Masala #${id}`} color={color} backPath="/learn/problems" />
+      <SectionPageHeader
+        title={t('learnViews', 'problemNumber').replace('{n}', String(id))}
+        color={color}
+        backPath="/learn/problems"
+      />
 
       <div style={{ maxWidth: '800px', margin: '0 auto', padding: '40px 20px' }}>
         <motion.div

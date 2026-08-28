@@ -1425,6 +1425,7 @@
     "interviewsDesc": "Olimlar, kosmonavtlar va mutaxassislar bilan eksklyuziv suhbatlar",
     "problemsTitle": "Masalalar",
     "problemsDesc": "Jami {count} ta masala — har birini hal qiling va bilimlaringizni mustahkamlang",
+    "problemNumber": "Masala #{n}",
     "solvedOf": "{total} tadan {solved} ta yechildi",
     "questionHeader": "SHART (QUESTION)",
     "enterAnswer": "Javobingizni kiriting...",

@@ -149,3 +149,31 @@ describe('the landing cards', () => {
     expect(await screen.findAllByText('Nyuton qonunlari')).not.toHaveLength(0);
   });
 });
+
+/**
+ * The hero heading over those cards was the same defect one level up: a
+ * hardcoded "KOINOTNI O'RGAN" in two spans, while `learnPage.headerTitle` and
+ * `headerHighlight` sat translated and unread in all three locale files. The
+ * subtitle under it was already reading its key, so an English reader met an
+ * Uzbek headline over an English sentence.
+ */
+describe('the section heading', () => {
+  let useUserStore;
+
+  beforeEach(async () => {
+    ({ useUserStore } = await import('@/store/useUserStore'));
+    api.get.mockResolvedValue({ data: [] });
+  });
+
+  it.each([
+    ['ENG', 'Cosmic', 'Academy'],
+    ['UZB', 'Koinot', 'Akademiyasi'],
+    ['RUS', 'Космическая', 'Академия'],
+  ])('is in the reader\'s language (%s)', async (language, title, highlight) => {
+    useUserStore.setState({ language });
+    renderPage();
+    expect(await screen.findAllByText(title, { exact: false })).not.toHaveLength(0);
+    expect(await screen.findAllByText(highlight, { exact: false })).not.toHaveLength(0);
+    expect(screen.queryByText(/KOINOTNI/)).toBeNull();
+  });
+});
