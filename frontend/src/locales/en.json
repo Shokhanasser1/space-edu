@@ -1452,6 +1452,7 @@
     "readingLesson": "Lesson",
     "videoPendingTitle": "Video in production",
     "videoPendingBody": "The animated video for this lesson is being made by UzCosmos and OIS. The lesson text below is ready to read now.",
+    "videoCredit": "Video: {channel}",
     "completed": "Completed",
     "lessonDescription": "In this lesson you will deeply explore {lessonName}. The visualizations and explanations provided in the video will help you easily grasp complex concepts. By the end of this lesson, you will be one step closer to the secrets of the universe.",
     "lessonDescriptionNoVideo": "In this lesson you will explore {lessonName}. The animated video is still in production; the text and the practice below are ready now.",

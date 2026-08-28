@@ -1,3 +1,17 @@
+/**
+ * A lesson stays a bare title until it has a video that is about it.
+ *
+ * `videoUrl` reaches `TopicLesson.video_url` through
+ * `scripts/export-learn-content.mjs`, and the lesson page plays it. The ones
+ * added on 28 Aug 2026 are Khan Academy's Uzbek physics lessons — somebody
+ * else's work, credited on screen from `src/data/videoCredits.js`.
+ *
+ * The rule PR #14 spent a branch restoring, and the one that matters here: a
+ * video goes on a lesson only when it teaches that lesson. Not a neighbouring
+ * topic, not one whose title merely sounds close. Most lessons below are still
+ * bare, and their empty slot says a video is being made for them — which is
+ * true, and is better than borrowing one.
+ */
 export const physicsTopicsData = {
   1: {
     id: 1,
@@ -5,17 +19,18 @@ export const physicsTopicsData = {
     titleEn: 'Kinematics', titleRu: 'Кинематика',
     color: '#00e5ff',
     lessons: [
-      "Basic concepts in mechanics",
+      { name: "Basic concepts in mechanics", videoUrl: "https://www.youtube.com/watch?v=LF98SpIWZac" },
       "Straight-line uniform motion",
-      "Graphical representation of straight-line uniform motion",
-      "Relativity of motion",
-      "Non-uniform motion",
-      "Uniformly accelerated motion. Acceleration. Instantaneous velocity",
-      "Displacement in uniformly accelerated motion",
+      { name: "Graphical representation of straight-line uniform motion", videoUrl: "https://www.youtube.com/watch?v=BTJmrnzT_eQ" },
+      { name: "Relativity of motion", videoUrl: "https://www.youtube.com/watch?v=gqphgVyTzqs" },
+      { name: "Non-uniform motion", videoUrl: "https://www.youtube.com/watch?v=Sn0EEL5E2cI" },
+      { name: "Uniformly accelerated motion. Acceleration. Instantaneous velocity", videoUrl: "https://www.youtube.com/watch?v=HK1qm34dy9E" },
+      { name: "Displacement in uniformly accelerated motion", videoUrl: "https://www.youtube.com/watch?v=RYKrRm8dPPw" },
       "Motion of two bodies",
-      "Graphical representation of uniformly accelerated motion",
+      { name: "Graphical representation of uniformly accelerated motion", videoUrl: "https://www.youtube.com/watch?v=8HC7N9D29TE" },
       "Curvilinear motion",
-      "Acceleration in curvilinear motion",
+      // Centripetal acceleration is what a body accelerating along a curve has.
+      { name: "Acceleration in curvilinear motion", videoUrl: "https://www.youtube.com/watch?v=Njc5QCRU4ZQ" },
       "Transmission of rotational motion",
       "Non-uniform circular motion"
     ]
@@ -26,22 +41,25 @@ export const physicsTopicsData = {
     titleEn: 'Dynamics', titleRu: 'Динамика',
     color: '#00e5ff',
     lessons: [
-      "Force. Newton's first law",
+      { name: "Force. Newton's first law", videoUrl: "https://www.youtube.com/watch?v=K9wubX_VPAA" },
       "Mass. Density",
-      "Newton's second law",
-      "Newton's third law",
-      "Law of universal gravitation",
-      "Gravity",
+      { name: "Newton's second law", videoUrl: "https://www.youtube.com/watch?v=BkUyufANeo4" },
+      { name: "Newton's third law", videoUrl: "https://www.youtube.com/watch?v=_sSdSI3PqWo" },
+      { name: "Law of universal gravitation", videoUrl: "https://www.youtube.com/watch?v=9qKK4LI0OYg" },
+      // "g as the strength of the gravitational field a body sits in".
+      { name: "Gravity", videoUrl: "https://www.youtube.com/watch?v=ila7kbiQucs" },
       "Elastic force",
-      "Weight",
-      "Weightlessness",
-      "Vertical motion of a body under gravity",
-      "Motion of a body thrown horizontally",
-      "Motion of a body thrown at an angle to the horizon",
-      "Artificial satellites of the Earth",
-      "Friction force. Static friction",
-      "Sliding friction force",
-      "Motion under the action of multiple forces"
+      { name: "Weight", videoUrl: "https://www.youtube.com/watch?v=tP2tQtnR9bg" },
+      // "Are astronauts in orbit free of gravity?" — the lesson, exactly.
+      { name: "Weightlessness", videoUrl: "https://www.youtube.com/watch?v=wD8HqX6gGZc" },
+      { name: "Vertical motion of a body under gravity", videoUrl: "https://www.youtube.com/watch?v=KicO4MoOMS4" },
+      { name: "Motion of a body thrown horizontally", videoUrl: "https://www.youtube.com/watch?v=W9l1urFgiu4" },
+      { name: "Motion of a body thrown at an angle to the horizon", videoUrl: "https://www.youtube.com/watch?v=5nOnhTq20vk" },
+      // Working out the orbital speed of the ISS, which is what a satellite is.
+      { name: "Artificial satellites of the Earth", videoUrl: "https://www.youtube.com/watch?v=yM-KakIQRGA" },
+      { name: "Friction force. Static friction", videoUrl: "https://www.youtube.com/watch?v=YP_hnGED0mQ" },
+      { name: "Sliding friction force", videoUrl: "https://www.youtube.com/watch?v=h6I7Lp_M--Q" },
+      { name: "Motion under the action of multiple forces", videoUrl: "https://www.youtube.com/watch?v=JRfEbz32HLU" }
     ]
   },
   3: {
@@ -54,11 +72,11 @@ export const physicsTopicsData = {
       "Conditions of equilibrium",
       "Body, force, and momentum",
       "Law of conservation of momentum",
-      "Mechanical work",
+      { name: "Mechanical work", videoUrl: "https://www.youtube.com/watch?v=RmMvfob6SHk" },
       "Kinetic energy",
       "Potential energy",
       "Potential energy of a deformed spring",
-      "Law of conservation of total mechanical energy",
+      { name: "Law of conservation of total mechanical energy", videoUrl: "https://www.youtube.com/watch?v=R97ptRkXgD8" },
       "Work of forces applied to a body. Conversion of mechanical energy into heat",
       "Power",
       "Efficiency"

@@ -1,3 +1,42 @@
+/**
+ * Khan Academy's Uzbek astronomy lessons, on the sub-lessons they are about.
+ *
+ * Keyed by sub-lesson name rather than written inline because the two lists
+ * below are generated — a spectral class, or a body, times three fixed
+ * sub-lesson titles — so there is no line to hang a `videoUrl` on.
+ *
+ * Only what the video actually teaches, which is why this map is short and
+ * most slots below stay empty. Two of them rest on a fact worth stating out
+ * loud, because if either is wrong the pairing is wrong: O-type stars are the
+ * massive ones, and a G-type star is a star like the Sun. Everything else here
+ * is a video about the body the lesson names. Where a body has more than one,
+ * the general video goes on "Understanding", photographs go on "Observations",
+ * and the deeper second part goes on "Physics of".
+ *
+ * `src/data/videoCredits.js` carries the channel each id belongs to, and the
+ * lesson page prints it under the player.
+ */
+const KHAN_VIDEOS = {
+  // "Massiv yulduzlarning hayot sikli" — the life cycle of a massive star.
+  'Evolution of O Stars': 'https://www.youtube.com/watch?v=gS5E0WsbNSg',
+  // "Qizil gigantga aylanish" — a Sun-like star leaving the main sequence.
+  'Evolution of G Stars': 'https://www.youtube.com/watch?v=dezCVRZW4No',
+  'Physics of Galaxies': 'https://www.youtube.com/watch?v=gHSLWrmBK-k',
+  // The Hubble deep-field photograph of galaxies.
+  'Observations of Galaxies': 'https://www.youtube.com/watch?v=RrpOxpTWmAM',
+  'Understanding Black holes': 'https://www.youtube.com/watch?v=l6k62nsjfFo',
+  'Physics of Black holes': 'https://www.youtube.com/watch?v=qT74-XVshxU',
+  // "Yulduzli maydon va bulutliklar suratlari" — pictures of nebulae.
+  'Observations of Nebulae': 'https://www.youtube.com/watch?v=CQvJKqzmEJI',
+  'Understanding Quasars': 'https://www.youtube.com/watch?v=JyeV3_bi5_w',
+  'Physics of Quasars': 'https://www.youtube.com/watch?v=rTRIWTzkjGE',
+  'Understanding Supernovae': 'https://www.youtube.com/watch?v=ROQWN2h7dVM',
+  'Physics of Supernovae': 'https://www.youtube.com/watch?v=_y-HcqZnxX8',
+};
+
+/** A sub-lesson, with its video if one of these lessons is genuinely about it. */
+const subLesson = (name) => ({ name, videoUrl: KHAN_VIDEOS[name] ?? '' });
+
 export const astronomyTopicsData = {
   1: {
     id: 1,
@@ -103,9 +142,9 @@ export const astronomyTopicsData = {
     ].map(type => ({
       name: type,
       subLessons: [
-        { name: `${type}-Type Characteristics` },
-        { name: `Evolution of ${type} Stars` },
-        { name: `Famous ${type}-Type Stars` }
+        subLesson(`${type}-Type Characteristics`),
+        subLesson(`Evolution of ${type} Stars`),
+        subLesson(`Famous ${type}-Type Stars`)
       ]
     }))
   },
@@ -145,9 +184,9 @@ export const astronomyTopicsData = {
     ].map(body => ({
       name: body,
       subLessons: [
-        { name: `Understanding ${body}` },
-        { name: `Physics of ${body}` },
-        { name: `Observations of ${body}` }
+        subLesson(`Understanding ${body}`),
+        subLesson(`Physics of ${body}`),
+        subLesson(`Observations of ${body}`)
       ]
     }))
   }
