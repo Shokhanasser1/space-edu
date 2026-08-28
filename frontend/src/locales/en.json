@@ -720,6 +720,13 @@
     "yourPlace": "Your place",
     "ofPlayers": "of {count} players",
     "notRankedYet": "Earn XP to join the rankings",
+    "boardXp": "By XP",
+    "boardQuiz": "By accuracy",
+    "quizSubtitle": "Ranked on your average quiz score, not on how many you have taken.",
+    "accuracy": "Accuracy",
+    "quizzesTaken": "Quizzes",
+    "minQuizzes": "Finish {count} quizzes to be ranked here — one lucky score is not a record.",
+    "noQuizPioneers": "Nobody has finished enough quizzes yet. Be the first!",
     "loadFailed": "Rankings could not be loaded. Trying again shortly."
   },
   "live": {

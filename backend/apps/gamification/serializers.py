@@ -22,6 +22,12 @@ class UserBadgeSerializer(serializers.ModelSerializer):
 
 
 class GamificationProfileSerializer(serializers.ModelSerializer):
+    # A run that has already been broken reads as 0 here rather than as the
+    # number it reached before the missed day — see
+    # `UserGamificationProfile.live_streak`. `last_play_date` is still in the
+    # response beside it, so the page can say when the run ended.
+    streak = serializers.IntegerField(source='live_streak', read_only=True)
+
     class Meta:
         model = UserGamificationProfile
         fields = ('xp', 'level', 'fuel', 'streak', 'last_play_date', 'skills')

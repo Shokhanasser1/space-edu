@@ -9,7 +9,10 @@ def check_and_award_badges(user, profile, lesson_count):
     for badge in candidates:
         if badge.condition_type == 'xp_threshold' and profile.xp >= badge.condition_value:
             earned = True
-        elif badge.condition_type == 'streak' and profile.streak >= badge.condition_value:
+        # `live_streak`, not the column: a badge is permanent, and "7-day
+        # streak" was being handed out to a child whose seven days had ended
+        # five days earlier and whose column nothing had lowered since.
+        elif badge.condition_type == 'streak' and profile.live_streak >= badge.condition_value:
             earned = True
         elif badge.condition_type == 'lessons' and lesson_count >= badge.condition_value:
             earned = True

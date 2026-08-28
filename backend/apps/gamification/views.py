@@ -10,7 +10,10 @@ from .full_profile import FullProfileView
 from django.db import transaction
 from rest_framework.permissions import IsAuthenticated
 
-from .leaderboard import BOARD_SIZE, BOARD_TTL_SECONDS, cached_board, rank_for_xp
+from .leaderboard import (
+    BOARD_SIZE, BOARD_TTL_SECONDS, MIN_QUIZZES_RANKED,
+    assign_ranks, cached_board, rank_for_xp,
+)
 from .models import Badge, UserBadge, UserGamificationProfile, RewardProduct, UserRewardPurchase
 from .serializers import (
     BadgeSerializer,
@@ -141,7 +144,25 @@ class StreakUpdateView(APIView):
 
 
 class QuizLeaderboardView(APIView):
-    """Leaderboard by quiz performance in a specific category."""
+    """GET /gamification/leaderboard/quiz/ — the board ranked on accuracy.
+
+    The XP board rewards how much a child has done; this one rewards how well,
+    which is the number a platform that exists to teach should be able to show.
+    It is worth having only if it is honest, and it was not: it ranked on
+    `Avg('percentage')` with nothing under it, so one lucky quiz at 100% stood
+    above fifty at 96, and the child who had done the work was told they were
+    second. `MIN_QUIZZES_RANKED` is the floor and `leaderboard.py` argues it.
+
+    Everything else here is `leaderboard.py`'s rule rather than this view's own:
+    the same competition ranking (`assign_ranks`), the same board length
+    (`BOARD_SIZE`, it was 50 for no reason), ties sharing a place, and a stable
+    order under them. Two boards on one platform that place the same tied
+    children differently is exactly what that module was written to stop.
+
+    `AllowAny`, like the XP board, and it publishes the same single field about
+    a child — the handle they chose. See `LeaderboardEntrySerializer` for why
+    that list is three fields long and not five (C-11).
+    """
     permission_classes = [AllowAny]
 
     def get(self, request):
@@ -153,10 +174,14 @@ class QuizLeaderboardView(APIView):
         if category:
             qs = qs.filter(category=category)
 
-        # Best score per user
         # Was Sum('percentage') / Count('id') labelled `best_pct`: that is a mean,
         # not a best, and on PostgreSQL integer division truncated it. Also stop
         # publishing usernames here — see LeaderboardEntrySerializer.
+        #
+        # The floor is applied after the annotation and inside the same category
+        # filter, so "five quizzes" means five of the quizzes being ranked. A
+        # count taken across every category would put a child on the physics
+        # board for astronomy practice.
         leaders = (
             qs.values('user__id', 'user__username', 'user__astronaut_name')
             .annotate(
@@ -165,22 +190,43 @@ class QuizLeaderboardView(APIView):
                 total_quizzes=Count('id'),
                 total_xp=Sum('xp_earned'),
             )
-            .order_by('-avg_pct')[:50]
+            .filter(total_quizzes__gte=MIN_QUIZZES_RANKED)
+            # `user__id` under the average for the same reason the XP board
+            # orders by `id` under `-xp`: it is not meaningful, only stable, and
+            # without it two equal children swap places between two requests.
+            .order_by('-avg_pct', 'user__id')
         )
+
+        my_id = request.user.id if request.user.is_authenticated else None
+        rows = [
+            {
+                'display_name': (entry['user__astronaut_name'] or '').strip()
+                or entry['user__username'],
+                'avg_percentage': round(entry['avg_pct'] or 0, 1),
+                'best_percentage': round(entry['best_pct'] or 0, 1),
+                'total_quizzes': entry['total_quizzes'],
+                'total_xp': entry['total_xp'] or 0,
+                'is_you': entry['user__id'] == my_id,
+            }
+            for entry in leaders[:BOARD_SIZE]
+        ]
 
         return Response({
             'category': category or 'all',
             'leaderboard': [
-                {
-                    'display_name': (entry['user__astronaut_name'] or '').strip()
-                    or entry['user__username'],
-                    'avg_percentage': round(entry['avg_pct'] or 0, 1),
-                    'best_percentage': round(entry['best_pct'] or 0, 1),
-                    'total_quizzes': entry['total_quizzes'],
-                    'total_xp': entry['total_xp'] or 0,
-                }
-                for entry in leaders
+                {'rank': rank, **row}
+                # Ranked on the figure the row prints, not the float behind it:
+                # see `assign_ranks`.
+                for rank, row in assign_ranks(rows, lambda r: r['avg_percentage'])
             ],
+            # Everybody who has taken enough quizzes to be ranked, not everybody
+            # who has taken one — the same distinction `player_queryset()` draws
+            # between a sign-up and a player.
+            'total_players': leaders.count(),
+            'board_size': BOARD_SIZE,
+            # A child who is not on this board is owed the reason as a number
+            # they can act on, not a blank page.
+            'min_quizzes': MIN_QUIZZES_RANKED,
         })
 
 
@@ -259,7 +305,10 @@ def mission_progress(user, mission):
 
     if mission.mission_type == 'streak':
         profile, _ = UserGamificationProfile.objects.get_or_create(user=user)
-        return profile.streak
+        # The run as it stands today, not the stored column: "three days
+        # running" was claimable four days after the run ended, because nothing
+        # lowers that column on a day nobody plays.
+        return profile.live_streak
     if mission.mission_type == 'lesson':
         return UserLessonProgress.objects.filter(user=user).count()
     if mission.mission_type == 'mastery':

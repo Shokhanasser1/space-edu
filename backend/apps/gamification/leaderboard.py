@@ -25,6 +25,28 @@ BOARD_SIZE = 100
 # request rate hurt; nothing but this line has to change.
 BOARD_TTL_SECONDS = 30
 
+# How many finished quizzes a child has to have taken before an average of
+# their scores is allowed to rank them.
+#
+# The board ranked on the mean with nothing under it, so one lucky quiz at 100%
+# outranked fifty at 96 — and the child who had actually done the work was told
+# they were second. A mean over one attempt is not a worse measurement of the
+# same thing; it is a measurement of something else.
+#
+# A floor rather than a weighted score, deliberately. This board is read by
+# 10-to-18-year-olds, and "take five quizzes to be ranked" is a rule a child can
+# act on. A Bayesian shrink towards the platform mean is the better statistic
+# and the worse feature: it prints a number that is not the child's average
+# next to their name, and nobody on the team could explain to them why 100%
+# reads as 78. It also matches how the XP board already decides who is a
+# player — `player_queryset()` excludes accounts that have not played — rather
+# than inventing a second idea of "enough".
+#
+# Five, because it is the shortest run that makes one bad or lucky day worth
+# less than the rest of the record, and because the pool holds enough questions
+# that five quizzes are not the same five questions.
+MIN_QUIZZES_RANKED = 5
+
 # Bump the version when the shape of a cached row changes, so a deploy does not
 # serve rows built by the previous code for the length of the window.
 _CACHE_KEY = 'gamification:leaderboard:v1'
@@ -57,6 +79,29 @@ def player_count():
     return player_queryset().count()
 
 
+def assign_ranks(rows, score_of):
+    """Standard competition ranking over rows already ordered best-first.
+
+    1-1-1-4, the rule `rank_for_xp` answers with. Held here as one function
+    because there are now two boards — XP and quiz accuracy — and a platform
+    where the same three tied children are 1-1-1 on one page and 1-2-3 on the
+    other has two rules, which is the finding this module exists for.
+
+    Yields `(rank, row)`. `score_of` returns the number the page *prints*, not
+    the one the database sorted on: two children shown "96.0" who differ in the
+    third decimal must share a place, or the board contradicts itself in the
+    only two columns a reader can see.
+    """
+    rank = 0
+    previous = None
+    for position, row in enumerate(rows, start=1):
+        score = score_of(row)
+        if position == 1 or score != previous:
+            rank = position
+            previous = score
+        yield rank, row
+
+
 def build_board():
     """The top of the board, ranked, with each row's profile id beside it.
 
@@ -81,17 +126,15 @@ def build_board():
     # adding a fourth.
     rows = LeaderboardEntrySerializer(profiles, many=True).data
 
-    board = []
-    rank = 0
-    previous_xp = None
-    for position, (profile, row) in enumerate(zip(profiles, rows), start=1):
-        if profile.xp != previous_xp:
-            # Exact rather than approximate: this page starts at first place, so
-            # the number of players ahead of a row is the number of rows above
-            # it, and no second query is needed to find it out.
-            rank = position
-            previous_xp = profile.xp
-        board.append((profile.id, {'rank': rank, **row}))
+    # Exact rather than approximate: this page starts at first place, so the
+    # number of players ahead of a row is the number of rows above it, and no
+    # second query is needed to find it out.
+    board = [
+        (profile.id, {'rank': rank, **row})
+        for rank, (profile, row) in assign_ranks(
+            list(zip(profiles, rows)), lambda pair: pair[0].xp,
+        )
+    ]
 
     return {'board': board, 'total_players': player_count()}
 

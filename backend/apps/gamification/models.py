@@ -72,6 +72,38 @@ class UserGamificationProfile(models.Model):
         self.refresh_from_db(fields=['fuel'])
         return self
 
+    @property
+    def live_streak(self):
+        """The streak as it stands today, not as it stood when it was written.
+
+        `claim_daily_streak()` is the only thing that ever writes the column,
+        and it only runs on a day the child plays — so the number keeps
+        whatever it reached until the next time they come back. A child who
+        held seven days and then missed Thursday was told "7" on Friday, on
+        Saturday and on Sunday, and it only became 1 the moment they played
+        again. A streak that cannot be broken is not a streak, and a child who
+        knows they did not play knows the number is a lie.
+
+        Corrected where it is read rather than by a nightly job: there is no
+        scheduler in this project, and a job that has not run yet leaves the
+        same wrong number on the screen.
+
+        The column itself stays as it is. It is the history
+        `claim_daily_streak()` reads to decide whether today continues
+        yesterday, and it is what `longest_streak` is built from in the
+        challenges app. This answers the different question the screen asks.
+
+        The same read on `UserStreak` is `UserStreak.live_streak`; the two are
+        deliberately the same rule, because the profile page shows one of them
+        and falls back to the other.
+        """
+        if self.last_play_date is None:
+            return 0
+        # Yesterday still counts: today is not over, and they can still keep it.
+        if self.last_play_date >= timezone.localdate() - timezone.timedelta(days=1):
+            return self.streak
+        return 0
+
     def claim_daily_streak(self, bonus_fuel=10, today=None):
         """Advance the streak and pay the once-a-day bonus, atomically.
 

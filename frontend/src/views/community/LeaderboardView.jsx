@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
-import { Trophy, Star, Crown, Shield } from 'lucide-react';
+import { Trophy, Star, Crown, Shield, Target } from 'lucide-react';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -24,6 +24,16 @@ export default function LeaderboardView() {
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [pollSeconds, setPollSeconds] = useState(DEFAULT_POLL_SECONDS);
+  // Two boards, one page. XP says how much a child has done; accuracy says how
+  // well, which is the number a platform that exists to teach should be able to
+  // show. The accuracy board only ranks children who have finished
+  // `min_quizzes` — the server sends that number so this page can say it rather
+  // than leave a child staring at a list they are not on. See
+  // apps/gamification/leaderboard.py.
+  const [mode, setMode] = useState('xp');
+  const [quizBoard, setQuizBoard] = useState(null);
+  const [quizLoading, setQuizLoading] = useState(false);
+  const [quizFailed, setQuizFailed] = useState(false);
 
   const load = useCallback(() => {
     return api.get('/gamification/leaderboard/')
@@ -43,6 +53,23 @@ export default function LeaderboardView() {
 
   useEffect(() => { load(); }, [load]);
 
+  const loadQuiz = useCallback(() => {
+    setQuizLoading(true);
+    return api.get('/gamification/leaderboard/quiz/')
+      .then(({ data }) => { setQuizBoard(data); setQuizFailed(false); })
+      // Not an empty catch (C-10): a board that silently stays blank reads as
+      // "nobody has taken a quiz", which is a different claim from "we could
+      // not ask".
+      .catch(() => setQuizFailed(true))
+      .finally(() => setQuizLoading(false));
+  }, []);
+
+  // Fetched when the tab is opened, not on mount: most readers never open it,
+  // and it is an aggregate over every quiz session on the platform.
+  useEffect(() => {
+    if (mode === 'quiz' && quizBoard === null && !quizLoading && !quizFailed) loadQuiz();
+  }, [mode, quizBoard, quizLoading, quizFailed, loadQuiz]);
+
   // A few seconds of this client's own, so ten thousand browsers do not all
   // arrive on the tick the cached board expires on.
   const jitterMs = useMemo(() => Math.floor(Math.random() * 4000), []);
@@ -52,11 +79,13 @@ export default function LeaderboardView() {
       // A page left open in a background tab is not being read. Browsers slow
       // these timers down by themselves; this stops them.
       if (document.visibilityState === 'hidden') return;
+      // Nor is a board the reader has switched away from.
+      if (mode !== 'xp') return;
       load();
     };
     const timer = setInterval(tick, pollSeconds * 1000 + jitterMs);
     return () => clearInterval(timer);
-  }, [load, pollSeconds, jitterMs]);
+  }, [load, pollSeconds, jitterMs, mode]);
 
   useEffect(() => {
     const onVisibilityChange = () => {
@@ -75,6 +104,9 @@ export default function LeaderboardView() {
   const rows = Array.isArray(board?.leaderboard) ? board.leaderboard : [];
   const top3 = rows.slice(0, 3);
   const rest = rows.slice(3);
+
+  const quizRows = Array.isArray(quizBoard?.leaderboard) ? quizBoard.leaderboard : [];
+  const minQuizzes = quizBoard?.min_quizzes ?? null;
 
   const myRank = board?.my_rank ?? null;
   const myXp = board?.my_xp ?? null;
@@ -102,11 +134,84 @@ export default function LeaderboardView() {
             {t('leaderboard', 'title')} <span className="text-glow-purple text-violet">{t('leaderboard', 'titleHighlight')}</span>
           </motion.h1>
           <p className="text-white/40 text-[16px] font-[500] max-w-sm mx-auto leading-relaxed">
-            {t('leaderboard', 'subtitle')}
+            {t('leaderboard', mode === 'quiz' ? 'quizSubtitle' : 'subtitle')}
           </p>
         </div>
 
-        {loading ? (
+        <div role="tablist" className="flex items-center justify-center gap-2 mb-10">
+          {[
+            { key: 'xp', label: t('leaderboard', 'boardXp'), Icon: Star },
+            { key: 'quiz', label: t('leaderboard', 'boardQuiz'), Icon: Target },
+          ].map(({ key, label, Icon }) => (
+            <button key={key} type="button" role="tab" id={`board-tab-${key}`}
+              aria-selected={mode === key} aria-controls="board-panel"
+              onClick={() => setMode(key)}
+              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl text-[11px] font-[800] uppercase tracking-widest transition-all border ${
+                mode === key
+                  ? 'bg-violet/15 border-violet/40 text-violet-light shadow-[0_0_20px_rgba(139,92,246,0.15)]'
+                  : 'bg-white/[0.02] border-white/5 text-white/30 hover:text-white/60 hover:bg-white/5'
+              }`}>
+              <Icon className="w-3.5 h-3.5" />{label}
+            </button>
+          ))}
+        </div>
+
+        {/* One panel, because the two boards are two answers to the same
+            question and a reader is looking at one of them. A `tablist` with
+            nothing labelled as its panel is worse than no roles at all. */}
+        <div id="board-panel" role="tabpanel" aria-labelledby={`board-tab-${mode}`}>
+        {mode === 'quiz' ? (
+          quizLoading ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-4">
+              <div className="w-8 h-8 border-2 border-violet/30 border-t-violet rounded-full animate-spin" />
+              <p className="text-[10px] font-[800] uppercase tracking-widest text-white/20">{t('leaderboard', 'syncing')}</p>
+            </div>
+          ) : quizFailed ? (
+            <div className="text-center text-white/30 py-20 font-[700] italic">{t('leaderboard', 'loadFailed')}</div>
+          ) : (
+            <>
+              {quizRows.length === 0 ? (
+                <div className="text-center text-white/30 py-20 font-[700] italic">{t('leaderboard', 'noQuizPioneers')}</div>
+              ) : (
+                <GlassCard delay={0.2} className="overflow-hidden !p-0">
+                  <div className="grid grid-cols-12 gap-2 px-8 py-5 border-b border-white/5 bg-white/[0.02] text-[10px] font-[800] text-white/30 uppercase tracking-[0.2em]">
+                    <div className="col-span-1 text-center">#</div>
+                    <div className="col-span-5">{t('leaderboard', 'explorer')}</div>
+                    <div className="col-span-3 text-center">{t('leaderboard', 'quizzesTaken')}</div>
+                    <div className="col-span-3 text-right">{t('leaderboard', 'accuracy')}</div>
+                  </div>
+                  <div className="divide-y divide-white/5">
+                    {quizRows.map((u, i) => (
+                      <div key={`${u.display_name}-${i}`}
+                        aria-current={u.is_you ? 'true' : undefined}
+                        className={`grid grid-cols-12 gap-2 px-8 py-5 items-center transition-all ${u.is_you ? 'bg-violet/10 border-l-4 border-violet shadow-inner' : 'hover:bg-white/[0.02]'}`}>
+                        {/* The server's place, not the row's position: children
+                            level on accuracy share one, exactly as they do on
+                            the XP board. */}
+                        <div className="col-span-1 text-center text-xs font-[800] text-white/20">{u.rank}</div>
+                        <div className="col-span-5 flex items-center gap-4">
+                          <img src={`https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(u.display_name || '')}`}
+                            className="w-10 h-10 rounded-xl border border-white/5 shadow-lg shrink-0" alt={u.display_name} />
+                          <p className={`text-sm font-[800] ${u.is_you ? 'text-violet-light' : 'text-white'}`}>{u.display_name}</p>
+                        </div>
+                        <div className="col-span-3 text-center text-[11px] font-[800] text-white/40">{fmt.number(u.total_quizzes)}</div>
+                        <div className="col-span-3 text-right text-sm font-[900] text-white tracking-tight">{fmt.number(u.avg_percentage)}%</div>
+                      </div>
+                    ))}
+                  </div>
+                </GlassCard>
+              )}
+              {/* A child who is not on this board is owed the reason, not a
+                  blank. The number is the server's — it is the floor the
+                  ranking actually applies. */}
+              {minQuizzes != null && (
+                <p className="mt-6 text-center text-[11px] font-[700] text-white/30 leading-relaxed">
+                  {t('leaderboard', 'minQuizzes').replace('{count}', fmt.number(minQuizzes))}
+                </p>
+              )}
+            </>
+          )
+        ) : loading ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
             <div className="w-8 h-8 border-2 border-violet/30 border-t-violet rounded-full animate-spin" />
             <p className="text-[10px] font-[800] uppercase tracking-widest text-white/20">{t('leaderboard', 'syncing')}</p>
@@ -226,6 +331,7 @@ export default function LeaderboardView() {
             )}
           </>
         )}
+        </div>
       </div>
     </div>
   );

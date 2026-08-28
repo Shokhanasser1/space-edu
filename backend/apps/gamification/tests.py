@@ -8,7 +8,9 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from apps.accounts.models import User
+from apps.challenges.models import QuizSession
 
+from .leaderboard import BOARD_SIZE, MIN_QUIZZES_RANKED
 from .models import Mission, RewardProduct, UserGamificationProfile, UserRewardPurchase
 
 
@@ -414,3 +416,222 @@ class LeaderboardAccuracyTests(TestCase):
         what the cache lifetime is, and it is what 10 000 clients cost."""
         board = self._board()
         self.assertGreaterEqual(board['poll_after_seconds'], 1)
+
+
+class StaleStreakTests(TestCase):
+    """A streak that cannot be broken is not a streak.
+
+    `claim_daily_streak()` is correct and row-locked on the day a child plays,
+    but it is the only thing that ever writes the column — so nothing lowers it
+    on the days they do not. A child who held seven days and then stopped was
+    still told "7" on the fourth day of having played nothing, because the
+    stored number is only ever read back out.
+
+    `UserStreak.live_streak` in the challenges app already answers this for the
+    daily-challenge streak. The same read on the gamification profile was left
+    behind, and the profile page falls back to it — so the fixed half was being
+    overwritten on screen by the half that was not.
+    """
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='gulnora', email='g@e.com', password='x',
+        )
+        self.profile = UserGamificationProfile.objects.get(user=self.user)
+        self.client = APIClient()
+        self.client.force_authenticate(self.user)
+
+    def _played(self, days_ago, streak=7):
+        """Put the row where a child who stopped playing `days_ago` leaves it."""
+        UserGamificationProfile.objects.filter(pk=self.profile.pk).update(
+            streak=streak,
+            last_play_date=timezone.localdate() - timezone.timedelta(days=days_ago),
+        )
+        self.profile.refresh_from_db()
+
+    def _served_streak(self):
+        response = self.client.get('/api/v1/gamification/profile/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        return response.data['streak']
+
+    def test_a_streak_with_a_gap_reads_as_broken(self):
+        """The bug, exactly: last played four days ago, still told seven."""
+        self._played(days_ago=4)
+        self.assertEqual(self._served_streak(), 0)
+
+    def test_playing_today_keeps_the_streak(self):
+        self._played(days_ago=0)
+        self.assertEqual(self._served_streak(), 7)
+
+    def test_yesterday_still_counts_because_today_is_not_over(self):
+        """They can still keep it by playing before midnight."""
+        self._played(days_ago=1)
+        self.assertEqual(self._served_streak(), 7)
+
+    def test_the_day_after_that_is_a_missed_day(self):
+        self._played(days_ago=2)
+        self.assertEqual(self._served_streak(), 0)
+
+    def test_a_child_who_has_never_played_has_no_streak(self):
+        UserGamificationProfile.objects.filter(pk=self.profile.pk).update(
+            streak=3, last_play_date=None,
+        )
+        self.assertEqual(self._served_streak(), 0)
+
+    def test_the_full_profile_says_the_same_number(self):
+        """Two endpoints serving one column must not disagree about it."""
+        self._played(days_ago=4)
+        response = self.client.get('/api/v1/gamification/profile/full/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['gamification']['streak'], 0)
+        self.assertEqual(response.data['daily_challenges']['current_streak'], 0)
+
+    def test_the_column_still_holds_what_the_run_reached(self):
+        """The stored value is history — `claim_daily_streak` reads it to decide
+        whether today continues yesterday. Only the *answer* changes."""
+        self._played(days_ago=4)
+        self._served_streak()
+        self.profile.refresh_from_db()
+        self.assertEqual(self.profile.streak, 7)
+
+    def test_a_broken_run_starts_again_at_one_when_they_come_back(self):
+        self._played(days_ago=4)
+        streak, _ = self.profile.claim_daily_streak()
+        self.assertEqual(streak, 1)
+        self.assertEqual(self._served_streak(), 1)
+
+    def test_a_streak_badge_is_not_awarded_on_a_streak_that_is_over(self):
+        """A badge is permanent. Awarding one off a column nothing lowers means
+        a child keeps "7-day streak" for a run that ended five days ago."""
+        from .models import Badge
+        from .services import check_and_award_badges
+
+        Badge.objects.create(
+            slug='streak-7', title_en='Orbit Master', description_en='7-day streak',
+            icon='UZ', condition_type='streak', condition_value=7,
+        )
+        self._played(days_ago=5)
+        awarded = check_and_award_badges(self.user, self.profile, lesson_count=0)
+        self.assertEqual(awarded, [])
+
+        self._played(days_ago=0)
+        self.assertEqual(
+            check_and_award_badges(self.user, self.profile, lesson_count=0),
+            ['streak-7'],
+        )
+
+    def test_a_streak_mission_is_not_paid_out_on_a_streak_that_is_over(self):
+        """The same lie, but it costs XP: the reward for a three-day run was
+        claimable four days after the run ended."""
+        mission = Mission.objects.create(
+            slug='three-days', title_en='Three days running', description_en='x',
+            mission_type='streak', target_value=3, reward_xp=300, reward_fuel=50,
+        )
+        self._played(days_ago=4)
+        response = self.client.post(
+            '/api/v1/gamification/missions/claim/',
+            {'mission_id': mission.id}, format='json',
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['progress'], 0)
+
+
+class QuizLeaderboardTests(TestCase):
+    """One lucky quiz used to beat fifty near-perfect ones.
+
+    The board ranked on `Avg('percentage')` with nothing under it, so a child
+    who took one quiz and happened to score 100% sat above a child who had
+    taken fifty and averaged 96. It also printed no place at all, ordered ties
+    arbitrarily and cut at a size of its own — all three of which the XP board
+    settled in `leaderboard.py`. Two boards on one platform answering the same
+    question by different rules is the finding that file was written for.
+    """
+
+    def setUp(self):
+        self.client = APIClient()
+
+    def _player(self, name, *, attempts, pct, category='physics'):
+        user = User.objects.create_user(
+            username=name, email=f'{name}@e.com', password='x', astronaut_name=name,
+        )
+        for _ in range(attempts):
+            QuizSession.objects.create(
+                user=user, category=category, score=1, total=1,
+                percentage=pct, is_completed=True,
+            )
+        return user
+
+    def _board(self, user=None, **params):
+        client = APIClient()
+        if user is not None:
+            client.force_authenticate(user)
+        response = client.get('/api/v1/gamification/leaderboard/quiz/', params)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        return response.data
+
+    def test_one_lucky_attempt_does_not_outrank_fifty_near_perfect_ones(self):
+        self._player('omadli', attempts=1, pct=100.0)
+        self._player('mehnatkash', attempts=50, pct=96.0)
+
+        names = [row['display_name'] for row in self._board()['leaderboard']]
+        self.assertEqual(names[0], 'mehnatkash')
+        self.assertNotIn('omadli', names)
+
+    def test_a_child_below_the_floor_is_not_on_the_board_at_all(self):
+        self._player('boshlovchi', attempts=MIN_QUIZZES_RANKED - 1, pct=100.0)
+        board = self._board()
+        self.assertEqual(board['leaderboard'], [])
+        self.assertEqual(board['total_players'], 0)
+
+    def test_the_floor_is_published_so_the_page_can_say_what_it_is(self):
+        """A child who is not on the board is owed the reason, in a number."""
+        board = self._board()
+        self.assertEqual(board['min_quizzes'], MIN_QUIZZES_RANKED)
+
+    def test_reaching_the_floor_puts_you_on_the_board(self):
+        self._player('yetdi', attempts=MIN_QUIZZES_RANKED, pct=80.0)
+        board = self._board()
+        self.assertEqual([r['display_name'] for r in board['leaderboard']], ['yetdi'])
+        self.assertEqual(board['total_players'], 1)
+
+    def test_tied_players_share_one_place(self):
+        """1-1-1-4, the same rule `rank_for_xp` uses — see leaderboard.py."""
+        for name in ('ayaz', 'bek', 'dilnoza'):
+            self._player(name, attempts=MIN_QUIZZES_RANKED, pct=90.0)
+        self._player('quyi', attempts=MIN_QUIZZES_RANKED, pct=50.0)
+
+        rows = self._board()['leaderboard']
+        self.assertEqual([row['rank'] for row in rows], [1, 1, 1, 4])
+
+    def test_the_board_marks_your_own_row(self):
+        me = self._player('men', attempts=MIN_QUIZZES_RANKED, pct=70.0)
+        self._player('boshqa', attempts=MIN_QUIZZES_RANKED, pct=90.0)
+        rows = self._board(me)['leaderboard']
+        self.assertEqual([row['is_you'] for row in rows], [False, True])
+
+    def test_the_board_is_no_longer_than_the_xp_board(self):
+        self.assertEqual(len(self._board()['leaderboard']), 0)
+        self.assertEqual(self._board()['board_size'], BOARD_SIZE)
+
+    def test_the_floor_is_counted_within_the_category_being_asked_about(self):
+        """Filtering by category and then ranking on an average built from
+        every category would rank a physics board on astronomy attempts."""
+        user = self._player('aralash', attempts=MIN_QUIZZES_RANKED, pct=100.0,
+                            category='astronomy')
+        QuizSession.objects.create(
+            user=user, category='physics', score=1, total=1,
+            percentage=100.0, is_completed=True,
+        )
+        self.assertEqual(self._board(category='physics')['leaderboard'], [])
+        self.assertEqual(
+            [r['display_name'] for r in self._board(category='astronomy')['leaderboard']],
+            ['aralash'],
+        )
+
+    def test_an_unfinished_quiz_does_not_count_towards_the_floor(self):
+        user = self._player('tugatmagan', attempts=MIN_QUIZZES_RANKED - 1, pct=100.0)
+        QuizSession.objects.create(
+            user=user, category='physics', score=0, total=1,
+            percentage=0.0, is_completed=False,
+        )
+        self.assertEqual(self._board()['leaderboard'], [])
