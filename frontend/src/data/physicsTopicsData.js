@@ -12,6 +12,19 @@
  * bare, and their empty slot says a video is being made for them — which is
  * true, and is better than borrowing one.
  */
+import { kinematicsLessonText } from './lessonText/physicsKinematics.js';
+
+/**
+ * A lesson whose text has been written, in all three languages.
+ *
+ * Keyed on the slug the lesson already has, and handed back to the exporter as
+ * an explicit `slug` — because the name is changing here. Every one of these
+ * was an English title standing in for the Uzbek original, so `name` moves to
+ * Uzbek and the English goes to `nameEn`; a derived slug would follow the name
+ * and strand every progress row already recorded against the old one.
+ */
+const written = (slug, videoUrl = '') => ({ slug, ...kinematicsLessonText[slug], videoUrl });
+
 export const physicsTopicsData = {
   1: {
     id: 1,
@@ -19,16 +32,18 @@ export const physicsTopicsData = {
     titleEn: 'Kinematics', titleRu: 'Кинематика',
     color: '#00e5ff',
     lessons: [
-      { name: "Basic concepts in mechanics", videoUrl: "https://www.youtube.com/watch?v=LF98SpIWZac" },
-      "Straight-line uniform motion",
-      { name: "Graphical representation of straight-line uniform motion", videoUrl: "https://www.youtube.com/watch?v=BTJmrnzT_eQ" },
-      { name: "Relativity of motion", videoUrl: "https://www.youtube.com/watch?v=gqphgVyTzqs" },
-      { name: "Non-uniform motion", videoUrl: "https://www.youtube.com/watch?v=Sn0EEL5E2cI" },
-      { name: "Uniformly accelerated motion. Acceleration. Instantaneous velocity", videoUrl: "https://www.youtube.com/watch?v=HK1qm34dy9E" },
-      { name: "Displacement in uniformly accelerated motion", videoUrl: "https://www.youtube.com/watch?v=RYKrRm8dPPw" },
-      "Motion of two bodies",
-      { name: "Graphical representation of uniformly accelerated motion", videoUrl: "https://www.youtube.com/watch?v=8HC7N9D29TE" },
-      "Curvilinear motion",
+      // The ten written lessons of this topic. The rest of the subject is still
+      // a bare title; see the branch notes in `lessonText/physicsKinematics.js`.
+      written('physics-kinematics-basic-concepts-in-mechanics', 'https://www.youtube.com/watch?v=LF98SpIWZac'),
+      written('physics-kinematics-straight-line-uniform-motion'),
+      written('physics-kinematics-graphical-representation-of-straight-line-uniform-motion', 'https://www.youtube.com/watch?v=BTJmrnzT_eQ'),
+      written('physics-kinematics-relativity-of-motion', 'https://www.youtube.com/watch?v=gqphgVyTzqs'),
+      written('physics-kinematics-non-uniform-motion', 'https://www.youtube.com/watch?v=Sn0EEL5E2cI'),
+      written('physics-kinematics-uniformly-accelerated-motion-acceleration-instantaneous-velocity', 'https://www.youtube.com/watch?v=HK1qm34dy9E'),
+      written('physics-kinematics-displacement-in-uniformly-accelerated-motion', 'https://www.youtube.com/watch?v=RYKrRm8dPPw'),
+      written('physics-kinematics-motion-of-two-bodies'),
+      written('physics-kinematics-graphical-representation-of-uniformly-accelerated-motion', 'https://www.youtube.com/watch?v=8HC7N9D29TE'),
+      written('physics-kinematics-curvilinear-motion'),
       // Centripetal acceleration is what a body accelerating along a curve has.
       { name: "Acceleration in curvilinear motion", videoUrl: "https://www.youtube.com/watch?v=Njc5QCRU4ZQ" },
       "Transmission of rotational motion",

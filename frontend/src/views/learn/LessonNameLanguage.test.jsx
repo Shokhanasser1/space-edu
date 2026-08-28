@@ -33,6 +33,15 @@ beforeEach(async () => {
 });
 
 // One lesson, written out in all three languages the way a content editor would.
+//
+// **None of these three names may appear in `src/data/physicsTopicsData.js`.**
+// The view renders the static file first and swaps in the API answer when it
+// lands, so a name the two have in common is found by `findByText` against the
+// static render — and the assertion then proves nothing about the API at all.
+// It also breaks outright: the node found in the first render is detached by
+// the second, and `toBeInTheDocument` fails on an element that was really
+// there. That is what happened on 28 Aug 2026, when the first ten kinematics
+// lessons were written and two of these strings became real content.
 const tree = {
   topics: [{
     order: 1, slug: 'physics-kinematics',
@@ -40,9 +49,9 @@ const tree = {
     color: '#00e5ff',
     lessons: [{
       slug: 'physics-uniform-motion',
-      name: "To'g'ri chiziqli tekis harakat",
-      name_en: 'Motion at constant velocity',
-      name_ru: 'Прямолинейное равномерное движение',
+      name: 'Vagon derazasidan qaralganda',
+      name_en: 'Seen from a carriage window',
+      name_ru: 'Вид из окна вагона',
       children: [],
     }],
   }],
@@ -63,25 +72,25 @@ function renderIn(storeLanguage) {
 describe('a lesson row', () => {
   it('is in Russian for a Russian reader', async () => {
     renderIn('RUS');
-    expect(await screen.findByText('Прямолинейное равномерное движение')).toBeInTheDocument();
-    expect(screen.queryByText("To'g'ri chiziqli tekis harakat")).toBeNull();
+    expect(await screen.findByText('Вид из окна вагона')).toBeInTheDocument();
+    expect(screen.queryByText('Vagon derazasidan qaralganda')).toBeNull();
   });
 
   it('is in English for an English reader', async () => {
     renderIn('ENG');
-    expect(await screen.findByText('Motion at constant velocity')).toBeInTheDocument();
-    expect(screen.queryByText("To'g'ri chiziqli tekis harakat")).toBeNull();
+    expect(await screen.findByText('Seen from a carriage window')).toBeInTheDocument();
+    expect(screen.queryByText('Vagon derazasidan qaralganda')).toBeNull();
   });
 
   it('is in Uzbek for an Uzbek reader, which is the base the others translate', async () => {
     renderIn('UZB');
-    expect(await screen.findByText("To'g'ri chiziqli tekis harakat")).toBeInTheDocument();
-    expect(screen.queryByText('Motion at constant velocity')).toBeNull();
+    expect(await screen.findByText('Vagon derazasidan qaralganda')).toBeInTheDocument();
+    expect(screen.queryByText('Seen from a carriage window')).toBeNull();
   });
 
   it('shows the base name rather than nothing when a translation is missing', async () => {
-    // Every one of the 474 seeded lessons is in this state today: name_ru is ''
-    // for all of them, so Russian has to degrade to something readable.
+    // 464 of the 474 seeded lessons are in this state: name_ru is empty, so
+    // Russian has to degrade to something readable rather than to nothing.
     api.get.mockResolvedValue({
       data: {
         topics: [{
@@ -98,6 +107,6 @@ describe('a lesson row', () => {
         </Routes>
       </MemoryRouter>,
     );
-    expect(await screen.findByText("To'g'ri chiziqli tekis harakat")).toBeInTheDocument();
+    expect(await screen.findByText('Vagon derazasidan qaralganda')).toBeInTheDocument();
   });
 });

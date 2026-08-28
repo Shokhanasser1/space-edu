@@ -18,8 +18,8 @@ class TopicLessonSerializer(serializers.ModelSerializer):
     class Meta:
         model = TopicLesson
         fields = ('id', 'slug', 'order', 'name', 'name_en', 'name_ru',
-                  'video_url', 'content', 'xp_reward', 'fuel_reward',
-                  'question_count', 'children')
+                  'video_url', 'content', 'content_en', 'content_ru',
+                  'xp_reward', 'fuel_reward', 'question_count', 'children')
 
     def get_children(self, obj):
         return TopicLessonSerializer(
@@ -31,7 +31,8 @@ class TopicLessonWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = TopicLesson
         fields = ('id', 'topic', 'parent', 'slug', 'order', 'name', 'name_en', 'name_ru',
-                  'video_url', 'content', 'xp_reward', 'fuel_reward')
+                  'video_url', 'content', 'content_en', 'content_ru',
+                  'xp_reward', 'fuel_reward')
 
     def validate(self, attrs):
         """A lesson and its parent must sit in the same topic, and a lesson

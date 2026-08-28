@@ -340,90 +340,120 @@
             {
               "slug": "physics-kinematics-basic-concepts-in-mechanics",
               "order": 0,
-              "name": "Basic concepts in mechanics",
+              "name": "Mexanikaning asosiy tushunchalari",
               "name_en": "Basic concepts in mechanics",
-              "name_ru": "",
+              "name_ru": "Основные понятия механики",
+              "content": "Mexanika jismlar qanday harakatlanishini va nima uchun aynan shunday harakatlanishini o'rganadi.\n\n**Moddiy nuqta** — masalaning shartida o'lchamini hisobga olmasa ham bo'ladigan jism. Toshkentdan Samarqandga ketayotgan avtobus xaritada nuqta; garajga kirayotgan o'sha avtobus esa nuqta emas.\n\n**Sanoq sistemasi** — sanoq jismi, unga bog'langan koordinata o'qi va soat. Ularsiz \"jism qayerda?\" degan savolning javobi yo'q.\n\n**Trayektoriya** — jism chizib o'tgan chiziq. **Yo'l** — shu chiziqning uzunligi, u hech qachon kamaymaydi. **Ko'chish** — boshlang'ich nuqtadan oxirgi nuqtaga yo'nalgan vektor.\n\n### Misol\n\nStadionning 400 metrli doirasi bo'ylab bir marta yugurdingiz. Yo'l 400 m ga teng, ko'chish esa nolga teng — chunki siz turgan joyingizga qaytdingiz.\n\nXalqaro birliklar sistemasida (SI) uzunlik metrda (m), vaqt sekundda (s) o'lchanadi.",
+              "content_en": "Mechanics studies how bodies move, and why they move the way they do.\n\n**A point mass** is a body whose size does not matter for the question you are asking. A bus driving from Tashkent to Samarkand is a point on the map; the same bus reversing into a garage is not.\n\n**A frame of reference** is a reference body, coordinate axes attached to it, and a clock. Without one, \"where is the body?\" has no answer.\n\n**The trajectory** is the line a body traces out. **Distance travelled** is the length of that line, and it never decreases. **Displacement** is the vector drawn from the starting point to the finishing point.\n\n### Example\n\nRun one lap of a 400 m stadium track. The distance travelled is 400 m; the displacement is zero, because you came back to where you started.\n\nIn SI, length is measured in metres (m) and time in seconds (s).",
+              "content_ru": "Механика изучает, как движутся тела и почему они движутся именно так.\n\n**Материальная точка** — тело, размерами которого в данной задаче можно пренебречь. Автобус, едущий из Ташкента в Самарканд, — точка на карте; тот же автобус, заезжающий в гараж, — уже нет.\n\n**Система отсчёта** — это тело отсчёта, связанные с ним координатные оси и часы. Без неё у вопроса «где находится тело?» нет ответа.\n\n**Траектория** — линия, которую описывает тело. **Путь** — длина этой линии, и он никогда не уменьшается. **Перемещение** — вектор, проведённый из начальной точки в конечную.\n\n### Пример\n\nПробегите один круг по 400-метровой дорожке стадиона. Путь равен 400 м, а перемещение равно нулю — вы вернулись туда, откуда стартовали.\n\nВ СИ длина измеряется в метрах (м), время — в секундах (с).",
               "video_url": "https://www.youtube.com/watch?v=LF98SpIWZac",
               "children": []
             },
             {
               "slug": "physics-kinematics-straight-line-uniform-motion",
               "order": 1,
-              "name": "Straight-line uniform motion",
+              "name": "To'g'ri chiziqli tekis harakat",
               "name_en": "Straight-line uniform motion",
-              "name_ru": "",
+              "name_ru": "Прямолинейное равномерное движение",
+              "content": "Jism to'g'ri chiziq bo'ylab harakatlanib, ixtiyoriy teng vaqt oraliqlarida teng yo'llarni bosib o'tsa, bu **to'g'ri chiziqli tekis harakat** deyiladi. Bunda tezlik o'zgarmaydi.\n\nTezlik — bir sekundda bosib o'tilgan yo'l:\n\n**v = s / t**, demak **s = v · t**\n\nKoordinata vaqtga chiziqli bog'lanadi:\n\n**x = x₀ + v · t**, bu yerda x₀ — boshlang'ich koordinata.\n\n### Misol\n\nPoyezd 72 km/soat tezlik bilan ketmoqda. 72 km/soat = 72 000 m / 3600 s = **20 m/s**. 30 sekundda u 20 · 30 = **600 m** yo'l bosadi.\n\nkm/soat ni m/s ga aylantirish uchun 3,6 ga bo'ling; teskarisiga o'tish uchun 3,6 ga ko'paytiring.",
+              "content_en": "A body moves in **straight-line uniform motion** when it travels along a straight line and covers equal distances in any equal intervals of time. Its velocity does not change.\n\nVelocity is the distance covered in one second:\n\n**v = s / t**, and therefore **s = v · t**\n\nThe coordinate depends on time linearly:\n\n**x = x₀ + v · t**, where x₀ is the starting coordinate.\n\n### Example\n\nA train travels at 72 km/h. That is 72 000 m / 3600 s = **20 m/s**. In 30 seconds it covers 20 · 30 = **600 m**.\n\nTo convert km/h into m/s, divide by 3.6; to go back the other way, multiply by 3.6.",
+              "content_ru": "Тело движется **прямолинейно и равномерно**, если оно движется по прямой и за любые равные промежутки времени проходит равные пути. Скорость при этом не меняется.\n\nСкорость — это путь, пройденный за одну секунду:\n\n**v = s / t**, а значит **s = v · t**\n\nКоордината зависит от времени линейно:\n\n**x = x₀ + v · t**, где x₀ — начальная координата.\n\n### Пример\n\nПоезд идёт со скоростью 72 км/ч. Это 72 000 м / 3600 с = **20 м/с**. За 30 секунд он пройдёт 20 · 30 = **600 м**.\n\nЧтобы перевести км/ч в м/с, разделите на 3,6; обратно — умножьте на 3,6.",
               "video_url": "",
               "children": []
             },
             {
               "slug": "physics-kinematics-graphical-representation-of-straight-line-uniform-motion",
               "order": 2,
-              "name": "Graphical representation of straight-line uniform motion",
+              "name": "To'g'ri chiziqli tekis harakatning grafik tasviri",
               "name_en": "Graphical representation of straight-line uniform motion",
-              "name_ru": "",
+              "name_ru": "Графическое представление прямолинейного равномерного движения",
+              "content": "Tekis harakatni ikki xil grafik bilan tasvirlash mumkin.\n\n**Koordinata grafigi (x–t).** Bu to'g'ri chiziq. Chiziq qanchalik tik bo'lsa, tezlik shunchalik katta. Pastga qarab tushayotgan chiziq jism o'qning teskari tomoniga ketayotganini, gorizontal chiziq esa jism tinch turganini bildiradi.\n\n**Tezlik grafigi (v–t).** Bu gorizontal chiziq, chunki tezlik o'zgarmaydi. Grafik ostidagi to'rtburchakning yuzi — ko'chishga teng.\n\n### Misol\n\nx–t grafigida chiziq t = 0 da x = 10 m nuqtadan boshlanib, t = 8 s da x = 50 m ga yetadi.\n\nTezlik: v = (50 − 10) / 8 = **5 m/s**.\n\nO'sha harakatning v–t grafigi 5 m/s balandlikdagi gorizontal chiziq. Uning ostidagi yuza: 5 · 8 = **40 m** — bu x ning 10 dan 50 gacha o'zgarishi bilan bir xil.",
+              "content_en": "Uniform motion can be drawn in two ways.\n\n**The position graph (x–t)** is a straight line. The steeper the line, the greater the speed. A line sloping downwards means the body is moving in the negative direction of the axis; a horizontal line means it is at rest.\n\n**The velocity graph (v–t)** is a horizontal line, because the velocity does not change. The area of the rectangle under it equals the displacement.\n\n### Example\n\nOn an x–t graph a line starts at x = 10 m when t = 0 and reaches x = 50 m at t = 8 s.\n\nThe velocity is v = (50 − 10) / 8 = **5 m/s**.\n\nThe v–t graph of the same motion is a horizontal line at 5 m/s. The area under it is 5 · 8 = **40 m** — the same as the change in x from 10 m to 50 m.",
+              "content_ru": "Равномерное движение можно изобразить двумя графиками.\n\n**График координаты (x–t)** — прямая линия. Чем круче линия, тем больше скорость. Линия, идущая вниз, означает движение против направления оси, а горизонтальная линия — что тело покоится.\n\n**График скорости (v–t)** — горизонтальная линия, ведь скорость не меняется. Площадь прямоугольника под ней равна перемещению.\n\n### Пример\n\nНа графике x–t линия начинается в точке x = 10 м при t = 0 и приходит в x = 50 м при t = 8 с.\n\nСкорость: v = (50 − 10) / 8 = **5 м/с**.\n\nГрафик v–t того же движения — горизонтальная линия на уровне 5 м/с. Площадь под ней: 5 · 8 = **40 м** — столько же, на сколько изменилась координата.",
               "video_url": "https://www.youtube.com/watch?v=BTJmrnzT_eQ",
               "children": []
             },
             {
               "slug": "physics-kinematics-relativity-of-motion",
               "order": 3,
-              "name": "Relativity of motion",
+              "name": "Harakatning nisbiyligi",
               "name_en": "Relativity of motion",
-              "name_ru": "",
+              "name_ru": "Относительность движения",
+              "content": "\"Jism harakatlanmoqda\" degan gap qaysi sanoq sistemasiga nisbatan aytilgani ko'rsatilmasa, tugallanmagan bo'ladi.\n\nVagonda o'tirgan yo'lovchi vagonga nisbatan tinch turadi, perronga nisbatan esa poyezd tezligi bilan harakatlanadi. Ikkala javob ham to'g'ri, chunki ular boshqa-boshqa sanoq sistemalarida berilgan.\n\nTezliklar qo'shiladi:\n\n**v(yer) = v(vagon) + v(vagonga nisbatan)** — vektor sifatida.\n\n### Misol\n\nPoyezd perronga nisbatan 20 m/s tezlik bilan ketmoqda. Yo'lovchi vagon ichida 1 m/s tezlik bilan yuradi.\n\nPoyezd yo'nalishi bo'yicha yursa, perronga nisbatan tezligi 20 + 1 = **21 m/s**. Orqaga qarab yursa, 20 − 1 = **19 m/s**.\n\nYo'l va trayektoriya ham nisbiy: yo'lovchi uchun tushgan tanga to'g'ri chiziq bo'ylab tushadi, perronda turgan odam esa uning egri chiziq chizganini ko'radi.",
+              "content_en": "Saying \"the body is moving\" is unfinished until you say which frame of reference you mean.\n\nA passenger sitting in a carriage is at rest relative to the carriage, and moving at the train's speed relative to the platform. Both answers are correct, because they are answers in different frames.\n\nVelocities add:\n\n**v(ground) = v(train) + v(relative to the train)** — as vectors.\n\n### Example\n\nA train moves at 20 m/s relative to the platform. A passenger walks inside it at 1 m/s.\n\nWalking towards the front, their speed relative to the platform is 20 + 1 = **21 m/s**. Walking towards the back, it is 20 − 1 = **19 m/s**.\n\nDistance and trajectory are relative too: a dropped coin falls in a straight line for the passenger, while somebody on the platform sees it trace a curve.",
+              "content_ru": "Фраза «тело движется» не закончена, пока не сказано, относительно какой системы отсчёта.\n\nПассажир, сидящий в вагоне, покоится относительно вагона и движется со скоростью поезда относительно платформы. Оба ответа верны — просто они даны в разных системах отсчёта.\n\nСкорости складываются:\n\n**v(земля) = v(поезд) + v(относительно поезда)** — как векторы.\n\n### Пример\n\nПоезд движется относительно платформы со скоростью 20 м/с. Пассажир идёт внутри вагона со скоростью 1 м/с.\n\nЕсли он идёт по ходу поезда, его скорость относительно платформы 20 + 1 = **21 м/с**. Если против хода — 20 − 1 = **19 м/с**.\n\nПуть и траектория тоже относительны: для пассажира выпавшая монета падает по прямой, а стоящий на платформе увидит, что она описала кривую.",
               "video_url": "https://www.youtube.com/watch?v=gqphgVyTzqs",
               "children": []
             },
             {
               "slug": "physics-kinematics-non-uniform-motion",
               "order": 4,
-              "name": "Non-uniform motion",
+              "name": "Notekis harakat",
               "name_en": "Non-uniform motion",
-              "name_ru": "",
+              "name_ru": "Неравномерное движение",
+              "content": "Haqiqiy harakatda tezlik doim o'zgarib turadi: avtobus bekatdan qo'zg'aladi, tezlashadi, svetoforda to'xtaydi. Bunday harakat **notekis harakat** deyiladi.\n\n**O'rtacha tezlik** — butun yo'lni butun vaqtga bo'lgan nisbat:\n\n**v(o'rtacha) = s(umumiy) / t(umumiy)**\n\nBu tezliklarning o'rta arifmetigi **emas** — vaqtlar har xil bo'lsa, javob ham boshqacha chiqadi.\n\n**Oniy tezlik** — ma'lum bir paytdagi tezlik. Avtomobil spidometri aynan shuni ko'rsatadi.\n\n### Misol\n\nAvtomobil dastlabki 100 km ni 50 km/soat bilan (2 soat), keyingi 100 km ni 100 km/soat bilan (1 soat) bosib o'tdi.\n\nO'rtacha tezlik = 200 km / 3 soat ≈ **66,7 km/soat**, 75 km/soat emas.",
+              "content_en": "In real motion the speed keeps changing: a bus pulls away from a stop, speeds up, and halts at a traffic light. Motion like this is called **non-uniform motion**.\n\n**Average speed** is the whole distance divided by the whole time:\n\n**v(average) = s(total) / t(total)**\n\nIt is **not** the arithmetic mean of the speeds — when the times spent at each speed differ, the two give different answers.\n\n**Instantaneous speed** is the speed at one particular moment. That is what a car's speedometer shows.\n\n### Example\n\nA car covers the first 100 km at 50 km/h (2 hours) and the next 100 km at 100 km/h (1 hour).\n\nAverage speed = 200 km / 3 h ≈ **66.7 km/h**, not 75 km/h.",
+              "content_ru": "В реальном движении скорость всё время меняется: автобус трогается с остановки, разгоняется, тормозит на светофоре. Такое движение называют **неравномерным**.\n\n**Средняя скорость** — это весь путь, делённый на всё время:\n\n**v(средняя) = s(общий) / t(общее)**\n\nЭто **не** среднее арифметическое скоростей: если время движения с каждой скоростью разное, ответы получаются разными.\n\n**Мгновенная скорость** — скорость в конкретный момент. Именно её показывает спидометр автомобиля.\n\n### Пример\n\nАвтомобиль проехал первые 100 км со скоростью 50 км/ч (2 часа), а следующие 100 км — со скоростью 100 км/ч (1 час).\n\nСредняя скорость = 200 км / 3 ч ≈ **66,7 км/ч**, а вовсе не 75 км/ч.",
               "video_url": "https://www.youtube.com/watch?v=Sn0EEL5E2cI",
               "children": []
             },
             {
               "slug": "physics-kinematics-uniformly-accelerated-motion-acceleration-instantaneous-velocity",
               "order": 5,
-              "name": "Uniformly accelerated motion. Acceleration. Instantaneous velocity",
+              "name": "Tekis tezlanuvchan harakat. Tezlanish. Oniy tezlik",
               "name_en": "Uniformly accelerated motion. Acceleration. Instantaneous velocity",
-              "name_ru": "",
+              "name_ru": "Равноускоренное движение. Ускорение. Мгновенная скорость",
+              "content": "**Tezlanish** — tezlikning bir sekundda qanchaga o'zgarishini ko'rsatadi:\n\n**a = (v − v₀) / t**\n\nO'lchov birligi — m/s². Tezlanish o'zgarmas bo'lsa, harakat **tekis tezlanuvchan** deyiladi va istalgan paytdagi tezlik quyidagicha topiladi:\n\n**v = v₀ + a · t**\n\nTezlanish tezlikka qarama-qarshi yo'nalgan bo'lsa, jism sekinlashadi; tanlangan o'qda a manfiy chiqadi.\n\n### Misol\n\nAvtomobil joyidan qo'zg'alib, 8 sekundda 20 m/s tezlikka erishdi.\n\na = (20 − 0) / 8 = **2,5 m/s²**\n\n3-sekundda uning oniy tezligi: v = 0 + 2,5 · 3 = **7,5 m/s**.\n\nErga yaqin joyda erkin tushayotgan jismning tezlanishi taxminan **9,8 m/s²** ga teng.",
+              "content_en": "**Acceleration** says how much the velocity changes in one second:\n\n**a = (v − v₀) / t**\n\nIts unit is m/s². When the acceleration stays constant the motion is called **uniformly accelerated**, and the velocity at any moment is\n\n**v = v₀ + a · t**\n\nIf the acceleration points against the velocity, the body slows down, and a comes out negative along the chosen axis.\n\n### Example\n\nA car starts from rest and reaches 20 m/s in 8 seconds.\n\na = (20 − 0) / 8 = **2.5 m/s²**\n\nIts instantaneous velocity at the 3rd second is v = 0 + 2.5 · 3 = **7.5 m/s**.\n\nA body falling freely near the Earth's surface has an acceleration of about **9.8 m/s²**.",
+              "content_ru": "**Ускорение** показывает, на сколько меняется скорость за одну секунду:\n\n**a = (v − v₀) / t**\n\nЕдиница измерения — м/с². Если ускорение постоянно, движение называют **равноускоренным**, и скорость в любой момент равна\n\n**v = v₀ + a · t**\n\nЕсли ускорение направлено против скорости, тело замедляется, и вдоль выбранной оси a получается отрицательным.\n\n### Пример\n\nАвтомобиль трогается с места и за 8 секунд разгоняется до 20 м/с.\n\na = (20 − 0) / 8 = **2,5 м/с²**\n\nЕго мгновенная скорость на 3-й секунде: v = 0 + 2,5 · 3 = **7,5 м/с**.\n\nУ тела, свободно падающего вблизи поверхности Земли, ускорение примерно **9,8 м/с²**.",
               "video_url": "https://www.youtube.com/watch?v=HK1qm34dy9E",
               "children": []
             },
             {
               "slug": "physics-kinematics-displacement-in-uniformly-accelerated-motion",
               "order": 6,
-              "name": "Displacement in uniformly accelerated motion",
+              "name": "Tekis tezlanuvchan harakatda ko'chish",
               "name_en": "Displacement in uniformly accelerated motion",
-              "name_ru": "",
+              "name_ru": "Перемещение при равноускоренном движении",
+              "content": "Tezlik o'zgarib turgani uchun ko'chishni **s = v · t** bilan hisoblab bo'lmaydi. Buning o'rniga:\n\n**s = v₀ · t + a · t² / 2**\n\nVaqt noma'lum bo'lsa, ikkinchi formula qulay:\n\n**s = (v² − v₀²) / (2a)**\n\nUchinchi yo'l — o'rtacha tezlik orqali, chunki tezlik bir tekis o'zgaradi:\n\n**s = ((v₀ + v) / 2) · t**\n\n### Misol\n\nAvtomobil joyidan qo'zg'alib, a = 2 m/s² tezlanish bilan 6 sekund harakatlandi.\n\ns = 0 + 2 · 6² / 2 = **36 m**\n\n6-sekunddagi tezligi v = 0 + 2 · 6 = 12 m/s. Uchinchi formula bilan tekshiramiz: ((0 + 12) / 2) · 6 = 36 m — javob bir xil.",
+              "content_en": "Because the velocity keeps changing, **s = v · t** cannot be used here. Instead:\n\n**s = v₀ · t + a · t² / 2**\n\nWhen the time is unknown, the second formula is the convenient one:\n\n**s = (v² − v₀²) / (2a)**\n\nA third route is the average velocity, which works because the velocity changes at a steady rate:\n\n**s = ((v₀ + v) / 2) · t**\n\n### Example\n\nA car starts from rest and travels for 6 seconds at an acceleration of a = 2 m/s².\n\ns = 0 + 2 · 6² / 2 = **36 m**\n\nIts velocity at 6 s is v = 0 + 2 · 6 = 12 m/s. Checking with the third formula: ((0 + 12) / 2) · 6 = 36 m — the same answer.",
+              "content_ru": "Скорость всё время меняется, поэтому формула **s = v · t** здесь не годится. Вместо неё:\n\n**s = v₀ · t + a · t² / 2**\n\nЕсли время неизвестно, удобнее вторая формула:\n\n**s = (v² − v₀²) / (2a)**\n\nТретий путь — через среднюю скорость, ведь скорость меняется равномерно:\n\n**s = ((v₀ + v) / 2) · t**\n\n### Пример\n\nАвтомобиль трогается с места и движется 6 секунд с ускорением a = 2 м/с².\n\ns = 0 + 2 · 6² / 2 = **36 м**\n\nСкорость на 6-й секунде: v = 0 + 2 · 6 = 12 м/с. Проверим третьей формулой: ((0 + 12) / 2) · 6 = 36 м — ответ тот же.",
               "video_url": "https://www.youtube.com/watch?v=RYKrRm8dPPw",
               "children": []
             },
             {
               "slug": "physics-kinematics-motion-of-two-bodies",
               "order": 7,
-              "name": "Motion of two bodies",
+              "name": "Ikki jismning harakati",
               "name_en": "Motion of two bodies",
-              "name_ru": "",
+              "name_ru": "Движение двух тел",
+              "content": "Ikki jism haqidagi masalani ikki xil yo'l bilan yechish mumkin.\n\n**Birinchi yo'l — bitta sanoq sistemasi.** Har biri uchun koordinata tenglamasini yozing va ularni tenglashtiring:\n\n**x₁ = x₀₁ + v₁ · t** va **x₂ = x₀₂ + v₂ · t**, uchrashuvda **x₁ = x₂**.\n\n**Ikkinchi yo'l — nisbiy tezlik.** Jismlar bir-biriga qarab kelsa, yaqinlashish tezligi v₁ + v₂; bir tomonga ketsa, orani yopish tezligi v₁ − v₂ ga teng.\n\n### Misol\n\nIkki velosipedchi orasidagi masofa 300 m. Ular bir-biriga qarab 5 m/s va 7 m/s tezlik bilan yo'lga chiqdi.\n\nYaqinlashish tezligi 5 + 7 = 12 m/s, demak ular 300 / 12 = **25 sekunddan keyin** uchrashadi.\n\nAgar avtomobil 25 m/s bilan yurayotgan yuk mashinasini (15 m/s) quvsa, unga nisbatan tezligi atigi 10 m/s bo'ladi — shuning uchun quvib o'tish uzoq davom etadi.",
+              "content_en": "A problem about two bodies can be solved in two ways.\n\n**The first way — one frame of reference.** Write a coordinate equation for each body and set them equal:\n\n**x₁ = x₀₁ + v₁ · t** and **x₂ = x₀₂ + v₂ · t**; at the meeting point **x₁ = x₂**.\n\n**The second way — relative velocity.** If the bodies move towards each other, the gap closes at v₁ + v₂; if they move the same way, it closes at v₁ − v₂.\n\n### Example\n\nTwo cyclists are 300 m apart and ride towards each other at 5 m/s and 7 m/s.\n\nThe gap closes at 5 + 7 = 12 m/s, so they meet after 300 / 12 = **25 seconds**.\n\nIf a car at 25 m/s is overtaking a lorry at 15 m/s, its speed relative to the lorry is only 10 m/s — which is why overtaking takes so long.",
+              "content_ru": "Задачу о двух телах можно решить двумя способами.\n\n**Первый способ — одна система отсчёта.** Запишите уравнение координаты для каждого тела и приравняйте их:\n\n**x₁ = x₀₁ + v₁ · t** и **x₂ = x₀₂ + v₂ · t**; в момент встречи **x₁ = x₂**.\n\n**Второй способ — относительная скорость.** Если тела движутся навстречу, расстояние сокращается со скоростью v₁ + v₂; если в одну сторону — со скоростью v₁ − v₂.\n\n### Пример\n\nДва велосипедиста находятся на расстоянии 300 м и едут навстречу друг другу со скоростями 5 м/с и 7 м/с.\n\nРасстояние сокращается со скоростью 5 + 7 = 12 м/с, значит они встретятся через 300 / 12 = **25 секунд**.\n\nА если автомобиль со скоростью 25 м/с обгоняет грузовик, идущий со скоростью 15 м/с, то относительно грузовика он движется всего со скоростью 10 м/с — поэтому обгон и длится так долго.",
               "video_url": "",
               "children": []
             },
             {
               "slug": "physics-kinematics-graphical-representation-of-uniformly-accelerated-motion",
               "order": 8,
-              "name": "Graphical representation of uniformly accelerated motion",
+              "name": "Tekis tezlanuvchan harakatning grafik tasviri",
               "name_en": "Graphical representation of uniformly accelerated motion",
-              "name_ru": "",
+              "name_ru": "Графическое представление равноускоренного движения",
+              "content": "**Tezlik grafigi (v–t)** — qiya to'g'ri chiziq. Chiziqning qiyaligi tezlanishga teng: ko'tarilsa jism tezlashadi, tushsa sekinlashadi.\n\n**Grafik ostidagi yuza — ko'chish.** Bu qoida har qanday v–t grafigi uchun o'rinli.\n\n**Koordinata grafigi (x–t)** endi to'g'ri chiziq emas, parabola bo'ladi, chunki x tenglamasida t² bor.\n\n### Misol\n\nv–t grafigidagi chiziq nol nuqtadan boshlanib, 6 sekundda 12 m/s ga yetadi.\n\nTezlanish — chiziqning qiyaligi: 12 / 6 = **2 m/s²**.\n\nKo'chish — chiziq ostidagi uchburchakning yuzi: (6 · 12) / 2 = **36 m**.\n\nBu oldingi darsdagi formula bergan javobning aynan o'zi: s = v₀t + at²/2 = 0 + 2 · 36 / 2 = 36 m.",
+              "content_en": "**The velocity graph (v–t)** is a sloping straight line. Its slope is the acceleration: rising means the body is speeding up, falling means it is slowing down.\n\n**The area under the graph is the displacement.** That rule holds for any v–t graph.\n\n**The position graph (x–t)** is no longer a straight line but a parabola, because the equation for x contains t².\n\n### Example\n\nA line on a v–t graph starts at zero and reaches 12 m/s after 6 seconds.\n\nThe acceleration is the slope of the line: 12 / 6 = **2 m/s²**.\n\nThe displacement is the area of the triangle under it: (6 · 12) / 2 = **36 m**.\n\nThat is exactly what the formula in the previous lesson gave: s = v₀t + at²/2 = 0 + 2 · 36 / 2 = 36 m.",
+              "content_ru": "**График скорости (v–t)** — наклонная прямая. Её наклон равен ускорению: линия идёт вверх — тело разгоняется, вниз — тормозит.\n\n**Площадь под графиком равна перемещению.** Это правило верно для любого графика v–t.\n\n**График координаты (x–t)** здесь уже не прямая, а парабола, потому что в уравнении для x есть t².\n\n### Пример\n\nЛиния на графике v–t начинается от нуля и через 6 секунд доходит до 12 м/с.\n\nУскорение — это наклон линии: 12 / 6 = **2 м/с²**.\n\nПеремещение — площадь треугольника под ней: (6 · 12) / 2 = **36 м**.\n\nРовно столько же дала формула из прошлого урока: s = v₀t + at²/2 = 0 + 2 · 36 / 2 = 36 м.",
               "video_url": "https://www.youtube.com/watch?v=8HC7N9D29TE",
               "children": []
             },
             {
               "slug": "physics-kinematics-curvilinear-motion",
               "order": 9,
-              "name": "Curvilinear motion",
+              "name": "Egri chiziqli harakat",
               "name_en": "Curvilinear motion",
-              "name_ru": "",
+              "name_ru": "Криволинейное движение",
+              "content": "Trayektoriyasi to'g'ri chiziq bo'lmasa, harakat **egri chiziqli** deyiladi: burilishdagi avtomobil, orbitadagi sun'iy yo'ldosh, otilgan tosh.\n\nEng muhim qoida: **tezlik har doim trayektoriyaga urinma bo'ylab yo'nalgan.** Shuning uchun jilvir toshdan uchgan uchqunlar aylana bo'ylab emas, to'g'ri chiziq bo'ylab uchadi.\n\nTezlikning qiymati o'zgarmasa ham, uning **yo'nalishi** o'zgaradi — demak tezlanish bor. Aylana bo'ylab tekis harakatda bu tezlanish aylana markaziga qarab yo'naladi va **markazga intilma tezlanish** deyiladi:\n\n**a = v² / R**\n\n### Misol\n\nAvtomobil 10 m/s tezlik bilan radiusi 50 m bo'lgan burilishdan o'tmoqda.\n\na = 10² / 50 = **2 m/s²**\n\nSpidometr o'zgarmagani bilan avtomobil tezlanish bilan harakatlanmoqda — buni burilishda sizni chetga tortayotgan kuch sifatida sezasiz.",
+              "content_en": "Motion is **curvilinear** when the trajectory is not a straight line: a car going round a bend, a satellite in orbit, a thrown stone.\n\nThe rule that matters most: **velocity always points along the tangent to the trajectory.** That is why sparks leaving a grinding wheel fly off in straight lines rather than curving with the wheel.\n\nEven when the size of the velocity does not change, its **direction** does — so there is an acceleration. In uniform motion round a circle that acceleration points at the centre of the circle and is called **centripetal acceleration**:\n\n**a = v² / R**\n\n### Example\n\nA car goes round a bend of radius 50 m at 10 m/s.\n\na = 10² / 50 = **2 m/s²**\n\nThe speedometer reading never changes, yet the car is accelerating — and you feel it as the push towards the side of your seat.",
+              "content_ru": "Движение называют **криволинейным**, когда траектория не является прямой: автомобиль на повороте, спутник на орбите, брошенный камень.\n\nСамое важное правило: **скорость всегда направлена по касательной к траектории.** Именно поэтому искры, слетающие с точильного круга, летят по прямой, а не по окружности.\n\nДаже если величина скорости не меняется, меняется её **направление** — значит, есть ускорение. При равномерном движении по окружности это ускорение направлено к центру окружности и называется **центростремительным**:\n\n**a = v² / R**\n\n### Пример\n\nАвтомобиль проходит поворот радиусом 50 м со скоростью 10 м/с.\n\na = 10² / 50 = **2 м/с²**\n\nСпидометр показывает одно и то же, но автомобиль движется с ускорением — вы чувствуете это как силу, прижимающую вас к боку сиденья.",
               "video_url": "",
               "children": []
             },
@@ -433,6 +463,9 @@
               "name": "Acceleration in curvilinear motion",
               "name_en": "Acceleration in curvilinear motion",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "https://www.youtube.com/watch?v=Njc5QCRU4ZQ",
               "children": []
             },
@@ -442,6 +475,9 @@
               "name": "Transmission of rotational motion",
               "name_en": "Transmission of rotational motion",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -451,6 +487,9 @@
               "name": "Non-uniform circular motion",
               "name_en": "Non-uniform circular motion",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             }
@@ -470,6 +509,9 @@
               "name": "Force. Newton's first law",
               "name_en": "Force. Newton's first law",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "https://www.youtube.com/watch?v=K9wubX_VPAA",
               "children": []
             },
@@ -479,6 +521,9 @@
               "name": "Mass. Density",
               "name_en": "Mass. Density",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -488,6 +533,9 @@
               "name": "Newton's second law",
               "name_en": "Newton's second law",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "https://www.youtube.com/watch?v=BkUyufANeo4",
               "children": []
             },
@@ -497,6 +545,9 @@
               "name": "Newton's third law",
               "name_en": "Newton's third law",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "https://www.youtube.com/watch?v=_sSdSI3PqWo",
               "children": []
             },
@@ -506,6 +557,9 @@
               "name": "Law of universal gravitation",
               "name_en": "Law of universal gravitation",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "https://www.youtube.com/watch?v=9qKK4LI0OYg",
               "children": []
             },
@@ -515,6 +569,9 @@
               "name": "Gravity",
               "name_en": "Gravity",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "https://www.youtube.com/watch?v=ila7kbiQucs",
               "children": []
             },
@@ -524,6 +581,9 @@
               "name": "Elastic force",
               "name_en": "Elastic force",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -533,6 +593,9 @@
               "name": "Weight",
               "name_en": "Weight",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "https://www.youtube.com/watch?v=tP2tQtnR9bg",
               "children": []
             },
@@ -542,6 +605,9 @@
               "name": "Weightlessness",
               "name_en": "Weightlessness",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "https://www.youtube.com/watch?v=wD8HqX6gGZc",
               "children": []
             },
@@ -551,6 +617,9 @@
               "name": "Vertical motion of a body under gravity",
               "name_en": "Vertical motion of a body under gravity",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "https://www.youtube.com/watch?v=KicO4MoOMS4",
               "children": []
             },
@@ -560,6 +629,9 @@
               "name": "Motion of a body thrown horizontally",
               "name_en": "Motion of a body thrown horizontally",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "https://www.youtube.com/watch?v=W9l1urFgiu4",
               "children": []
             },
@@ -569,6 +641,9 @@
               "name": "Motion of a body thrown at an angle to the horizon",
               "name_en": "Motion of a body thrown at an angle to the horizon",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "https://www.youtube.com/watch?v=5nOnhTq20vk",
               "children": []
             },
@@ -578,6 +653,9 @@
               "name": "Artificial satellites of the Earth",
               "name_en": "Artificial satellites of the Earth",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "https://www.youtube.com/watch?v=yM-KakIQRGA",
               "children": []
             },
@@ -587,6 +665,9 @@
               "name": "Friction force. Static friction",
               "name_en": "Friction force. Static friction",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "https://www.youtube.com/watch?v=YP_hnGED0mQ",
               "children": []
             },
@@ -596,6 +677,9 @@
               "name": "Sliding friction force",
               "name_en": "Sliding friction force",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "https://www.youtube.com/watch?v=h6I7Lp_M--Q",
               "children": []
             },
@@ -605,6 +689,9 @@
               "name": "Motion under the action of multiple forces",
               "name_en": "Motion under the action of multiple forces",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "https://www.youtube.com/watch?v=JRfEbz32HLU",
               "children": []
             }
@@ -624,6 +711,9 @@
               "name": "Center of gravity of a body",
               "name_en": "Center of gravity of a body",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -633,6 +723,9 @@
               "name": "Conditions of equilibrium",
               "name_en": "Conditions of equilibrium",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -642,6 +735,9 @@
               "name": "Body, force, and momentum",
               "name_en": "Body, force, and momentum",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -651,6 +747,9 @@
               "name": "Law of conservation of momentum",
               "name_en": "Law of conservation of momentum",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -660,6 +759,9 @@
               "name": "Mechanical work",
               "name_en": "Mechanical work",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "https://www.youtube.com/watch?v=RmMvfob6SHk",
               "children": []
             },
@@ -669,6 +771,9 @@
               "name": "Kinetic energy",
               "name_en": "Kinetic energy",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -678,6 +783,9 @@
               "name": "Potential energy",
               "name_en": "Potential energy",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -687,6 +795,9 @@
               "name": "Potential energy of a deformed spring",
               "name_en": "Potential energy of a deformed spring",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -696,6 +807,9 @@
               "name": "Law of conservation of total mechanical energy",
               "name_en": "Law of conservation of total mechanical energy",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "https://www.youtube.com/watch?v=R97ptRkXgD8",
               "children": []
             },
@@ -705,6 +819,9 @@
               "name": "Work of forces applied to a body. Conversion of mechanical energy into heat",
               "name_en": "Work of forces applied to a body. Conversion of mechanical energy into heat",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -714,6 +831,9 @@
               "name": "Power",
               "name_en": "Power",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -723,6 +843,9 @@
               "name": "Efficiency",
               "name_en": "Efficiency",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             }
@@ -742,6 +865,9 @@
               "name": "Pressure. Pascal's law",
               "name_en": "Pressure. Pascal's law",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -751,6 +877,9 @@
               "name": "Hydrostatic pressure",
               "name_en": "Hydrostatic pressure",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -760,6 +889,9 @@
               "name": "Communicating vessels",
               "name_en": "Communicating vessels",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -769,6 +901,9 @@
               "name": "Atmospheric pressure",
               "name_en": "Atmospheric pressure",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -778,6 +913,9 @@
               "name": "Hydraulic press",
               "name_en": "Hydraulic press",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -787,6 +925,9 @@
               "name": "Archimedes' force",
               "name_en": "Archimedes' force",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -796,6 +937,9 @@
               "name": "Flow of liquids in a pipe. Bernoulli's law",
               "name_en": "Flow of liquids in a pipe. Bernoulli's law",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             }
@@ -815,6 +959,9 @@
               "name": "Basic concepts characterizing oscillatory motion",
               "name_en": "Basic concepts characterizing oscillatory motion",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -824,6 +971,9 @@
               "name": "Spring pendulum",
               "name_en": "Spring pendulum",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -833,6 +983,9 @@
               "name": "Mathematical pendulum",
               "name_en": "Mathematical pendulum",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -842,6 +995,9 @@
               "name": "Equation of harmonic oscillations",
               "name_en": "Equation of harmonic oscillations",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -851,6 +1007,9 @@
               "name": "Energy of an oscillating body",
               "name_en": "Energy of an oscillating body",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -860,6 +1019,9 @@
               "name": "Resonance",
               "name_en": "Resonance",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -869,6 +1031,9 @@
               "name": "Mechanical waves",
               "name_en": "Mechanical waves",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -878,6 +1043,9 @@
               "name": "Sound waves",
               "name_en": "Sound waves",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             }
@@ -897,6 +1065,9 @@
               "name": "Structure of matter and its basic properties",
               "name_en": "Structure of matter and its basic properties",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -906,6 +1077,9 @@
               "name": "Ideal gas. Basic equation of MKT",
               "name_en": "Ideal gas. Basic equation of MKT",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -915,6 +1089,9 @@
               "name": "Absolute temperature. Average kinetic energy of molecules",
               "name_en": "Absolute temperature. Average kinetic energy of molecules",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -924,6 +1101,9 @@
               "name": "Root mean square speed of gas molecules",
               "name_en": "Root mean square speed of gas molecules",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -933,6 +1113,9 @@
               "name": "Equation of state of an ideal gas",
               "name_en": "Equation of state of an ideal gas",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -942,6 +1125,9 @@
               "name": "Clapeyron equation",
               "name_en": "Clapeyron equation",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -951,6 +1137,9 @@
               "name": "Change in gas mass",
               "name_en": "Change in gas mass",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -960,6 +1149,9 @@
               "name": "Isobaric, isochoric, isothermal processes",
               "name_en": "Isobaric, isochoric, isothermal processes",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -969,6 +1161,9 @@
               "name": "Problems with graphs",
               "name_en": "Problems with graphs",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -978,6 +1173,9 @@
               "name": "Saturated vapor. Critical temperature",
               "name_en": "Saturated vapor. Critical temperature",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -987,6 +1185,9 @@
               "name": "Air humidity",
               "name_en": "Air humidity",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -996,6 +1197,9 @@
               "name": "Capillarity phenomena. Surface tension",
               "name_en": "Capillarity phenomena. Surface tension",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1005,6 +1209,9 @@
               "name": "Mechanical properties of solids",
               "name_en": "Mechanical properties of solids",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1014,6 +1221,9 @@
               "name": "Thermal expansion",
               "name_en": "Thermal expansion",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             }
@@ -1033,6 +1243,9 @@
               "name": "Internal energy",
               "name_en": "Internal energy",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1042,6 +1255,9 @@
               "name": "Work in thermodynamics",
               "name_en": "Work in thermodynamics",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1051,6 +1267,9 @@
               "name": "Amount of heat",
               "name_en": "Amount of heat",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1060,6 +1279,9 @@
               "name": "First law of thermodynamics",
               "name_en": "First law of thermodynamics",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1069,6 +1291,9 @@
               "name": "Adiabatic process. Second law of thermodynamics",
               "name_en": "Adiabatic process. Second law of thermodynamics",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1078,6 +1303,9 @@
               "name": "Heat engines",
               "name_en": "Heat engines",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             }
@@ -1097,6 +1325,9 @@
               "name": "Electric charge. Law of conservation of charge",
               "name_en": "Electric charge. Law of conservation of charge",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1106,6 +1337,9 @@
               "name": "Coulomb's law",
               "name_en": "Coulomb's law",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1115,6 +1349,9 @@
               "name": "Electric field. Electric field strength",
               "name_en": "Electric field. Electric field strength",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1124,6 +1361,9 @@
               "name": "Conductors in an electric field",
               "name_en": "Conductors in an electric field",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1133,6 +1373,9 @@
               "name": "Fields of a charged sphere and plane",
               "name_en": "Fields of a charged sphere and plane",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1142,6 +1385,9 @@
               "name": "Dielectrics in an electric field",
               "name_en": "Dielectrics in an electric field",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1151,6 +1397,9 @@
               "name": "Work of a uniform electric field. Potential",
               "name_en": "Work of a uniform electric field. Potential",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1160,6 +1409,9 @@
               "name": "Potential of a point charge and a charged sphere",
               "name_en": "Potential of a point charge and a charged sphere",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1169,6 +1421,9 @@
               "name": "Equipotential surfaces",
               "name_en": "Equipotential surfaces",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1178,6 +1433,9 @@
               "name": "Relationship between E and φ",
               "name_en": "Relationship between E and φ",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1187,6 +1445,9 @@
               "name": "Electric capacitance. Capacitors",
               "name_en": "Electric capacitance. Capacitors",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1196,6 +1457,9 @@
               "name": "Parallel and series connection of capacitors",
               "name_en": "Parallel and series connection of capacitors",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1205,6 +1469,9 @@
               "name": "Energy of a charged capacitor",
               "name_en": "Energy of a charged capacitor",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             }
@@ -1224,6 +1491,9 @@
               "name": "Electric current. Current strength",
               "name_en": "Electric current. Current strength",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1233,6 +1503,9 @@
               "name": "Ohm's law for a section of a circuit. Resistance",
               "name_en": "Ohm's law for a section of a circuit. Resistance",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1242,6 +1515,9 @@
               "name": "Electric circuits. Series and parallel connection of conductors",
               "name_en": "Electric circuits. Series and parallel connection of conductors",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1251,6 +1527,9 @@
               "name": "Connecting additional resistance to an ammeter and voltmeter",
               "name_en": "Connecting additional resistance to an ammeter and voltmeter",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1260,6 +1539,9 @@
               "name": "Work and power of direct current",
               "name_en": "Work and power of direct current",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1269,6 +1551,9 @@
               "name": "Joule-Lenz law",
               "name_en": "Joule-Lenz law",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1278,6 +1563,9 @@
               "name": "Series and parallel connection of lamps",
               "name_en": "Series and parallel connection of lamps",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1287,6 +1575,9 @@
               "name": "Ohm's law for a complete circuit",
               "name_en": "Ohm's law for a complete circuit",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1296,6 +1587,9 @@
               "name": "Series and parallel connection of current sources",
               "name_en": "Series and parallel connection of current sources",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             }
@@ -1315,6 +1609,9 @@
               "name": "Electric current in metals",
               "name_en": "Electric current in metals",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1324,6 +1621,9 @@
               "name": "Electric current in semiconductors",
               "name_en": "Electric current in semiconductors",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1333,6 +1633,9 @@
               "name": "Electric current in vacuum",
               "name_en": "Electric current in vacuum",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1342,6 +1645,9 @@
               "name": "Electric current in liquids",
               "name_en": "Electric current in liquids",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1351,6 +1657,9 @@
               "name": "Electric current in gases",
               "name_en": "Electric current in gases",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1360,6 +1669,9 @@
               "name": "Mixed problems",
               "name_en": "Mixed problems",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             }
@@ -1379,6 +1691,9 @@
               "name": "Permanent magnets. Magnetic field. Magnetic field of currents",
               "name_en": "Permanent magnets. Magnetic field. Magnetic field of currents",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1388,6 +1703,9 @@
               "name": "Ampere force",
               "name_en": "Ampere force",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1397,6 +1715,9 @@
               "name": "Lorentz force",
               "name_en": "Lorentz force",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1406,6 +1727,9 @@
               "name": "Magnetic properties of matter",
               "name_en": "Magnetic properties of matter",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1415,6 +1739,9 @@
               "name": "Magnetic flux",
               "name_en": "Magnetic flux",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1424,6 +1751,9 @@
               "name": "Law of electromagnetic induction. Lenz's rule",
               "name_en": "Law of electromagnetic induction. Lenz's rule",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1433,6 +1763,9 @@
               "name": "Self-induction. Inductance",
               "name_en": "Self-induction. Inductance",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1442,6 +1775,9 @@
               "name": "Energy of the magnetic field of a current",
               "name_en": "Energy of the magnetic field of a current",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             }
@@ -1461,6 +1797,9 @@
               "name": "Charge, voltage, and current in an oscillatory circuit",
               "name_en": "Charge, voltage, and current in an oscillatory circuit",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1470,6 +1809,9 @@
               "name": "Thomson's formula for an ideal oscillatory circuit",
               "name_en": "Thomson's formula for an ideal oscillatory circuit",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1479,6 +1821,9 @@
               "name": "Energy in an oscillatory circuit",
               "name_en": "Energy in an oscillatory circuit",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1488,6 +1833,9 @@
               "name": "Alternating current generator",
               "name_en": "Alternating current generator",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1497,6 +1845,9 @@
               "name": "Active resistance in an AC circuit",
               "name_en": "Active resistance in an AC circuit",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1506,6 +1857,9 @@
               "name": "Capacitor in an AC circuit",
               "name_en": "Capacitor in an AC circuit",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1515,6 +1869,9 @@
               "name": "Inductor in an AC circuit",
               "name_en": "Inductor in an AC circuit",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1524,6 +1881,9 @@
               "name": "Active resistance, capacitor, and inductor in an AC circuit",
               "name_en": "Active resistance, capacitor, and inductor in an AC circuit",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1533,6 +1893,9 @@
               "name": "Transformer",
               "name_en": "Transformer",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1542,6 +1905,9 @@
               "name": "Electromagnetic waves",
               "name_en": "Electromagnetic waves",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1551,6 +1917,9 @@
               "name": "Radio communication. Radiolocation",
               "name_en": "Radio communication. Radiolocation",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             }
@@ -1570,6 +1939,9 @@
               "name": "Reflection of light",
               "name_en": "Reflection of light",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1579,6 +1951,9 @@
               "name": "Refraction of light",
               "name_en": "Refraction of light",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1588,6 +1963,9 @@
               "name": "Wave nature of light",
               "name_en": "Wave nature of light",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1597,6 +1975,9 @@
               "name": "Total internal reflection",
               "name_en": "Total internal reflection",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1606,6 +1987,9 @@
               "name": "Lenses",
               "name_en": "Lenses",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1615,6 +1999,9 @@
               "name": "Lens formula",
               "name_en": "Lens formula",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1624,6 +2011,9 @@
               "name": "Optical instruments",
               "name_en": "Optical instruments",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1633,6 +2023,9 @@
               "name": "Interference",
               "name_en": "Interference",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1642,6 +2035,9 @@
               "name": "Diffraction",
               "name_en": "Diffraction",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1651,6 +2047,9 @@
               "name": "Polarization",
               "name_en": "Polarization",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1660,6 +2059,9 @@
               "name": "Elements of the theory of relativity",
               "name_en": "Elements of the theory of relativity",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1669,6 +2071,9 @@
               "name": "Relationship between mass and energy",
               "name_en": "Relationship between mass and energy",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1678,6 +2083,9 @@
               "name": "Emission and absorption spectra",
               "name_en": "Emission and absorption spectra",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1687,6 +2095,9 @@
               "name": "Light quanta. Photons",
               "name_en": "Light quanta. Photons",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1696,6 +2107,9 @@
               "name": "X-rays",
               "name_en": "X-rays",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1705,6 +2119,9 @@
               "name": "Photoelectric effect",
               "name_en": "Photoelectric effect",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             }
@@ -1724,6 +2141,9 @@
               "name": "Rutherford's experiment. Bohr's postulates",
               "name_en": "Rutherford's experiment. Bohr's postulates",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1733,6 +2153,9 @@
               "name": "Structure of the atomic nucleus. Radioactivity",
               "name_en": "Structure of the atomic nucleus. Radioactivity",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1742,6 +2165,9 @@
               "name": "Law of radioactive decay",
               "name_en": "Law of radioactive decay",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1751,6 +2177,9 @@
               "name": "Nuclear binding energy",
               "name_en": "Nuclear binding energy",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             },
@@ -1760,6 +2189,9 @@
               "name": "Nuclear reactions",
               "name_en": "Nuclear reactions",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": []
             }
@@ -1793,6 +2225,9 @@
               "name": "Sun",
               "name_en": "Sun",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -1801,6 +2236,9 @@
                   "name": "Structure of the Sun",
                   "name_en": "Structure of the Sun",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -1810,6 +2248,9 @@
                   "name": "Solar Energy & Fusion",
                   "name_en": "Solar Energy & Fusion",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -1819,6 +2260,9 @@
                   "name": "The Sun's Life Cycle",
                   "name_en": "The Sun's Life Cycle",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -1830,6 +2274,9 @@
               "name": "Mercury",
               "name_en": "Mercury",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -1838,6 +2285,9 @@
                   "name": "Mercury's Extreme Environment",
                   "name_en": "Mercury's Extreme Environment",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -1847,6 +2297,9 @@
                   "name": "Geology of the Smallest Planet",
                   "name_en": "Geology of the Smallest Planet",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -1856,6 +2309,9 @@
                   "name": "Missions to Mercury",
                   "name_en": "Missions to Mercury",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -1867,6 +2323,9 @@
               "name": "Venus",
               "name_en": "Venus",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -1875,6 +2334,9 @@
                   "name": "The Runaway Greenhouse Effect",
                   "name_en": "The Runaway Greenhouse Effect",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -1884,6 +2346,9 @@
                   "name": "Venusian Surface & Volcanism",
                   "name_en": "Venusian Surface & Volcanism",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -1893,6 +2358,9 @@
                   "name": "Exploration of the Morning and Evening Star",
                   "name_en": "Exploration of the Morning and Evening Star",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -1904,6 +2372,9 @@
               "name": "Earth",
               "name_en": "Earth",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -1912,6 +2383,9 @@
                   "name": "The Goldilocks Zone",
                   "name_en": "The Goldilocks Zone",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -1921,6 +2395,9 @@
                   "name": "Atmosphere & Biosphere",
                   "name_en": "Atmosphere & Biosphere",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -1930,6 +2407,9 @@
                   "name": "Earth's Magnetic Shield",
                   "name_en": "Earth's Magnetic Shield",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -1941,6 +2421,9 @@
               "name": "Mars",
               "name_en": "Mars",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -1949,6 +2432,9 @@
                   "name": "The Red Planet's History",
                   "name_en": "The Red Planet's History",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -1958,6 +2444,9 @@
                   "name": "Water on Mars",
                   "name_en": "Water on Mars",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -1967,6 +2456,9 @@
                   "name": "Future Human Colonization",
                   "name_en": "Future Human Colonization",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -1978,6 +2470,9 @@
               "name": "Jupiter",
               "name_en": "Jupiter",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -1986,6 +2481,9 @@
                   "name": "The King of Planets",
                   "name_en": "The King of Planets",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -1995,6 +2493,9 @@
                   "name": "The Great Red Spot",
                   "name_en": "The Great Red Spot",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2004,6 +2505,9 @@
                   "name": "Jupiter's Galilean Moons",
                   "name_en": "Jupiter's Galilean Moons",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -2015,6 +2519,9 @@
               "name": "Saturn",
               "name_en": "Saturn",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -2023,6 +2530,9 @@
                   "name": "Lord of the Rings",
                   "name_en": "Lord of the Rings",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2032,6 +2542,9 @@
                   "name": "Saturn's Hexagon Storm",
                   "name_en": "Saturn's Hexagon Storm",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2041,6 +2554,9 @@
                   "name": "Titan: Lakes of Liquid Methane and Ethane",
                   "name_en": "Titan: Lakes of Liquid Methane and Ethane",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -2052,6 +2568,9 @@
               "name": "Uranus",
               "name_en": "Uranus",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -2060,6 +2579,9 @@
                   "name": "The Sideways Ice Giant",
                   "name_en": "The Sideways Ice Giant",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2069,6 +2591,9 @@
                   "name": "Atmosphere & Composition",
                   "name_en": "Atmosphere & Composition",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2078,6 +2603,9 @@
                   "name": "Uranus's Ring System",
                   "name_en": "Uranus's Ring System",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -2089,6 +2617,9 @@
               "name": "Neptune",
               "name_en": "Neptune",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -2097,6 +2628,9 @@
                   "name": "The Windy Blue Planet",
                   "name_en": "The Windy Blue Planet",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2106,6 +2640,9 @@
                   "name": "Triton: A Captured Moon",
                   "name_en": "Triton: A Captured Moon",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2115,6 +2652,9 @@
                   "name": "Neptune's Dark Spots",
                   "name_en": "Neptune's Dark Spots",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -2136,6 +2676,9 @@
               "name": "O",
               "name_en": "O",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -2144,6 +2687,9 @@
                   "name": "O-Type Characteristics",
                   "name_en": "O-Type Characteristics",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2153,6 +2699,9 @@
                   "name": "Evolution of O Stars",
                   "name_en": "Evolution of O Stars",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "https://www.youtube.com/watch?v=gS5E0WsbNSg",
                   "children": []
                 },
@@ -2162,6 +2711,9 @@
                   "name": "Famous O-Type Stars",
                   "name_en": "Famous O-Type Stars",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -2173,6 +2725,9 @@
               "name": "B",
               "name_en": "B",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -2181,6 +2736,9 @@
                   "name": "B-Type Characteristics",
                   "name_en": "B-Type Characteristics",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2190,6 +2748,9 @@
                   "name": "Evolution of B Stars",
                   "name_en": "Evolution of B Stars",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2199,6 +2760,9 @@
                   "name": "Famous B-Type Stars",
                   "name_en": "Famous B-Type Stars",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -2210,6 +2774,9 @@
               "name": "A",
               "name_en": "A",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -2218,6 +2785,9 @@
                   "name": "A-Type Characteristics",
                   "name_en": "A-Type Characteristics",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2227,6 +2797,9 @@
                   "name": "Evolution of A Stars",
                   "name_en": "Evolution of A Stars",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2236,6 +2809,9 @@
                   "name": "Famous A-Type Stars",
                   "name_en": "Famous A-Type Stars",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -2247,6 +2823,9 @@
               "name": "F",
               "name_en": "F",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -2255,6 +2834,9 @@
                   "name": "F-Type Characteristics",
                   "name_en": "F-Type Characteristics",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2264,6 +2846,9 @@
                   "name": "Evolution of F Stars",
                   "name_en": "Evolution of F Stars",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2273,6 +2858,9 @@
                   "name": "Famous F-Type Stars",
                   "name_en": "Famous F-Type Stars",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -2284,6 +2872,9 @@
               "name": "G",
               "name_en": "G",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -2292,6 +2883,9 @@
                   "name": "G-Type Characteristics",
                   "name_en": "G-Type Characteristics",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2301,6 +2895,9 @@
                   "name": "Evolution of G Stars",
                   "name_en": "Evolution of G Stars",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "https://www.youtube.com/watch?v=dezCVRZW4No",
                   "children": []
                 },
@@ -2310,6 +2907,9 @@
                   "name": "Famous G-Type Stars",
                   "name_en": "Famous G-Type Stars",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -2321,6 +2921,9 @@
               "name": "K",
               "name_en": "K",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -2329,6 +2932,9 @@
                   "name": "K-Type Characteristics",
                   "name_en": "K-Type Characteristics",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2338,6 +2944,9 @@
                   "name": "Evolution of K Stars",
                   "name_en": "Evolution of K Stars",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2347,6 +2956,9 @@
                   "name": "Famous K-Type Stars",
                   "name_en": "Famous K-Type Stars",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -2358,6 +2970,9 @@
               "name": "M",
               "name_en": "M",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -2366,6 +2981,9 @@
                   "name": "M-Type Characteristics",
                   "name_en": "M-Type Characteristics",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2375,6 +2993,9 @@
                   "name": "Evolution of M Stars",
                   "name_en": "Evolution of M Stars",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2384,6 +3005,9 @@
                   "name": "Famous M-Type Stars",
                   "name_en": "Famous M-Type Stars",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -2405,6 +3029,9 @@
               "name": "Falcon 9",
               "name_en": "Falcon 9",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -2413,6 +3040,9 @@
                   "name": "Falcon 9 Design",
                   "name_en": "Falcon 9 Design",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2422,6 +3052,9 @@
                   "name": "Falcon 9 Launch History",
                   "name_en": "Falcon 9 Launch History",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2431,6 +3064,9 @@
                   "name": "Falcon 9 Mission Impact",
                   "name_en": "Falcon 9 Mission Impact",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -2442,6 +3078,9 @@
               "name": "Falcon Heavy",
               "name_en": "Falcon Heavy",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -2450,6 +3089,9 @@
                   "name": "Falcon Heavy Design",
                   "name_en": "Falcon Heavy Design",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2459,6 +3101,9 @@
                   "name": "Falcon Heavy Launch History",
                   "name_en": "Falcon Heavy Launch History",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2468,6 +3113,9 @@
                   "name": "Falcon Heavy Mission Impact",
                   "name_en": "Falcon Heavy Mission Impact",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -2479,6 +3127,9 @@
               "name": "Electron",
               "name_en": "Electron",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -2487,6 +3138,9 @@
                   "name": "Electron Design",
                   "name_en": "Electron Design",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2496,6 +3150,9 @@
                   "name": "Electron Launch History",
                   "name_en": "Electron Launch History",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2505,6 +3162,9 @@
                   "name": "Electron Mission Impact",
                   "name_en": "Electron Mission Impact",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -2516,6 +3176,9 @@
               "name": "New Shepard",
               "name_en": "New Shepard",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -2524,6 +3187,9 @@
                   "name": "New Shepard Design",
                   "name_en": "New Shepard Design",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2533,6 +3199,9 @@
                   "name": "New Shepard Launch History",
                   "name_en": "New Shepard Launch History",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2542,6 +3211,9 @@
                   "name": "New Shepard Mission Impact",
                   "name_en": "New Shepard Mission Impact",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -2553,6 +3225,9 @@
               "name": "Starship",
               "name_en": "Starship",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -2561,6 +3236,9 @@
                   "name": "Starship Design",
                   "name_en": "Starship Design",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2570,6 +3248,9 @@
                   "name": "Starship Launch History",
                   "name_en": "Starship Launch History",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2579,6 +3260,9 @@
                   "name": "Starship Mission Impact",
                   "name_en": "Starship Mission Impact",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -2590,6 +3274,9 @@
               "name": "International Space Station",
               "name_en": "International Space Station",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -2598,6 +3285,9 @@
                   "name": "International Space Station Design",
                   "name_en": "International Space Station Design",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2607,6 +3297,9 @@
                   "name": "International Space Station Launch History",
                   "name_en": "International Space Station Launch History",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2616,6 +3309,9 @@
                   "name": "International Space Station Mission Impact",
                   "name_en": "International Space Station Mission Impact",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -2627,6 +3323,9 @@
               "name": "Terra",
               "name_en": "Terra",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -2635,6 +3334,9 @@
                   "name": "Terra Design",
                   "name_en": "Terra Design",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2644,6 +3346,9 @@
                   "name": "Terra Launch History",
                   "name_en": "Terra Launch History",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2653,6 +3358,9 @@
                   "name": "Terra Mission Impact",
                   "name_en": "Terra Mission Impact",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -2664,6 +3372,9 @@
               "name": "Aqua",
               "name_en": "Aqua",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -2672,6 +3383,9 @@
                   "name": "Aqua Design",
                   "name_en": "Aqua Design",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2681,6 +3395,9 @@
                   "name": "Aqua Launch History",
                   "name_en": "Aqua Launch History",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2690,6 +3407,9 @@
                   "name": "Aqua Mission Impact",
                   "name_en": "Aqua Mission Impact",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -2701,6 +3421,9 @@
               "name": "Envisat",
               "name_en": "Envisat",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -2709,6 +3432,9 @@
                   "name": "Envisat Design",
                   "name_en": "Envisat Design",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2718,6 +3444,9 @@
                   "name": "Envisat Launch History",
                   "name_en": "Envisat Launch History",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2727,6 +3456,9 @@
                   "name": "Envisat Mission Impact",
                   "name_en": "Envisat Mission Impact",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -2738,6 +3470,9 @@
               "name": "Gaia",
               "name_en": "Gaia",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -2746,6 +3481,9 @@
                   "name": "Gaia Design",
                   "name_en": "Gaia Design",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2755,6 +3493,9 @@
                   "name": "Gaia Launch History",
                   "name_en": "Gaia Launch History",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2764,6 +3505,9 @@
                   "name": "Gaia Mission Impact",
                   "name_en": "Gaia Mission Impact",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -2785,6 +3529,9 @@
               "name": "Planets",
               "name_en": "Planets",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -2793,6 +3540,9 @@
                   "name": "Understanding Planets",
                   "name_en": "Understanding Planets",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2802,6 +3552,9 @@
                   "name": "Physics of Planets",
                   "name_en": "Physics of Planets",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2811,6 +3564,9 @@
                   "name": "Observations of Planets",
                   "name_en": "Observations of Planets",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -2822,6 +3578,9 @@
               "name": "Natural satellites",
               "name_en": "Natural satellites",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -2830,6 +3589,9 @@
                   "name": "Understanding Natural satellites",
                   "name_en": "Understanding Natural satellites",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2839,6 +3601,9 @@
                   "name": "Physics of Natural satellites",
                   "name_en": "Physics of Natural satellites",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2848,6 +3613,9 @@
                   "name": "Observations of Natural satellites",
                   "name_en": "Observations of Natural satellites",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -2859,6 +3627,9 @@
               "name": "Asteroids",
               "name_en": "Asteroids",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -2867,6 +3638,9 @@
                   "name": "Understanding Asteroids",
                   "name_en": "Understanding Asteroids",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2876,6 +3650,9 @@
                   "name": "Physics of Asteroids",
                   "name_en": "Physics of Asteroids",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2885,6 +3662,9 @@
                   "name": "Observations of Asteroids",
                   "name_en": "Observations of Asteroids",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -2896,6 +3676,9 @@
               "name": "Comets",
               "name_en": "Comets",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -2904,6 +3687,9 @@
                   "name": "Understanding Comets",
                   "name_en": "Understanding Comets",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2913,6 +3699,9 @@
                   "name": "Physics of Comets",
                   "name_en": "Physics of Comets",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2922,6 +3711,9 @@
                   "name": "Observations of Comets",
                   "name_en": "Observations of Comets",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -2933,6 +3725,9 @@
               "name": "Meteoroids",
               "name_en": "Meteoroids",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -2941,6 +3736,9 @@
                   "name": "Understanding Meteoroids",
                   "name_en": "Understanding Meteoroids",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2950,6 +3748,9 @@
                   "name": "Physics of Meteoroids",
                   "name_en": "Physics of Meteoroids",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2959,6 +3760,9 @@
                   "name": "Observations of Meteoroids",
                   "name_en": "Observations of Meteoroids",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -2970,6 +3774,9 @@
               "name": "Meteors",
               "name_en": "Meteors",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -2978,6 +3785,9 @@
                   "name": "Understanding Meteors",
                   "name_en": "Understanding Meteors",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2987,6 +3797,9 @@
                   "name": "Physics of Meteors",
                   "name_en": "Physics of Meteors",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -2996,6 +3809,9 @@
                   "name": "Observations of Meteors",
                   "name_en": "Observations of Meteors",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -3007,6 +3823,9 @@
               "name": "Meteorites",
               "name_en": "Meteorites",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -3015,6 +3834,9 @@
                   "name": "Understanding Meteorites",
                   "name_en": "Understanding Meteorites",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3024,6 +3846,9 @@
                   "name": "Physics of Meteorites",
                   "name_en": "Physics of Meteorites",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3033,6 +3858,9 @@
                   "name": "Observations of Meteorites",
                   "name_en": "Observations of Meteorites",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -3044,6 +3872,9 @@
               "name": "Galaxies",
               "name_en": "Galaxies",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -3052,6 +3883,9 @@
                   "name": "Understanding Galaxies",
                   "name_en": "Understanding Galaxies",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3061,6 +3895,9 @@
                   "name": "Physics of Galaxies",
                   "name_en": "Physics of Galaxies",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "https://www.youtube.com/watch?v=gHSLWrmBK-k",
                   "children": []
                 },
@@ -3070,6 +3907,9 @@
                   "name": "Observations of Galaxies",
                   "name_en": "Observations of Galaxies",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "https://www.youtube.com/watch?v=RrpOxpTWmAM",
                   "children": []
                 }
@@ -3081,6 +3921,9 @@
               "name": "Black holes",
               "name_en": "Black holes",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -3089,6 +3932,9 @@
                   "name": "Understanding Black holes",
                   "name_en": "Understanding Black holes",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "https://www.youtube.com/watch?v=l6k62nsjfFo",
                   "children": []
                 },
@@ -3098,6 +3944,9 @@
                   "name": "Physics of Black holes",
                   "name_en": "Physics of Black holes",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "https://www.youtube.com/watch?v=qT74-XVshxU",
                   "children": []
                 },
@@ -3107,6 +3956,9 @@
                   "name": "Observations of Black holes",
                   "name_en": "Observations of Black holes",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -3118,6 +3970,9 @@
               "name": "Nebulae",
               "name_en": "Nebulae",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -3126,6 +3981,9 @@
                   "name": "Understanding Nebulae",
                   "name_en": "Understanding Nebulae",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3135,6 +3993,9 @@
                   "name": "Physics of Nebulae",
                   "name_en": "Physics of Nebulae",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3144,6 +4005,9 @@
                   "name": "Observations of Nebulae",
                   "name_en": "Observations of Nebulae",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "https://www.youtube.com/watch?v=CQvJKqzmEJI",
                   "children": []
                 }
@@ -3155,6 +4019,9 @@
               "name": "Quasars",
               "name_en": "Quasars",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -3163,6 +4030,9 @@
                   "name": "Understanding Quasars",
                   "name_en": "Understanding Quasars",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "https://www.youtube.com/watch?v=JyeV3_bi5_w",
                   "children": []
                 },
@@ -3172,6 +4042,9 @@
                   "name": "Physics of Quasars",
                   "name_en": "Physics of Quasars",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "https://www.youtube.com/watch?v=rTRIWTzkjGE",
                   "children": []
                 },
@@ -3181,6 +4054,9 @@
                   "name": "Observations of Quasars",
                   "name_en": "Observations of Quasars",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -3192,6 +4068,9 @@
               "name": "Pulsars",
               "name_en": "Pulsars",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -3200,6 +4079,9 @@
                   "name": "Understanding Pulsars",
                   "name_en": "Understanding Pulsars",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3209,6 +4091,9 @@
                   "name": "Physics of Pulsars",
                   "name_en": "Physics of Pulsars",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3218,6 +4103,9 @@
                   "name": "Observations of Pulsars",
                   "name_en": "Observations of Pulsars",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -3229,6 +4117,9 @@
               "name": "Supernovae",
               "name_en": "Supernovae",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -3237,6 +4128,9 @@
                   "name": "Understanding Supernovae",
                   "name_en": "Understanding Supernovae",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "https://www.youtube.com/watch?v=ROQWN2h7dVM",
                   "children": []
                 },
@@ -3246,6 +4140,9 @@
                   "name": "Physics of Supernovae",
                   "name_en": "Physics of Supernovae",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "https://www.youtube.com/watch?v=_y-HcqZnxX8",
                   "children": []
                 },
@@ -3255,6 +4152,9 @@
                   "name": "Observations of Supernovae",
                   "name_en": "Observations of Supernovae",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -3266,6 +4166,9 @@
               "name": "Exoplanets",
               "name_en": "Exoplanets",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -3274,6 +4177,9 @@
                   "name": "Understanding Exoplanets",
                   "name_en": "Understanding Exoplanets",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3283,6 +4189,9 @@
                   "name": "Physics of Exoplanets",
                   "name_en": "Physics of Exoplanets",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3292,6 +4201,9 @@
                   "name": "Observations of Exoplanets",
                   "name_en": "Observations of Exoplanets",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -3303,6 +4215,9 @@
               "name": "Galaxy clusters",
               "name_en": "Galaxy clusters",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -3311,6 +4226,9 @@
                   "name": "Understanding Galaxy clusters",
                   "name_en": "Understanding Galaxy clusters",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3320,6 +4238,9 @@
                   "name": "Physics of Galaxy clusters",
                   "name_en": "Physics of Galaxy clusters",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3329,6 +4250,9 @@
                   "name": "Observations of Galaxy clusters",
                   "name_en": "Observations of Galaxy clusters",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -3340,6 +4264,9 @@
               "name": "Cosmic dust and gas clouds",
               "name_en": "Cosmic dust and gas clouds",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -3348,6 +4275,9 @@
                   "name": "Understanding Cosmic dust and gas clouds",
                   "name_en": "Understanding Cosmic dust and gas clouds",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3357,6 +4287,9 @@
                   "name": "Physics of Cosmic dust and gas clouds",
                   "name_en": "Physics of Cosmic dust and gas clouds",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3366,6 +4299,9 @@
                   "name": "Observations of Cosmic dust and gas clouds",
                   "name_en": "Observations of Cosmic dust and gas clouds",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -3401,6 +4337,9 @@
               "name": "Sun",
               "name_en": "Sun",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -3409,6 +4348,9 @@
                   "name": "Sun Module Design",
                   "name_en": "Sun Module Design",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3418,6 +4360,9 @@
                   "name": "Sun Landing Systems",
                   "name_en": "Sun Landing Systems",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3427,6 +4372,9 @@
                   "name": "Sun Habitat Construction",
                   "name_en": "Sun Habitat Construction",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -3438,6 +4386,9 @@
               "name": "Mercury",
               "name_en": "Mercury",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -3446,6 +4397,9 @@
                   "name": "Mercury Module Design",
                   "name_en": "Mercury Module Design",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3455,6 +4409,9 @@
                   "name": "Mercury Landing Systems",
                   "name_en": "Mercury Landing Systems",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3464,6 +4421,9 @@
                   "name": "Mercury Habitat Construction",
                   "name_en": "Mercury Habitat Construction",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -3475,6 +4435,9 @@
               "name": "Venus",
               "name_en": "Venus",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -3483,6 +4446,9 @@
                   "name": "Venus Module Design",
                   "name_en": "Venus Module Design",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3492,6 +4458,9 @@
                   "name": "Venus Landing Systems",
                   "name_en": "Venus Landing Systems",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3501,6 +4470,9 @@
                   "name": "Venus Habitat Construction",
                   "name_en": "Venus Habitat Construction",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -3512,6 +4484,9 @@
               "name": "Earth",
               "name_en": "Earth",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -3520,6 +4495,9 @@
                   "name": "Earth Module Design",
                   "name_en": "Earth Module Design",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3529,6 +4507,9 @@
                   "name": "Earth Landing Systems",
                   "name_en": "Earth Landing Systems",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3538,6 +4519,9 @@
                   "name": "Earth Habitat Construction",
                   "name_en": "Earth Habitat Construction",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -3549,6 +4533,9 @@
               "name": "Mars",
               "name_en": "Mars",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -3557,6 +4544,9 @@
                   "name": "Mars Module Design",
                   "name_en": "Mars Module Design",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3566,6 +4556,9 @@
                   "name": "Mars Landing Systems",
                   "name_en": "Mars Landing Systems",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3575,6 +4568,9 @@
                   "name": "Mars Habitat Construction",
                   "name_en": "Mars Habitat Construction",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -3586,6 +4582,9 @@
               "name": "Jupiter",
               "name_en": "Jupiter",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -3594,6 +4593,9 @@
                   "name": "Jupiter Module Design",
                   "name_en": "Jupiter Module Design",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3603,6 +4605,9 @@
                   "name": "Jupiter Landing Systems",
                   "name_en": "Jupiter Landing Systems",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3612,6 +4617,9 @@
                   "name": "Jupiter Habitat Construction",
                   "name_en": "Jupiter Habitat Construction",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -3623,6 +4631,9 @@
               "name": "Saturn",
               "name_en": "Saturn",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -3631,6 +4642,9 @@
                   "name": "Saturn Module Design",
                   "name_en": "Saturn Module Design",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3640,6 +4654,9 @@
                   "name": "Saturn Landing Systems",
                   "name_en": "Saturn Landing Systems",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3649,6 +4666,9 @@
                   "name": "Saturn Habitat Construction",
                   "name_en": "Saturn Habitat Construction",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -3660,6 +4680,9 @@
               "name": "Uranus",
               "name_en": "Uranus",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -3668,6 +4691,9 @@
                   "name": "Uranus Module Design",
                   "name_en": "Uranus Module Design",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3677,6 +4703,9 @@
                   "name": "Uranus Landing Systems",
                   "name_en": "Uranus Landing Systems",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3686,6 +4715,9 @@
                   "name": "Uranus Habitat Construction",
                   "name_en": "Uranus Habitat Construction",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -3697,6 +4729,9 @@
               "name": "Neptune",
               "name_en": "Neptune",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -3705,6 +4740,9 @@
                   "name": "Neptune Module Design",
                   "name_en": "Neptune Module Design",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3714,6 +4752,9 @@
                   "name": "Neptune Landing Systems",
                   "name_en": "Neptune Landing Systems",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3723,6 +4764,9 @@
                   "name": "Neptune Habitat Construction",
                   "name_en": "Neptune Habitat Construction",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -3744,6 +4788,9 @@
               "name": "Falcon 9",
               "name_en": "Falcon 9",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -3752,6 +4799,9 @@
                   "name": "Falcon 9 Engineering",
                   "name_en": "Falcon 9 Engineering",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3761,6 +4811,9 @@
                   "name": "Falcon 9 Operational Orbit",
                   "name_en": "Falcon 9 Operational Orbit",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3770,6 +4823,9 @@
                   "name": "Falcon 9 Future Upgrades",
                   "name_en": "Falcon 9 Future Upgrades",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -3781,6 +4837,9 @@
               "name": "Falcon Heavy",
               "name_en": "Falcon Heavy",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -3789,6 +4848,9 @@
                   "name": "Falcon Heavy Engineering",
                   "name_en": "Falcon Heavy Engineering",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3798,6 +4860,9 @@
                   "name": "Falcon Heavy Operational Orbit",
                   "name_en": "Falcon Heavy Operational Orbit",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3807,6 +4872,9 @@
                   "name": "Falcon Heavy Future Upgrades",
                   "name_en": "Falcon Heavy Future Upgrades",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -3818,6 +4886,9 @@
               "name": "Electron",
               "name_en": "Electron",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -3826,6 +4897,9 @@
                   "name": "Electron Engineering",
                   "name_en": "Electron Engineering",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3835,6 +4909,9 @@
                   "name": "Electron Operational Orbit",
                   "name_en": "Electron Operational Orbit",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3844,6 +4921,9 @@
                   "name": "Electron Future Upgrades",
                   "name_en": "Electron Future Upgrades",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -3855,6 +4935,9 @@
               "name": "New Shepard",
               "name_en": "New Shepard",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -3863,6 +4946,9 @@
                   "name": "New Shepard Engineering",
                   "name_en": "New Shepard Engineering",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3872,6 +4958,9 @@
                   "name": "New Shepard Operational Orbit",
                   "name_en": "New Shepard Operational Orbit",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3881,6 +4970,9 @@
                   "name": "New Shepard Future Upgrades",
                   "name_en": "New Shepard Future Upgrades",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -3892,6 +4984,9 @@
               "name": "Starship",
               "name_en": "Starship",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -3900,6 +4995,9 @@
                   "name": "Starship Engineering",
                   "name_en": "Starship Engineering",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3909,6 +5007,9 @@
                   "name": "Starship Operational Orbit",
                   "name_en": "Starship Operational Orbit",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3918,6 +5019,9 @@
                   "name": "Starship Future Upgrades",
                   "name_en": "Starship Future Upgrades",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -3929,6 +5033,9 @@
               "name": "International Space Station",
               "name_en": "International Space Station",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -3937,6 +5044,9 @@
                   "name": "International Space Station Engineering",
                   "name_en": "International Space Station Engineering",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3946,6 +5056,9 @@
                   "name": "International Space Station Operational Orbit",
                   "name_en": "International Space Station Operational Orbit",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3955,6 +5068,9 @@
                   "name": "International Space Station Future Upgrades",
                   "name_en": "International Space Station Future Upgrades",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -3966,6 +5082,9 @@
               "name": "Terra",
               "name_en": "Terra",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -3974,6 +5093,9 @@
                   "name": "Terra Engineering",
                   "name_en": "Terra Engineering",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3983,6 +5105,9 @@
                   "name": "Terra Operational Orbit",
                   "name_en": "Terra Operational Orbit",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -3992,6 +5117,9 @@
                   "name": "Terra Future Upgrades",
                   "name_en": "Terra Future Upgrades",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -4003,6 +5131,9 @@
               "name": "Aqua",
               "name_en": "Aqua",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -4011,6 +5142,9 @@
                   "name": "Aqua Engineering",
                   "name_en": "Aqua Engineering",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -4020,6 +5154,9 @@
                   "name": "Aqua Operational Orbit",
                   "name_en": "Aqua Operational Orbit",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -4029,6 +5166,9 @@
                   "name": "Aqua Future Upgrades",
                   "name_en": "Aqua Future Upgrades",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -4040,6 +5180,9 @@
               "name": "Envisat",
               "name_en": "Envisat",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -4048,6 +5191,9 @@
                   "name": "Envisat Engineering",
                   "name_en": "Envisat Engineering",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -4057,6 +5203,9 @@
                   "name": "Envisat Operational Orbit",
                   "name_en": "Envisat Operational Orbit",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -4066,6 +5215,9 @@
                   "name": "Envisat Future Upgrades",
                   "name_en": "Envisat Future Upgrades",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -4077,6 +5229,9 @@
               "name": "Gaia",
               "name_en": "Gaia",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -4085,6 +5240,9 @@
                   "name": "Gaia Engineering",
                   "name_en": "Gaia Engineering",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -4094,6 +5252,9 @@
                   "name": "Gaia Operational Orbit",
                   "name_en": "Gaia Operational Orbit",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -4103,6 +5264,9 @@
                   "name": "Gaia Future Upgrades",
                   "name_en": "Gaia Future Upgrades",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -4138,6 +5302,9 @@
               "name": "Astronomy",
               "name_en": "Astronomy",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -4146,6 +5313,9 @@
                   "name": "Neil deGrasse Tyson",
                   "name_en": "Neil deGrasse Tyson",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": [
                     {
@@ -4154,6 +5324,9 @@
                       "name": "Neil deGrasse Tyson's Early Career",
                       "name_en": "Neil deGrasse Tyson's Early Career",
                       "name_ru": "",
+                      "content": "",
+                      "content_en": "",
+                      "content_ru": "",
                       "video_url": "",
                       "children": []
                     },
@@ -4163,6 +5336,9 @@
                       "name": "Neil deGrasse Tyson's Greatest Discoveries",
                       "name_en": "Neil deGrasse Tyson's Greatest Discoveries",
                       "name_ru": "",
+                      "content": "",
+                      "content_en": "",
+                      "content_ru": "",
                       "video_url": "",
                       "children": []
                     },
@@ -4172,6 +5348,9 @@
                       "name": "Neil deGrasse Tyson on Future of Space",
                       "name_en": "Neil deGrasse Tyson on Future of Space",
                       "name_ru": "",
+                      "content": "",
+                      "content_en": "",
+                      "content_ru": "",
                       "video_url": "",
                       "children": []
                     }
@@ -4183,6 +5362,9 @@
                   "name": "Kip Thorne",
                   "name_en": "Kip Thorne",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": [
                     {
@@ -4191,6 +5373,9 @@
                       "name": "Kip Thorne's Early Career",
                       "name_en": "Kip Thorne's Early Career",
                       "name_ru": "",
+                      "content": "",
+                      "content_en": "",
+                      "content_ru": "",
                       "video_url": "",
                       "children": []
                     },
@@ -4200,6 +5385,9 @@
                       "name": "Kip Thorne's Greatest Discoveries",
                       "name_en": "Kip Thorne's Greatest Discoveries",
                       "name_ru": "",
+                      "content": "",
+                      "content_en": "",
+                      "content_ru": "",
                       "video_url": "",
                       "children": []
                     },
@@ -4209,6 +5397,9 @@
                       "name": "Kip Thorne on Future of Space",
                       "name_en": "Kip Thorne on Future of Space",
                       "name_ru": "",
+                      "content": "",
+                      "content_en": "",
+                      "content_ru": "",
                       "video_url": "",
                       "children": []
                     }
@@ -4220,6 +5411,9 @@
                   "name": "Brian Cox",
                   "name_en": "Brian Cox",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": [
                     {
@@ -4228,6 +5422,9 @@
                       "name": "Brian Cox's Early Career",
                       "name_en": "Brian Cox's Early Career",
                       "name_ru": "",
+                      "content": "",
+                      "content_en": "",
+                      "content_ru": "",
                       "video_url": "",
                       "children": []
                     },
@@ -4237,6 +5434,9 @@
                       "name": "Brian Cox's Greatest Discoveries",
                       "name_en": "Brian Cox's Greatest Discoveries",
                       "name_ru": "",
+                      "content": "",
+                      "content_en": "",
+                      "content_ru": "",
                       "video_url": "",
                       "children": []
                     },
@@ -4246,6 +5446,9 @@
                       "name": "Brian Cox on Future of Space",
                       "name_en": "Brian Cox on Future of Space",
                       "name_ru": "",
+                      "content": "",
+                      "content_en": "",
+                      "content_ru": "",
                       "video_url": "",
                       "children": []
                     }
@@ -4257,6 +5460,9 @@
                   "name": "Andrea Ghez",
                   "name_en": "Andrea Ghez",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": [
                     {
@@ -4265,6 +5471,9 @@
                       "name": "Andrea Ghez's Early Career",
                       "name_en": "Andrea Ghez's Early Career",
                       "name_ru": "",
+                      "content": "",
+                      "content_en": "",
+                      "content_ru": "",
                       "video_url": "",
                       "children": []
                     },
@@ -4274,6 +5483,9 @@
                       "name": "Andrea Ghez's Greatest Discoveries",
                       "name_en": "Andrea Ghez's Greatest Discoveries",
                       "name_ru": "",
+                      "content": "",
+                      "content_en": "",
+                      "content_ru": "",
                       "video_url": "",
                       "children": []
                     },
@@ -4283,6 +5495,9 @@
                       "name": "Andrea Ghez on Future of Space",
                       "name_en": "Andrea Ghez on Future of Space",
                       "name_ru": "",
+                      "content": "",
+                      "content_en": "",
+                      "content_ru": "",
                       "video_url": "",
                       "children": []
                     }
@@ -4294,6 +5509,9 @@
                   "name": "Adam Riess",
                   "name_en": "Adam Riess",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": [
                     {
@@ -4302,6 +5520,9 @@
                       "name": "Adam Riess's Early Career",
                       "name_en": "Adam Riess's Early Career",
                       "name_ru": "",
+                      "content": "",
+                      "content_en": "",
+                      "content_ru": "",
                       "video_url": "",
                       "children": []
                     },
@@ -4311,6 +5532,9 @@
                       "name": "Adam Riess's Greatest Discoveries",
                       "name_en": "Adam Riess's Greatest Discoveries",
                       "name_ru": "",
+                      "content": "",
+                      "content_en": "",
+                      "content_ru": "",
                       "video_url": "",
                       "children": []
                     },
@@ -4320,6 +5544,9 @@
                       "name": "Adam Riess on Future of Space",
                       "name_en": "Adam Riess on Future of Space",
                       "name_ru": "",
+                      "content": "",
+                      "content_en": "",
+                      "content_ru": "",
                       "video_url": "",
                       "children": []
                     }
@@ -4331,6 +5558,9 @@
                   "name": "Saul Perlmutter",
                   "name_en": "Saul Perlmutter",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": [
                     {
@@ -4339,6 +5569,9 @@
                       "name": "Saul Perlmutter's Early Career",
                       "name_en": "Saul Perlmutter's Early Career",
                       "name_ru": "",
+                      "content": "",
+                      "content_en": "",
+                      "content_ru": "",
                       "video_url": "",
                       "children": []
                     },
@@ -4348,6 +5581,9 @@
                       "name": "Saul Perlmutter's Greatest Discoveries",
                       "name_en": "Saul Perlmutter's Greatest Discoveries",
                       "name_ru": "",
+                      "content": "",
+                      "content_en": "",
+                      "content_ru": "",
                       "video_url": "",
                       "children": []
                     },
@@ -4357,6 +5593,9 @@
                       "name": "Saul Perlmutter on Future of Space",
                       "name_en": "Saul Perlmutter on Future of Space",
                       "name_ru": "",
+                      "content": "",
+                      "content_en": "",
+                      "content_ru": "",
                       "video_url": "",
                       "children": []
                     }
@@ -4368,6 +5607,9 @@
                   "name": "Roger Penrose",
                   "name_en": "Roger Penrose",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": [
                     {
@@ -4376,6 +5618,9 @@
                       "name": "Roger Penrose's Early Career",
                       "name_en": "Roger Penrose's Early Career",
                       "name_ru": "",
+                      "content": "",
+                      "content_en": "",
+                      "content_ru": "",
                       "video_url": "",
                       "children": []
                     },
@@ -4385,6 +5630,9 @@
                       "name": "Roger Penrose's Greatest Discoveries",
                       "name_en": "Roger Penrose's Greatest Discoveries",
                       "name_ru": "",
+                      "content": "",
+                      "content_en": "",
+                      "content_ru": "",
                       "video_url": "",
                       "children": []
                     },
@@ -4394,6 +5642,9 @@
                       "name": "Roger Penrose on Future of Space",
                       "name_en": "Roger Penrose on Future of Space",
                       "name_ru": "",
+                      "content": "",
+                      "content_en": "",
+                      "content_ru": "",
                       "video_url": "",
                       "children": []
                     }
@@ -4407,6 +5658,9 @@
               "name": "Physics",
               "name_en": "Physics",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -4415,6 +5669,9 @@
                   "name": "Edward Witten",
                   "name_en": "Edward Witten",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": [
                     {
@@ -4423,6 +5680,9 @@
                       "name": "Edward Witten's Research Focus",
                       "name_en": "Edward Witten's Research Focus",
                       "name_ru": "",
+                      "content": "",
+                      "content_en": "",
+                      "content_ru": "",
                       "video_url": "",
                       "children": []
                     },
@@ -4432,6 +5692,9 @@
                       "name": "Edward Witten's Theoretical Impact",
                       "name_en": "Edward Witten's Theoretical Impact",
                       "name_ru": "",
+                      "content": "",
+                      "content_en": "",
+                      "content_ru": "",
                       "video_url": "",
                       "children": []
                     },
@@ -4441,6 +5704,9 @@
                       "name": "In Conversation with Edward Witten",
                       "name_en": "In Conversation with Edward Witten",
                       "name_ru": "",
+                      "content": "",
+                      "content_en": "",
+                      "content_ru": "",
                       "video_url": "",
                       "children": []
                     }
@@ -4452,6 +5718,9 @@
                   "name": "Juan Maldacena",
                   "name_en": "Juan Maldacena",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": [
                     {
@@ -4460,6 +5729,9 @@
                       "name": "Juan Maldacena's Research Focus",
                       "name_en": "Juan Maldacena's Research Focus",
                       "name_ru": "",
+                      "content": "",
+                      "content_en": "",
+                      "content_ru": "",
                       "video_url": "",
                       "children": []
                     },
@@ -4469,6 +5741,9 @@
                       "name": "Juan Maldacena's Theoretical Impact",
                       "name_en": "Juan Maldacena's Theoretical Impact",
                       "name_ru": "",
+                      "content": "",
+                      "content_en": "",
+                      "content_ru": "",
                       "video_url": "",
                       "children": []
                     },
@@ -4478,6 +5753,9 @@
                       "name": "In Conversation with Juan Maldacena",
                       "name_en": "In Conversation with Juan Maldacena",
                       "name_ru": "",
+                      "content": "",
+                      "content_en": "",
+                      "content_ru": "",
                       "video_url": "",
                       "children": []
                     }
@@ -4489,6 +5767,9 @@
                   "name": "Lisa Randall",
                   "name_en": "Lisa Randall",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": [
                     {
@@ -4497,6 +5778,9 @@
                       "name": "Lisa Randall's Research Focus",
                       "name_en": "Lisa Randall's Research Focus",
                       "name_ru": "",
+                      "content": "",
+                      "content_en": "",
+                      "content_ru": "",
                       "video_url": "",
                       "children": []
                     },
@@ -4506,6 +5790,9 @@
                       "name": "Lisa Randall's Theoretical Impact",
                       "name_en": "Lisa Randall's Theoretical Impact",
                       "name_ru": "",
+                      "content": "",
+                      "content_en": "",
+                      "content_ru": "",
                       "video_url": "",
                       "children": []
                     },
@@ -4515,6 +5802,9 @@
                       "name": "In Conversation with Lisa Randall",
                       "name_en": "In Conversation with Lisa Randall",
                       "name_ru": "",
+                      "content": "",
+                      "content_en": "",
+                      "content_ru": "",
                       "video_url": "",
                       "children": []
                     }
@@ -4526,6 +5816,9 @@
                   "name": "David Gross",
                   "name_en": "David Gross",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": [
                     {
@@ -4534,6 +5827,9 @@
                       "name": "David Gross's Research Focus",
                       "name_en": "David Gross's Research Focus",
                       "name_ru": "",
+                      "content": "",
+                      "content_en": "",
+                      "content_ru": "",
                       "video_url": "",
                       "children": []
                     },
@@ -4543,6 +5839,9 @@
                       "name": "David Gross's Theoretical Impact",
                       "name_en": "David Gross's Theoretical Impact",
                       "name_ru": "",
+                      "content": "",
+                      "content_en": "",
+                      "content_ru": "",
                       "video_url": "",
                       "children": []
                     },
@@ -4552,6 +5851,9 @@
                       "name": "In Conversation with David Gross",
                       "name_en": "In Conversation with David Gross",
                       "name_ru": "",
+                      "content": "",
+                      "content_en": "",
+                      "content_ru": "",
                       "video_url": "",
                       "children": []
                     }
@@ -4563,6 +5865,9 @@
                   "name": "Frank Wilczek",
                   "name_en": "Frank Wilczek",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": [
                     {
@@ -4571,6 +5876,9 @@
                       "name": "Frank Wilczek's Research Focus",
                       "name_en": "Frank Wilczek's Research Focus",
                       "name_ru": "",
+                      "content": "",
+                      "content_en": "",
+                      "content_ru": "",
                       "video_url": "",
                       "children": []
                     },
@@ -4580,6 +5888,9 @@
                       "name": "Frank Wilczek's Theoretical Impact",
                       "name_en": "Frank Wilczek's Theoretical Impact",
                       "name_ru": "",
+                      "content": "",
+                      "content_en": "",
+                      "content_ru": "",
                       "video_url": "",
                       "children": []
                     },
@@ -4589,6 +5900,9 @@
                       "name": "In Conversation with Frank Wilczek",
                       "name_en": "In Conversation with Frank Wilczek",
                       "name_ru": "",
+                      "content": "",
+                      "content_en": "",
+                      "content_ru": "",
                       "video_url": "",
                       "children": []
                     }
@@ -4600,6 +5914,9 @@
                   "name": "Ashoke Sen",
                   "name_en": "Ashoke Sen",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": [
                     {
@@ -4608,6 +5925,9 @@
                       "name": "Ashoke Sen's Research Focus",
                       "name_en": "Ashoke Sen's Research Focus",
                       "name_ru": "",
+                      "content": "",
+                      "content_en": "",
+                      "content_ru": "",
                       "video_url": "",
                       "children": []
                     },
@@ -4617,6 +5937,9 @@
                       "name": "Ashoke Sen's Theoretical Impact",
                       "name_en": "Ashoke Sen's Theoretical Impact",
                       "name_ru": "",
+                      "content": "",
+                      "content_en": "",
+                      "content_ru": "",
                       "video_url": "",
                       "children": []
                     },
@@ -4626,6 +5949,9 @@
                       "name": "In Conversation with Ashoke Sen",
                       "name_en": "In Conversation with Ashoke Sen",
                       "name_ru": "",
+                      "content": "",
+                      "content_en": "",
+                      "content_ru": "",
                       "video_url": "",
                       "children": []
                     }
@@ -4637,6 +5963,9 @@
                   "name": "Cumrun Vafa",
                   "name_en": "Cumrun Vafa",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": [
                     {
@@ -4645,6 +5974,9 @@
                       "name": "Cumrun Vafa's Research Focus",
                       "name_en": "Cumrun Vafa's Research Focus",
                       "name_ru": "",
+                      "content": "",
+                      "content_en": "",
+                      "content_ru": "",
                       "video_url": "",
                       "children": []
                     },
@@ -4654,6 +5986,9 @@
                       "name": "Cumrun Vafa's Theoretical Impact",
                       "name_en": "Cumrun Vafa's Theoretical Impact",
                       "name_ru": "",
+                      "content": "",
+                      "content_en": "",
+                      "content_ru": "",
                       "video_url": "",
                       "children": []
                     },
@@ -4663,6 +5998,9 @@
                       "name": "In Conversation with Cumrun Vafa",
                       "name_en": "In Conversation with Cumrun Vafa",
                       "name_ru": "",
+                      "content": "",
+                      "content_en": "",
+                      "content_ru": "",
                       "video_url": "",
                       "children": []
                     }
@@ -4686,6 +6024,9 @@
               "name": "Yuri Gagarin",
               "name_en": "Yuri Gagarin",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -4694,6 +6035,9 @@
                   "name": "Yuri Gagarin's Training",
                   "name_en": "Yuri Gagarin's Training",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -4703,6 +6047,9 @@
                   "name": "Yuri Gagarin's Historic Mission",
                   "name_en": "Yuri Gagarin's Historic Mission",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -4712,6 +6059,9 @@
                   "name": "Legacy of Yuri Gagarin",
                   "name_en": "Legacy of Yuri Gagarin",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -4723,6 +6073,9 @@
               "name": "Neil Armstrong",
               "name_en": "Neil Armstrong",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -4731,6 +6084,9 @@
                   "name": "Neil Armstrong's Training",
                   "name_en": "Neil Armstrong's Training",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -4740,6 +6096,9 @@
                   "name": "Neil Armstrong's Historic Mission",
                   "name_en": "Neil Armstrong's Historic Mission",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -4749,6 +6108,9 @@
                   "name": "Legacy of Neil Armstrong",
                   "name_en": "Legacy of Neil Armstrong",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -4760,6 +6122,9 @@
               "name": "Buzz Aldrin",
               "name_en": "Buzz Aldrin",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -4768,6 +6133,9 @@
                   "name": "Buzz Aldrin's Training",
                   "name_en": "Buzz Aldrin's Training",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -4777,6 +6145,9 @@
                   "name": "Buzz Aldrin's Historic Mission",
                   "name_en": "Buzz Aldrin's Historic Mission",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -4786,6 +6157,9 @@
                   "name": "Legacy of Buzz Aldrin",
                   "name_en": "Legacy of Buzz Aldrin",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -4797,6 +6171,9 @@
               "name": "Valentina Tereshkova",
               "name_en": "Valentina Tereshkova",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -4805,6 +6182,9 @@
                   "name": "Valentina Tereshkova's Training",
                   "name_en": "Valentina Tereshkova's Training",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -4814,6 +6194,9 @@
                   "name": "Valentina Tereshkova's Historic Mission",
                   "name_en": "Valentina Tereshkova's Historic Mission",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -4823,6 +6206,9 @@
                   "name": "Legacy of Valentina Tereshkova",
                   "name_en": "Legacy of Valentina Tereshkova",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -4844,6 +6230,9 @@
               "name": "Mission Control",
               "name_en": "Mission Control",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -4852,6 +6241,9 @@
                   "name": "Role of Mission Control",
                   "name_en": "Role of Mission Control",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -4861,6 +6253,9 @@
                   "name": "A Day in the Life: Mission Control",
                   "name_en": "A Day in the Life: Mission Control",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -4870,6 +6265,9 @@
                   "name": "Challenges for Mission Control",
                   "name_en": "Challenges for Mission Control",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -4881,6 +6279,9 @@
               "name": "Rocket Engineers",
               "name_en": "Rocket Engineers",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -4889,6 +6290,9 @@
                   "name": "Role of Rocket Engineers",
                   "name_en": "Role of Rocket Engineers",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -4898,6 +6302,9 @@
                   "name": "A Day in the Life: Rocket Engineers",
                   "name_en": "A Day in the Life: Rocket Engineers",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -4907,6 +6314,9 @@
                   "name": "Challenges for Rocket Engineers",
                   "name_en": "Challenges for Rocket Engineers",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }
@@ -4918,6 +6328,9 @@
               "name": "Space Suits Designers",
               "name_en": "Space Suits Designers",
               "name_ru": "",
+              "content": "",
+              "content_en": "",
+              "content_ru": "",
               "video_url": "",
               "children": [
                 {
@@ -4926,6 +6339,9 @@
                   "name": "Role of Space Suits Designers",
                   "name_en": "Role of Space Suits Designers",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -4935,6 +6351,9 @@
                   "name": "A Day in the Life: Space Suits Designers",
                   "name_en": "A Day in the Life: Space Suits Designers",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 },
@@ -4944,6 +6363,9 @@
                   "name": "Challenges for Space Suits Designers",
                   "name_en": "Challenges for Space Suits Designers",
                   "name_ru": "",
+                  "content": "",
+                  "content_en": "",
+                  "content_ru": "",
                   "video_url": "",
                   "children": []
                 }

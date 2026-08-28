@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import SectionPageHeader from '@/components/layout/SectionPageHeader';
 import { useLearnTopics } from '@/hooks/useLearnTopics';
-import { lessonName, slugAtPath } from '@/lib/learnContent';
+import { lessonName, lessonText, slugAtPath } from '@/lib/learnContent';
 import { videoCredit } from '@/data/videoCredits';
 import { Play, Info, CheckCircle2, Trophy, Coins, Heart, Rocket } from 'lucide-react';
 import { useState, useEffect } from 'react';
@@ -104,10 +104,11 @@ export default function UniversalLessonView() {
   }
 
   const name = lessonName(lesson, i18n.language);
-  // Written in the admin panel, stored on TopicLesson.content. Empty for most
+  // Stored on TopicLesson.content / content_en / content_ru, and picked by the
+  // reader's language the same way the title above it is. Empty for most
   // lessons today — they are titles and, sometimes, a video — so the generic
   // line below stays as the fallback rather than leaving a blank page.
-  const lessonText = typeof lesson === 'object' ? (lesson.content || '') : '';
+  const body = lessonText(lesson, i18n.language);
   const color = topic.color || '#3b82f6';
   // "-qism" was written straight into the template, so an English or Russian
   // reader got "The Great Red Spot - 2-qism". The word order differs per
@@ -369,8 +370,8 @@ export default function UniversalLessonView() {
               }}>
                 {displayTitle}
               </h1>
-              {lessonText ? (
-                <LessonBody markdown={lessonText} />
+              {body ? (
+                <LessonBody markdown={body} />
               ) : (
                 <p style={{ fontSize: '18px', color: 'rgba(255,255,255,0.6)', lineHeight: 1.7, maxWidth: '800px' }}>
                   {/* The video wording only holds when there is a video. */}
