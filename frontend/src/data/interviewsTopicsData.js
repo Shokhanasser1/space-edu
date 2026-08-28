@@ -12,9 +12,9 @@ export const interviewsTopicsData = {
         ].map(name => ({
           name,
           subLessons: [
-            { name: `${name}'s Early Career`, videoUrl: "https://www.youtube.com/embed/libKVRa01L8" },
-            { name: `${name}'s Greatest Discoveries`, videoUrl: "https://www.youtube.com/embed/2HoTK_Gqi2Q" },
-            { name: `${name} on Future of Space`, videoUrl: "https://www.youtube.com/embed/0KBjnN7kUKo" }
+            { name: `${name}'s Early Career` },
+            { name: `${name}'s Greatest Discoveries` },
+            { name: `${name} on Future of Space` }
           ]
         }))
       },
@@ -25,9 +25,9 @@ export const interviewsTopicsData = {
         ].map(name => ({
           name,
           subLessons: [
-            { name: `${name}'s Research Focus`, videoUrl: "https://www.youtube.com/embed/libKVRa01L8" },
-            { name: `${name}'s Theoretical Impact`, videoUrl: "https://www.youtube.com/embed/2HoTK_Gqi2Q" },
-            { name: `In Conversation with ${name}`, videoUrl: "https://www.youtube.com/embed/0KBjnN7kUKo" }
+            { name: `${name}'s Research Focus` },
+            { name: `${name}'s Theoretical Impact` },
+            { name: `In Conversation with ${name}` }
           ]
         }))
       }
@@ -35,17 +35,32 @@ export const interviewsTopicsData = {
   },
   2: {
     id: 2,
-    title: 'Kosmonavtlar',
-    titleEn: 'Cosmonauts', titleRu: 'Космонавты',
+    // Two of the four below are American. A cosmonaut is Russian or Soviet
+    // crew; an astronaut is American crew and, now, the general international
+    // term — IAU Office of Astronomy for Education glossary, "Astronaut",
+    // https://astro4edu.org/resources/glossary/term/23/ . Gagarin and
+    // Tereshkova flew for the Soviet programme; Armstrong and Aldrin flew for
+    // NASA, so "Cosmonauts" was wrong for half the topic in English and Uzbek.
+    //
+    // The Russian «Космонавты» was already defensible — in Russian *космонавт*
+    // is the general word and *астронавт* is given as "то же, что космонавт"
+    // (Gramota.ru, Словарь-справочник трудностей русского языка). It is spelled
+    // out here anyway so the three languages say the same thing.
+    //
+    // `slug` pins what the derived slug used to be: it prefixes all 25 lesson
+    // slugs under this topic, and progress rows key on those.
+    slug: 'interviews-cosmonauts',
+    title: 'Astronavtlar va kosmonavtlar',
+    titleEn: 'Astronauts and Cosmonauts', titleRu: 'Астронавты и космонавты',
     color: '#3b82f6',
     lessons: [
       "Yuri Gagarin", "Neil Armstrong", "Buzz Aldrin", "Valentina Tereshkova"
     ].map(name => ({
       name,
       subLessons: [
-        { name: `${name}'s Training`, videoUrl: "https://www.youtube.com/embed/XJSKezIdHJY" },
-        { name: `${name}'s Historic Mission`, videoUrl: "https://www.youtube.com/embed/libKVRa01L8" },
-        { name: `Legacy of ${name}`, videoUrl: "https://www.youtube.com/embed/HCDVN7DCzYE" }
+        { name: `${name}'s Training` },
+        { name: `${name}'s Historic Mission` },
+        { name: `Legacy of ${name}` }
       ]
     }))
   },
@@ -60,9 +75,9 @@ export const interviewsTopicsData = {
     ].map(name => ({
       name,
       subLessons: [
-        { name: `Role of ${name}`, videoUrl: "https://www.youtube.com/embed/XJSKezIdHJY" },
-        { name: `A Day in the Life: ${name}`, videoUrl: "https://www.youtube.com/embed/libKVRa01L8" },
-        { name: `Challenges for ${name}`, videoUrl: "https://www.youtube.com/embed/HCDVN7DCzYE" }
+        { name: `Role of ${name}` },
+        { name: `A Day in the Life: ${name}` },
+        { name: `Challenges for ${name}` }
       ]
     }))
   }

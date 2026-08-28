@@ -2,7 +2,7 @@ import { useParams, Navigate, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import SectionPageHeader from '@/components/layout/SectionPageHeader';
 import { useLearnTopics } from '@/hooks/useLearnTopics';
-import { quizPath } from '@/lib/learnContent';
+import { lessonName, quizPath } from '@/lib/learnContent';
 import { BookOpen, FlaskConical } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -50,9 +50,9 @@ function FuiButton({ icon: Icon, label, accentColor, onClick }) {
 }
 
 /* ─── Lesson row card ─── */
-function LessonBlock({ lesson, index, color, topicColor, onClick, onTest }) {
+function LessonBlock({ lesson, index, color, topicColor, onClick, onTest, onLab }) {
   const [hovered, setHovered] = useState(false);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const tealColor  = '#2dd4bf'; // teal for Test
   const blueColor  = '#60a5fa'; // blue for Lab
@@ -119,7 +119,7 @@ function LessonBlock({ lesson, index, color, topicColor, onClick, onTest }) {
           textOverflow: 'ellipsis',
           transition: 'color 0.2s ease',
         }}>
-          {typeof lesson === 'object' ? lesson.name : lesson}
+          {lessonName(lesson, i18n.language)}
         </h3>
       </div>
 
@@ -135,7 +135,7 @@ function LessonBlock({ lesson, index, color, topicColor, onClick, onTest }) {
           icon={FlaskConical}
           label={t('learnViews', 'labButton') || 'Lab'}
           accentColor={blueColor}
-          onClick={onClick}
+          onClick={onLab}
         />
       </div>
     </motion.div>
@@ -175,6 +175,7 @@ export default function PhysicsTopicView() {
               color={topic.color}
               onClick={() => navigate(`/learn/physics/${topicId}/lesson/${i}`)}
               onTest={() => navigate(quizPath('physics', lesson))}
+              onLab={() => navigate('/lab')}
             />
           ))}
         </div>

@@ -25,16 +25,48 @@ export function useProblems() {
   useEffect(() => {
     let cancelled = false;
 
-    api.get('/courses/problems/?sphere=problems')
-      .then(({ data }) => {
+    // The endpoint is paginated at 20. Reading only `results` and stopping is
+    // how /learn/problems came to say "20 problems" over a set of 30 — the last
+    // ten were not just unreachable, the page did not know they were there. The
+    // set had already been cut from a dishonest 145 to an honest 30; showing 20
+    // of those gave a third of it back.
+    //
+    // `next` is followed rather than counted so a changed page size needs no
+    // change here, with a hard stop because a server that always answers with a
+    // `next` must not spin the browser.
+    const MAX_PAGES = 25;
+
+    (async () => {
+      const collected = [];
+      let url = '/courses/problems/?sphere=problems';
+
+      for (let page = 0; page < MAX_PAGES && url; page += 1) {
+        let data;
+        try {
+          ({ data } = await api.get(url));
+        } catch {
+          // Keep whatever arrived. Twenty problems beats an error screen over a
+          // set that mostly loaded; only a first page that fails is a failure.
+          if (cancelled) return;
+          if (!collected.length) {
+            setState('error');
+            return;
+          }
+          break;
+        }
         if (cancelled) return;
-        const rows = Array.isArray(data) ? data : (data?.results ?? []);
-        setProblems([...rows].sort((a, b) => a.number - b.number));
-        setState('ready');
-      })
-      .catch(() => {
-        if (!cancelled) setState('error');
-      });
+
+        if (Array.isArray(data)) {
+          collected.push(...data);
+          break;
+        }
+        collected.push(...(data?.results ?? []));
+        url = data?.next ?? null;
+      }
+
+      setProblems(collected.sort((a, b) => a.number - b.number));
+      setState('ready');
+    })();
 
     return () => {
       cancelled = true;

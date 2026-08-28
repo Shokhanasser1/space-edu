@@ -39,6 +39,14 @@ const depthOf = (nodes) =>
 
 const toSubLesson = (node) => ({
   name: node.name,
+  // The translated names, dropped here until 28 Aug 2026 — the journey
+  // `content` made until 24 August, one field over. `TopicLesson.name_en` and
+  // `name_ru` are editable in the panel and sent by the serializer, and this
+  // function read only `name`, so a lesson list stayed in Uzbek on an English
+  // or Russian page however carefully it had been translated. Falling back to
+  // the base name is the rule `adaptTopic` already uses for the titles.
+  nameEn: node.name_en || node.name,
+  nameRu: node.name_ru || node.name,
   slug: node.slug,
   videoUrl: node.video_url || '',
   // The lesson's own text. Dropped here until 24 Aug 2026, which is why an
@@ -47,6 +55,25 @@ const toSubLesson = (node) => ({
   // serializer to this function and stopped.
   content: node.content || '',
 });
+
+/**
+ * A lesson's name in the reader's language.
+ *
+ * Takes an ISO code — 'en', 'ru' or 'uz' — which is what `i18n.language` gives
+ * you. Handing it the store's 'ENG'/'RUS'/'UZB' returns the base name and says
+ * nothing about it, so convert with `langCode()` from `lib/questionText.js`
+ * first if that is what you are holding.
+ *
+ * A lesson is either an object from the API or a bare string from the static
+ * file, and every screen that draws a lesson row meets both shapes.
+ */
+export function lessonName(lesson, lang) {
+  if (typeof lesson === 'string') return lesson;
+  if (!lesson) return '';
+  if (lang === 'en') return lesson.nameEn || lesson.name || '';
+  if (lang === 'ru') return lesson.nameRu || lesson.name || '';
+  return lesson.name || '';
+}
 
 const toLesson = (node) => {
   const lesson = toSubLesson(node);
@@ -71,6 +98,8 @@ export function adaptTopic(topic) {
       ...base,
       sections: roots.map((section) => ({
         name: section.name,
+        nameEn: section.name_en || section.name,
+        nameRu: section.name_ru || section.name,
         slug: section.slug,
         lessons: (section.children ?? []).map(toLesson),
       })),

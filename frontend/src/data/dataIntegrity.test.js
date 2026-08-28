@@ -153,3 +153,73 @@ describe('the featured stars point at real catalogue entries', () => {
     }
   });
 });
+
+/**
+ * Factual corrections, and the slugs they must not move.
+ *
+ * Every slug in the learn tree is derived from a name — a topic's from its
+ * English title, a lesson's from the topic slug plus its own name — and
+ * `TopicLesson.slug` is what progress and awards key on. That is deliberate
+ * (re-ordering a topic must not orphan a row) and it has one sharp edge:
+ * correcting a wrong title silently re-slugs it and everything under it, and
+ * `seed_learn_content` leaves the old rows behind as unreachable orphans.
+ *
+ * A curriculum this size will need corrections for years, so the exporter takes
+ * an explicit `slug` on a topic or a lesson and uses it in place of the derived
+ * one. These pin the corrections made on 28 Aug 2026 together with the slugs
+ * they had to keep — if a later edit moves one, this goes red rather than
+ * quietly stranding a pupil's progress.
+ */
+describe('corrected content keeps its slug', () => {
+  const fixture = () =>
+    import('../../../backend/apps/courses/fixtures/learn_content.json', {
+      with: { type: 'json' },
+    }).then((m) => m.default);
+
+  const findNode = (tree, slug) => {
+    for (const node of tree) {
+      if (node.slug === slug) return node;
+      const hit = findNode(node.children ?? [], slug);
+      if (hit) return hit;
+    }
+    return null;
+  };
+
+  const topics = async () => {
+    const data = await fixture();
+    return data.spheres.flatMap((s) => s.topics);
+  };
+
+  it('keeps the cosmonauts topic slug while the title stops calling Armstrong one', async () => {
+    // IAU OAE glossary, "Astronaut": Russian crew are cosmonauts, American crew
+    // are astronauts. Armstrong and Aldrin are two of the four lessons here.
+    // https://astro4edu.org/resources/glossary/term/23/
+    const topic = (await topics()).find((t) => t.slug === 'interviews-cosmonauts');
+    expect(topic, 'the slug 25 lesson rows hang off must not move').toBeTruthy();
+    expect(topic.title_en).toBe('Astronauts and Cosmonauts');
+    expect(findNode(topic.lessons, 'interviews-cosmonauts-neil-armstrong')).toBeTruthy();
+  });
+
+  it('keeps the Venus slug while the title stops calling it only the morning star', async () => {
+    // NASA, Venus Facts: the ancients "even thinking it was two objects: a
+    // morning star and an evening star".
+    // https://science.nasa.gov/venus/venus-facts/
+    const topic = (await topics()).find((t) => t.slug === 'astronomy-solar-system');
+    const node = findNode(topic.lessons, 'astronomy-solar-system-exploration-of-the-morning-star');
+    expect(node, 'the slug this lesson had must not move').toBeTruthy();
+    expect(node.name).toBe('Exploration of the Morning and Evening Star');
+  });
+
+  it('keeps the Titan slug while the title says what the lakes are made of', async () => {
+    // NASA, Titan: "rivers, lakes and seas of liquid hydrocarbons like methane
+    // and ethane" — not water, at about -180 C.
+    // https://science.nasa.gov/saturn/moons/titan/
+    const topic = (await topics()).find((t) => t.slug === 'astronomy-solar-system');
+    const node = findNode(
+      topic.lessons,
+      'astronomy-solar-system-titan-a-world-with-liquid-lakes',
+    );
+    expect(node, 'the slug this lesson had must not move').toBeTruthy();
+    expect(node.name).toBe('Titan: Lakes of Liquid Methane and Ethane');
+  });
+});

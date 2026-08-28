@@ -3,6 +3,7 @@ import { ArrowLeft, Globe } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useState, useRef, useEffect } from 'react';
 import { useUserStore } from '@/store/useUserStore';
+import { useTranslation } from '@/hooks/useTranslation';
 
 const LANGS = [
   { code: 'UZB', label: "O'zbekcha", flag: '🇺🇿' },
@@ -12,6 +13,7 @@ const LANGS = [
 
 export default function SectionPageHeader({ title, color = '#00e5ff', backPath = '/learn' }) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [langOpen, setLangOpen] = useState(false);
   const language = useUserStore((s) => s.language);
   const setLanguage = useUserStore((s) => s.setLanguage);
@@ -74,7 +76,7 @@ export default function SectionPageHeader({ title, color = '#00e5ff', backPath =
         }}
       >
         <ArrowLeft style={{ width: '18px', height: '18px' }} />
-        Orqaga
+        {t('common', 'back')}
       </button>
 
       {/* Center title */}

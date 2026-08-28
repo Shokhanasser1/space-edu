@@ -10,9 +10,9 @@ export const creativityTopicsData = {
     ].map(name => ({
       name,
       subLessons: [
-        { name: `${name} Module Design`, videoUrl: "https://www.youtube.com/embed/libKVRa01L8" },
-        { name: `${name} Landing Systems`, videoUrl: "https://www.youtube.com/embed/2HoTK_Gqi2Q" },
-        { name: `${name} Habitat Construction`, videoUrl: "https://www.youtube.com/embed/0KBjnN7kUKo" }
+        { name: `${name} Module Design` },
+        { name: `${name} Landing Systems` },
+        { name: `${name} Habitat Construction` }
       ]
     }))
   },
@@ -26,9 +26,9 @@ export const creativityTopicsData = {
     ].map(name => ({
       name,
       subLessons: [
-        { name: `${name} Engineering`, videoUrl: "https://www.youtube.com/embed/921VbEMAwwY" },
-        { name: `${name} Operational Orbit`, videoUrl: "https://www.youtube.com/embed/libKVRa01L8" },
-        { name: `${name} Future Upgrades`, videoUrl: "https://www.youtube.com/embed/XJSKezIdHJY" }
+        { name: `${name} Engineering` },
+        { name: `${name} Operational Orbit` },
+        { name: `${name} Future Upgrades` }
       ]
     }))
   }

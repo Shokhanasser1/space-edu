@@ -2,7 +2,7 @@ import { useParams, Navigate, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import SectionPageHeader from '@/components/layout/SectionPageHeader';
 import { useLearnTopics } from '@/hooks/useLearnTopics';
-import { quizPath } from '@/lib/learnContent';
+import { lessonName, quizPath } from '@/lib/learnContent';
 import { BookOpen, Beaker, Satellite, Rocket } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -15,14 +15,14 @@ const blockVariants = {
   }),
 };
 
-function LessonBlock({ lesson, index, color, onClick, onTest }) {
+function LessonBlock({ lesson, index, color, onClick, onTest, onLab }) {
   const [hovered, setHovered] = useState(false);
   const { t, i18n } = useTranslation();
   const colorLight = `${color}1A`;
   const colorBorder = `${color}40`;
 
   const isObject = typeof lesson === 'object';
-  const name = isObject ? lesson.name : lesson;
+  const name = lessonName(lesson, i18n.language);
   const type = isObject ? lesson.type : null;
 
   return (
@@ -96,6 +96,7 @@ function LessonBlock({ lesson, index, color, onClick, onTest }) {
           {t('learnViews', 'testButton')}
         </button>
         <button
+          onClick={(e) => { e.stopPropagation(); onLab?.(); }}
           style={{
             display: 'flex', alignItems: 'center', gap: '6px',
             padding: '8px 16px', borderRadius: '10px',
@@ -147,6 +148,7 @@ export default function AstronomyTopicView() {
               color={topic.color}
               onClick={() => navigate(`/learn/astronomy/${topicId}/sub/${i}`)}
               onTest={() => navigate(quizPath('astronomy', lesson))}
+              onLab={() => navigate('/lab')}
             />
           ))}
         </div>

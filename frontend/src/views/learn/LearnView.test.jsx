@@ -94,3 +94,86 @@ describe('LearnView lesson counts', () => {
     expect(await screen.findAllByText('465')).not.toHaveLength(0);
   });
 });
+
+/**
+ * 28 Aug 2026: the landing page of the whole Learn section was not translated.
+ *
+ * Each card printed `section.titleEn` as its heading and `section.title` as the
+ * subtitle — English over Uzbek, in every language, so a Russian reader met the
+ * section with no Russian on it at all. The description and the four topic
+ * pills under it were Uzbek string literals in the component.
+ *
+ * Nothing needed translating to fix it. `learnPage` in all three locale files
+ * already held the title, the description and all four pills for each of the
+ * five sections — 35 keys per language, written and reviewed, and never read.
+ */
+describe('the landing cards', () => {
+  let useUserStore;
+
+  beforeEach(async () => {
+    ({ useUserStore } = await import('@/store/useUserStore'));
+    api.get.mockResolvedValue({ data: [] });
+  });
+
+  const renderIn = (storeLanguage) => {
+    useUserStore.setState({ language: storeLanguage });
+    return renderPage();
+  };
+
+  it('speaks Russian to a Russian reader', async () => {
+    renderIn('RUS');
+    expect(await screen.findAllByText('Физика')).not.toHaveLength(0);
+    expect(await screen.findAllByText('Основы космической механики, гравитации и энергии'))
+      .not.toHaveLength(0);
+    expect(await screen.findAllByText('Законы Ньютона')).not.toHaveLength(0);
+  });
+
+  it('does not fall back to the Uzbek copy for a Russian reader', async () => {
+    renderIn('RUS');
+    await screen.findAllByText('Физика');
+    expect(screen.queryByText('Kosmik mexanika, gravitatsiya va energiya asoslari')).toBeNull();
+    expect(screen.queryByText('Nyuton qonunlari')).toBeNull();
+  });
+
+  it('speaks English to an English reader', async () => {
+    renderIn('ENG');
+    expect(await screen.findAllByText('Foundations of cosmic mechanics, gravity, and energy'))
+      .not.toHaveLength(0);
+    expect(await screen.findAllByText("Newton's Laws")).not.toHaveLength(0);
+  });
+
+  it('speaks Uzbek to an Uzbek reader', async () => {
+    renderIn('UZB');
+    expect(await screen.findAllByText('Kosmik mexanika, gravitatsiya va energiya asoslari'))
+      .not.toHaveLength(0);
+    expect(await screen.findAllByText('Nyuton qonunlari')).not.toHaveLength(0);
+  });
+});
+
+/**
+ * The hero heading over those cards was the same defect one level up: a
+ * hardcoded "KOINOTNI O'RGAN" in two spans, while `learnPage.headerTitle` and
+ * `headerHighlight` sat translated and unread in all three locale files. The
+ * subtitle under it was already reading its key, so an English reader met an
+ * Uzbek headline over an English sentence.
+ */
+describe('the section heading', () => {
+  let useUserStore;
+
+  beforeEach(async () => {
+    ({ useUserStore } = await import('@/store/useUserStore'));
+    api.get.mockResolvedValue({ data: [] });
+  });
+
+  it.each([
+    ['ENG', 'Cosmic', 'Academy'],
+    ['UZB', 'Koinot', 'Akademiyasi'],
+    ['RUS', 'Космическая', 'Академия'],
+  ])('is in the reader\'s language (%s)', async (language, title, highlight) => {
+    useUserStore.setState({ language });
+    renderPage();
+    expect(await screen.findAllByText(title, { exact: false })).not.toHaveLength(0);
+    expect(await screen.findAllByText(highlight, { exact: false })).not.toHaveLength(0);
+    expect(screen.queryByText(/KOINOTNI/)).toBeNull();
+  });
+});
