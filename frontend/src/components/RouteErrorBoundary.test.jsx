@@ -127,12 +127,33 @@ describe('the app wires it in', () => {
   });
 });
 
+/**
+ * Every source file the Laboratory is made of. The modules moved out of
+ * `SpaceLabView.jsx` into `lab/` on 28 Aug 2026, and the textures with them,
+ * so a check that reads only the shell file reads nothing that loads one.
+ */
+async function labSources() {
+  const shell = await import('@/views/explore/SpaceLabView.jsx?raw').then((m) => m.default);
+  const modules = import.meta.glob('../views/explore/lab/*.{js,jsx}', {
+    query: '?raw', import: 'default', eager: true,
+  });
+  return {
+    'SpaceLabView.jsx': shell,
+    ...Object.fromEntries(
+      Object.entries(modules).filter(([path]) => !/\.test\.jsx?$/.test(path)),
+    ),
+  };
+}
+
+const stripComments = (source) =>
+  source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+
 describe('textures', () => {
-  it('SpaceLabView no longer throws its way out of a failed load', async () => {
-    const source = await import('@/views/explore/SpaceLabView.jsx?raw').then((m) => m.default);
+  it('the Laboratory no longer throws its way out of a failed load', async () => {
+    const sources = Object.values(await labSources());
     // `useLoader` throws on error; the replacement returns null per texture.
-    expect(source).not.toMatch(/useLoader\s*\(/);
-    expect(source).toMatch(/useTextures/);
+    for (const source of sources) expect(source).not.toMatch(/useLoader\s*\(/);
+    expect(sources.some((source) => /useTextures/.test(source))).toBe(true);
   });
 
   it('the loader hands back null rather than raising', async () => {
@@ -143,12 +164,17 @@ describe('textures', () => {
   });
 
   it('no texture comes from somebody else’s host', async () => {
-    const source = await import('@/views/explore/SpaceLabView.jsx?raw').then((m) => m.default);
-    // The comment above the list may name the old hosts, to explain why. Code
-    // may not: this is the check that stops one being pasted back in.
-    const code = source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
-    expect(code).not.toMatch(/https?:\/\//);
-    expect(code).toMatch(/'\/textures\//);
+    // The comment above a list may name the old hosts, to explain why. Code
+    // may not: this is the check that stops one being pasted back in. Only
+    // the files that load textures are held to it — `labFacts.js` cites its
+    // sources by URL, which is the point of that file.
+    const loaders = Object.entries(await labSources())
+      .map(([path, source]) => [path, stripComments(source)])
+      .filter(([, code]) => /'\/textures\//.test(code));
+    expect(loaders.map(([path]) => path), 'nothing in the Laboratory loads a texture').not.toEqual([]);
+    for (const [path, code] of loaders) {
+      expect(code, path).not.toMatch(/https?:\/\//);
+    }
   });
 
   it('nor does any other Earth on the site', async () => {
