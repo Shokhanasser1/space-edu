@@ -13,6 +13,9 @@
  */
 import { describe, expect, it } from 'vitest';
 
+import { locations, stars as featuredStars } from './stars';
+import { starsByHr } from './skyCatalog';
+
 import { newsData } from './mockData';
 import { astronomyTopicsData } from './astronomyTopicsData';
 import { creativityTopicsData } from './creativityTopicsData';
@@ -107,5 +110,46 @@ describe('fallback news', () => {
   it('ids are unique', () => {
     const ids = newsData.map((a) => a.id);
     expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
+/**
+ * The 25 featured stars are hand-written prose with an `hr` field pointing at
+ * the generated catalogue. That pointer is the only thing tying a story to a
+ * real position, and nothing crashes if it is wrong -- the sky view just
+ * highlights a different star, or none. So it is checked here.
+ */
+describe('the featured stars point at real catalogue entries', () => {
+  it('gives every featured star a Harvard Revised number', () => {
+    for (const star of featuredStars) {
+      expect(Number.isInteger(star.hr), star.id).toBe(true);
+    }
+  });
+
+  it('finds every one of those numbers in the catalogue', () => {
+    for (const star of featuredStars) {
+      expect(starsByHr.has(star.hr), `${star.id} (HR ${star.hr})`).toBe(true);
+    }
+  });
+
+  it('points each one at a star of the name it claims', () => {
+    // `name` here is prose -- "Polaris (North Star)" -- so this checks that the
+    // catalogue's IAU name is in it, which catches an hr copied from the row
+    // above far more reliably than checking the number exists.
+    for (const star of featuredStars) {
+      const catalogued = starsByHr.get(star.hr);
+      expect(catalogued.name, star.id).toBeTruthy();
+      expect(
+        star.name.toLowerCase().includes(catalogued.name.toLowerCase()),
+        `${star.id} says "${star.name}" but HR ${star.hr} is ${catalogued.name}`,
+      ).toBe(true);
+    }
+  });
+
+  it('gives every location a latitude and longitude the sky view can use', () => {
+    for (const location of locations) {
+      expect(Math.abs(location.lat), location.id).toBeLessThanOrEqual(90);
+      expect(Math.abs(location.lon), location.id).toBeLessThanOrEqual(180);
+    }
   });
 });

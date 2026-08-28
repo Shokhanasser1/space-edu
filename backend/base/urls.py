@@ -13,6 +13,7 @@ urlpatterns = [
     path('api/v1/chat/',         include('apps.chat.urls')),
     path('api/v1/news/',         include('apps.news.urls')),
     path('api/v1/events/',       include('apps.events.urls')),
+    path('api/v1/satellites/',   include('apps.satellites.urls')),
     path('api/v1/challenges/',   include('apps.challenges.urls')),
     path('api/v1/admin-panel/',  include('apps.admin_api.urls')),
     path('api/v1/ai/',           include('apps.ai.urls')),

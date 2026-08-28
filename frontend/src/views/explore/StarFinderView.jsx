@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Compass, MapPin, Search, Star, Info, Eye, ChevronRight, ChevronLeft, Telescope, Orbit, BookOpen, Bell, Camera, Layers, ChevronDown } from 'lucide-react';
+import { Compass, MapPin, Search, Star, Info, Eye, ChevronRight, ChevronLeft, BookOpen, Bell, Camera, Layers, ChevronDown, Clock } from 'lucide-react';
 import { stars as originalStars, locations as originalLocations } from '../../data/stars';
+import { starsByHr } from '@/data/skyCatalog';
 import useStarStore from '../../store/useStarStore';
 import { useTranslation } from '@/hooks/useTranslation';
+import { compassKey, horizontalFromEquatorial, localSiderealTimeDeg } from '@/lib/skyPosition';
 import ARCameraView from './ARCameraView';
+import SkyView from './SkyView';
 import StarCollection from './StarCollection';
 
 function CustomSelect({ value, onChange, options, placeholder = 'Select an option...' }) {
@@ -67,15 +70,26 @@ function CustomSelect({ value, onChange, options, placeholder = 'Select an optio
   );
 }
 
+/**
+ * `<input type="datetime-local">` wants the *local* wall clock, and
+ * `toISOString()` is UTC -- feeding it that shows a Tashkent child a time five
+ * hours off their own watch.
+ */
+function toLocalInputValue(date) {
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+    + `T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
 export default function StarFinderView() {
   const { t, language } = useTranslation();
   const [activeTab, setActiveTab] = useState('finder'); // 'finder', 'ar', 'collection'
   
-  const [stars, setStars] = useState(originalStars);
-  const [locations, setLocations] = useState(originalLocations);
+  const stars = originalStars;
+  const locations = originalLocations;
   const [selectedLocation, setSelectedLocation] = useState(originalLocations[0].id);
   const [selectedStar, setSelectedStar] = useState(originalStars[0].id);
-  const [isCalculating, setIsCalculating] = useState(false);
+  const [when, setWhen] = useState(() => new Date());
   const [result, setResult] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showReminderToast, setShowReminderToast] = useState(false);
@@ -83,74 +97,56 @@ export default function StarFinderView() {
 
   const { starOfTheDay, initializeDailyStar } = useStarStore();
 
-  useEffect(() => {
-    const translateText = async (text, target) => {
-      if (!text || target === 'ENG') return text;
-      const langMap = { 'UZB': 'uz', 'RUS': 'ru' };
-      const targetLang = langMap[target] || 'en';
-      try {
-        const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${targetLang}&dt=t&q=${encodeURI(text)}`);
-        const data = await res.json();
-        return data[0].map(x => x[0]).join('');
-      } catch { return text; }
-    };
-
-    const translateData = async () => {
-      if (language === 'ENG') {
-        setStars(originalStars);
-        setLocations(originalLocations);
-        return;
-      }
-
-      // Translate common star data
-      const translatedStars = await Promise.all(originalStars.map(async (s) => ({
-        ...s,
-        name: await translateText(s.name, language),
-        constellation: await translateText(s.constellation, language),
-        story: await translateText(s.story, language),
-        visibilityFactors: await Promise.all(s.visibilityFactors.map(f => translateText(f, language))),
-        bestSeason: await translateText(s.bestSeason, language),
-      })));
-      setStars(translatedStars);
-
-      const translatedLocations = await Promise.all(originalLocations.map(async (l) => ({
-        ...l,
-        name: await translateText(l.name, language),
-      })));
-      setLocations(translatedLocations);
-    };
-
-    translateData();
-  }, [language]);
+  /**
+   * There used to be an effect here that translated every star's name, story
+   * and visibility notes by `fetch`ing translate.googleapis.com once per
+   * string -- roughly 130 uncached cross-origin requests each time a child
+   * changed language, to an undocumented endpoint, from a site used by
+   * 10-to-18-year-olds. It failed closed to English, so on any school network
+   * that blocks Google it had never worked at all.
+   *
+   * It is gone. Star names now come from `skyView.starNames.*` in the three
+   * locale files, and nothing on this page talks to another host -- the same
+   * rule the home page's Earth was rewritten for in b8d1ac2. The English prose
+   * (`story`, `visibilityFactors`) is still English in all three languages,
+   * which is honestly where it already was; translating it properly is
+   * content work and is written up in the pull request.
+   */
 
   useEffect(() => {
     initializeDailyStar(stars.map(s => s.id));
   }, [initializeDailyStar, stars]);
 
+  const activeLocation = locations.find((l) => l.id === selectedLocation);
+  const activeStar = stars.find((s) => s.id === selectedStar);
+
+  /**
+   * Where the chosen star actually is, from the chosen place at the chosen
+   * moment. What this replaced:
+   *
+   *   const baseAzimuth = ((locIndex + 1) * (starIndex + 1) * 47) % 360;
+   *
+   * -- which moved every star in the sky if you reordered the dropdown, and
+   * moved none of them if you waited six hours.
+   */
+  const position = useMemo(() => {
+    const catalogued = starsByHr.get(activeStar?.hr);
+    if (!catalogued || !activeLocation) return null;
+    const lst = localSiderealTimeDeg(when, activeLocation.lon);
+    const { altitudeDeg, azimuthDeg } = horizontalFromEquatorial(
+      catalogued.ra, catalogued.dec, activeLocation.lat, lst,
+    );
+    return { catalogued, altitudeDeg, azimuthDeg };
+  }, [activeStar, activeLocation, when]);
+
   const handleFindStar = () => {
-    setIsCalculating(true);
-    setResult(null);
+    if (!position) return;
+    setResult({
+      azimuth: Math.round(position.azimuth ?? position.azimuthDeg),
+      altitude: Math.round(position.altitudeDeg),
+      direction: t('skyView', `compass.${compassKey(position.azimuthDeg)}`),
+    });
     setCurrentImageIndex(0);
-
-    setTimeout(() => {
-      const locIndex = locations.findIndex(l => l.id === selectedLocation);
-      const starIndex = stars.findIndex(s => s.id === selectedStar);
-      
-      const baseAzimuth = ((locIndex + 1) * (starIndex + 1) * 47) % 360;
-      const baseAltitude = ((locIndex + 1) + (starIndex + 1) * 13) % 90;
-
-      let direction = t('starFinder', 'north');
-      if (baseAzimuth > 45 && baseAzimuth <= 135) direction = t('starFinder', 'east');
-      else if (baseAzimuth > 135 && baseAzimuth <= 225) direction = t('starFinder', 'south');
-      else if (baseAzimuth > 225 && baseAzimuth <= 315) direction = t('starFinder', 'west');
-
-      setResult({
-        azimuth: baseAzimuth,
-        altitude: baseAltitude,
-        direction
-      });
-      setIsCalculating(false);
-    }, 1000);
   };
 
 // --- Main View ---
@@ -368,27 +364,72 @@ export default function StarFinderView() {
             </div>
 
             <div className="w-full md:w-1/5">
+              {/* No spinner: the old one waited a fake second before printing
+                  index arithmetic. The answer is now four lines of trigonometry
+                  and arrives before the click finishes. */}
               <button
                 onClick={handleFindStar}
-                disabled={isCalculating}
-                className="w-full bg-neon-purple text-black font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-white transition-colors disabled:opacity-50 h-[50px]"
+                className="w-full bg-neon-purple text-black font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-white transition-colors h-[50px]"
               >
-                {isCalculating ? (
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-                  >
-                    <Search className="w-5 h-5" />
-                  </motion.div>
-                ) : (
-                  <><Search className="w-5 h-5" /> {t('starFinder', 'calculate')}</>
-                )}
+                <Search className="w-5 h-5" /> {t('starFinder', 'calculate')}
               </button>
             </div>
           </motion.div>
         )}
 
         {/* Content based on Active Tab & Results */}
+        {activeTab === 'finder' && activeLocation && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="glass p-4 md:p-6 rounded-3xl border border-white/10"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+              <div className="flex items-center gap-2 text-sm text-gray-400">
+                <MapPin className="w-4 h-4 text-neon-purple" />
+                {t('starFinder', 'viewingFrom')} {activeLocation.name}
+              </div>
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-gray-500" />
+                <input
+                  type="datetime-local"
+                  aria-label={t('skyView', 'whenLabel')}
+                  value={toLocalInputValue(when)}
+                  onChange={(event) => {
+                    const parsed = new Date(event.target.value);
+                    if (!Number.isNaN(parsed.getTime())) setWhen(parsed);
+                  }}
+                  className="bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-sm text-white [color-scheme:dark]"
+                />
+                <button
+                  type="button"
+                  onClick={() => setWhen(new Date())}
+                  className="px-3 py-2 rounded-xl border border-white/10 bg-black/40 text-sm text-gray-300 hover:text-white hover:bg-white/10 transition-colors"
+                >
+                  {t('skyView', 'now')}
+                </button>
+              </div>
+            </div>
+
+            <SkyView
+              latitude={activeLocation.lat}
+              longitude={activeLocation.lon}
+              when={when}
+              selectedHr={activeStar?.hr ?? null}
+              onSelectStar={(star) => {
+                const featured = stars.find((s) => s.hr === star.hr);
+                if (featured) setSelectedStar(featured.id);
+              }}
+            />
+
+            {/* Said out loud, because it is the honest half of the lesson: the
+                stars are measured and the lines between them are not. */}
+            <p className="mt-3 text-[11px] text-gray-500">
+              {t('skyView', 'linesAreDrawn')}
+            </p>
+          </motion.div>
+        )}
+
         <AnimatePresence mode="wait">
           {result && activeTab === 'ar' && (
             <motion.div key="ar-view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>

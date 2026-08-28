@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     'apps.chat',
     'apps.news',
     'apps.events',
+    'apps.satellites',
     'apps.challenges',
     'apps.admin_api',
     'apps.ai',
