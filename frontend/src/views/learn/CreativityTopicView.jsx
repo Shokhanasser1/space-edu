@@ -2,6 +2,7 @@ import { useParams, Navigate, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import SectionPageHeader from '@/components/layout/SectionPageHeader';
 import { useLearnTopics } from '@/hooks/useLearnTopics';
+import { lessonName } from '@/lib/learnContent';
 import { Play } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -58,7 +59,7 @@ function CreativityLessonCard({ lesson, index, color, onClick }) {
           width="100%"
           height="100%"
           src={lesson.videoUrl}
-          title={lesson.name}
+          title={lessonName(lesson, i18n.language)}
           frameBorder="0"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
@@ -113,7 +114,7 @@ function CreativityLessonCard({ lesson, index, color, onClick }) {
           marginBottom: '16px',
           lineHeight: 1.2
         }}>
-          {lesson.name}
+          {lessonName(lesson, i18n.language)}
         </h3>
 
         <p style={{ 
@@ -123,7 +124,7 @@ function CreativityLessonCard({ lesson, index, color, onClick }) {
           lineHeight: 1.6,
           marginBottom: '24px'
         }}>
-          {t('learnViews', 'lessonDescription', { name: lesson.name })}
+          {t('learnViews', 'lessonDescription', { name: lessonName(lesson, i18n.language) })}
         </p>
 
         <button

@@ -98,7 +98,7 @@ export default function ProblemsView() {
             margin: '0 0 12px 0',
             textShadow: `0 0 20px rgba(74, 222, 128, 0.50)`,
           }}>
-            PROBLEMS
+            {t('learnViews', 'problemsTitle')}
           </h1>
 
           {/* Subtitle */}
@@ -109,7 +109,7 @@ export default function ProblemsView() {
             margin: '0 auto',
             lineHeight: 1.65,
           }}>
-            Masalalar
+            {t('learnViews', 'problemsDesc').replace('{count}', String(numbers.length))}
           </p>
 
           {/* Divider */}
@@ -164,7 +164,9 @@ export default function ProblemsView() {
                 letterSpacing: '0.05em',
               }}
             >
-              {solvedCount} / {numbers.length} solved
+              {t('learnViews', 'solvedOf')
+                .replace('{solved}', String(solvedCount))
+                .replace('{total}', String(numbers.length))}
             </span>
           </div>
         </motion.div>

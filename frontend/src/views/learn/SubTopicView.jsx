@@ -2,7 +2,7 @@ import { useParams, Navigate, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import SectionPageHeader from '@/components/layout/SectionPageHeader';
 import { useLearnTopics } from '@/hooks/useLearnTopics';
-import { SUBJECTS } from '@/lib/learnContent';
+import { SUBJECTS, lessonName } from '@/lib/learnContent';
 import { BookOpen, FlaskConical } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -49,15 +49,15 @@ function FuiButton({ icon: Icon, label, accentColor, onClick }) {
   );
 }
 
-function LessonBlock({ lesson, index, color, onClick }) {
+function LessonBlock({ lesson, index, color, onClick, onLab }) {
   const [hovered, setHovered] = useState(false);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const tealColor = '#2dd4bf';
   const blueColor = '#60a5fa';
   const badgeColor = tealColor;
 
-  const lessonName = typeof lesson === 'object' ? lesson.name : lesson;
+  const name = lessonName(lesson, i18n.language);
 
   return (
     <motion.div
@@ -117,7 +117,7 @@ function LessonBlock({ lesson, index, color, onClick }) {
           textOverflow: 'ellipsis',
           transition: 'color 0.2s ease',
         }}>
-          {lessonName}
+          {name}
         </h3>
       </div>
 
@@ -133,7 +133,7 @@ function LessonBlock({ lesson, index, color, onClick }) {
           icon={FlaskConical}
           label={t('learnViews', 'labButton') || 'Lab'}
           accentColor={blueColor}
-          onClick={onClick}
+          onClick={onLab}
         />
       </div>
     </motion.div>
@@ -141,6 +141,7 @@ function LessonBlock({ lesson, index, color, onClick }) {
 }
 
 export default function SubTopicView() {
+  const { i18n } = useTranslation();
   const { subject, topicId, subIdx } = useParams();
   const navigate = useNavigate();
 
@@ -164,7 +165,7 @@ export default function SubTopicView() {
 
   return (
     <div className="pt-24 pb-20" style={{ minHeight: '100vh', background: 'transparent' }}>
-      <SectionPageHeader title={subTopic.name} color={topic.color} backPath={backPath} />
+      <SectionPageHeader title={lessonName(subTopic, i18n.language)} color={topic.color} backPath={backPath} />
 
       <div style={{ maxWidth: '860px', margin: '0 auto', padding: '32px 20px 80px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -175,6 +176,7 @@ export default function SubTopicView() {
               index={i}
               color={topic.color}
               onClick={() => navigate(`/learn/${subject}/${topicId}/sub/${subIdx}/lesson/${i}`)}
+              onLab={() => navigate('/lab')}
             />
           ))}
         </div>

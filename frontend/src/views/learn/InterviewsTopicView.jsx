@@ -2,6 +2,7 @@ import { useParams, Navigate, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import SectionPageHeader from '@/components/layout/SectionPageHeader';
 import { useLearnTopics } from '@/hooks/useLearnTopics';
+import { lessonName } from '@/lib/learnContent';
 import { BookOpen, Beaker, Satellite, Rocket } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -53,7 +54,7 @@ function LessonBlock({ lesson, index, color, onClick }) {
           {index + 1}
         </div>
         <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 500, color: hovered ? '#fff' : 'rgba(255,255,255,0.85)', transition: 'color 0.2s ease' }}>
-          {typeof lesson === 'object' ? lesson.name : lesson}
+          {lessonName(lesson, i18n.language)}
         </h3>
       </div>
       
@@ -106,7 +107,7 @@ export default function InterviewsTopicView() {
             {topic.sections.map((section, sIdx) => (
               <div key={sIdx}>
                 <h2 style={{ fontSize: '24px', fontWeight: 800, color: '#fff', marginBottom: '20px', paddingLeft: '8px', borderLeft: `4px solid ${topic.color}` }}>
-                  {section.name}
+                  {lessonName(section, i18n.language)}
                 </h2>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {section.lessons.map((lesson, i) => {

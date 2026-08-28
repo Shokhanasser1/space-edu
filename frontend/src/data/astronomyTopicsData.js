@@ -8,73 +8,87 @@ export const astronomyTopicsData = {
       { 
         name: "Sun", 
         subLessons: [
-          { name: "Structure of the Sun", videoUrl: "https://www.youtube.com/embed/2HoTK_Gqi2Q" },
-          { name: "Solar Energy & Fusion", videoUrl: "https://www.youtube.com/embed/0KBjnN7kUKo" },
-          { name: "The Sun's Life Cycle", videoUrl: "https://www.youtube.com/embed/HCDVN7DCzYE" }
+          { name: "Structure of the Sun" },
+          { name: "Solar Energy & Fusion" },
+          { name: "The Sun's Life Cycle" }
         ]
       },
       { 
         name: "Mercury", 
         subLessons: [
-          { name: "Mercury's Extreme Environment", videoUrl: "https://www.youtube.com/embed/libKVRa01L8" },
-          { name: "Geology of the Smallest Planet", videoUrl: "https://www.youtube.com/embed/XycHvvnc2X4" },
-          { name: "Missions to Mercury", videoUrl: "https://www.youtube.com/embed/epZdZaEQhS0" }
+          { name: "Mercury's Extreme Environment" },
+          { name: "Geology of the Smallest Planet" },
+          { name: "Missions to Mercury" }
         ]
       },
       { 
         name: "Venus", 
         subLessons: [
-          { name: "The Runaway Greenhouse Effect", videoUrl: "https://www.youtube.com/embed/BvKaWlyf57w" },
-          { name: "Venusian Surface & Volcanism", videoUrl: "https://www.youtube.com/embed/m4NXbFOiOGk" },
-          { name: "Exploration of the Morning Star", videoUrl: "https://www.youtube.com/embed/D85gxYG9qhM" }
+          { name: "The Runaway Greenhouse Effect" },
+          { name: "Venusian Surface & Volcanism" },
+          // Venus is the evening star as often as it is the morning star —
+          // NASA, Venus Facts: the ancients thought it "was two objects: a
+          // morning star and an evening star".
+          // https://science.nasa.gov/venus/venus-facts/
+          {
+            name: "Exploration of the Morning and Evening Star",
+            slug: "astronomy-solar-system-exploration-of-the-morning-star",
+          }
         ]
       },
       { 
         name: "Earth", 
         subLessons: [
-          { name: "The Goldilocks Zone", videoUrl: "https://www.youtube.com/embed/HCDVN7DCzYE" },
-          { name: "Atmosphere & Biosphere", videoUrl: "https://www.youtube.com/embed/libKVRa01L8" },
-          { name: "Earth's Magnetic Shield", videoUrl: "https://www.youtube.com/embed/0KBjnN7kUKo" }
+          { name: "The Goldilocks Zone" },
+          { name: "Atmosphere & Biosphere" },
+          { name: "Earth's Magnetic Shield" }
         ]
       },
       { 
         name: "Mars", 
         subLessons: [
-          { name: "The Red Planet's History", videoUrl: "https://www.youtube.com/embed/D85gxYG9qhM" },
-          { name: "Water on Mars", videoUrl: "https://www.youtube.com/embed/XycHvvnc2X4" },
-          { name: "Future Human Colonization", videoUrl: "https://www.youtube.com/embed/921VbEMAwwY" }
+          { name: "The Red Planet's History" },
+          { name: "Water on Mars" },
+          { name: "Future Human Colonization" }
         ]
       },
       { 
         name: "Jupiter", 
         subLessons: [
-          { name: "The King of Planets", videoUrl: "https://www.youtube.com/embed/XycHvvnc2X4" },
-          { name: "The Great Red Spot", videoUrl: "https://www.youtube.com/embed/libKVRa01L8" },
-          { name: "Jupiter's Galilean Moons", videoUrl: "https://www.youtube.com/embed/epZdZaEQhS0" }
+          { name: "The King of Planets" },
+          { name: "The Great Red Spot" },
+          { name: "Jupiter's Galilean Moons" }
         ]
       },
       { 
         name: "Saturn", 
         subLessons: [
-          { name: "Lord of the Rings", videoUrl: "https://www.youtube.com/embed/epZdZaEQhS0" },
-          { name: "Saturn's Hexagon Storm", videoUrl: "https://www.youtube.com/embed/m4NXbFOiOGk" },
-          { name: "Titan: A World with Liquid Lakes", videoUrl: "https://www.youtube.com/embed/0KBjnN7kUKo" }
+          { name: "Lord of the Rings" },
+          { name: "Saturn's Hexagon Storm" },
+          // The liquid is methane and ethane at about -180 C, not water —
+          // NASA, Titan: "rivers, lakes and seas of liquid hydrocarbons like
+          // methane and ethane".
+          // https://science.nasa.gov/saturn/moons/titan/
+          {
+            name: "Titan: Lakes of Liquid Methane and Ethane",
+            slug: "astronomy-solar-system-titan-a-world-with-liquid-lakes",
+          }
         ]
       },
       { 
         name: "Uranus", 
         subLessons: [
-          { name: "The Sideways Ice Giant", videoUrl: "https://www.youtube.com/embed/m4NXbFOiOGk" },
-          { name: "Atmosphere & Composition", videoUrl: "https://www.youtube.com/embed/libKVRa01L8" },
-          { name: "Uranus's Ring System", videoUrl: "https://www.youtube.com/embed/epZdZaEQhS0" }
+          { name: "The Sideways Ice Giant" },
+          { name: "Atmosphere & Composition" },
+          { name: "Uranus's Ring System" }
         ]
       },
       { 
         name: "Neptune", 
         subLessons: [
-          { name: "The Windy Blue Planet", videoUrl: "https://www.youtube.com/embed/NStn7zZKXfE" },
-          { name: "Triton: A Captured Moon", videoUrl: "https://www.youtube.com/embed/XycHvvnc2X4" },
-          { name: "Neptune's Dark Spots", videoUrl: "https://www.youtube.com/embed/D85gxYG9qhM" }
+          { name: "The Windy Blue Planet" },
+          { name: "Triton: A Captured Moon" },
+          { name: "Neptune's Dark Spots" }
         ]
       }
     ]
@@ -89,9 +103,9 @@ export const astronomyTopicsData = {
     ].map(type => ({
       name: type,
       subLessons: [
-        { name: `${type}-Type Characteristics`, videoUrl: "https://www.youtube.com/embed/2HoTK_Gqi2Q" },
-        { name: `Evolution of ${type} Stars`, videoUrl: "https://www.youtube.com/embed/0KBjnN7kUKo" },
-        { name: `Famous ${type}-Type Stars`, videoUrl: "https://www.youtube.com/embed/HCDVN7DCzYE" }
+        { name: `${type}-Type Characteristics` },
+        { name: `Evolution of ${type} Stars` },
+        { name: `Famous ${type}-Type Stars` }
       ]
     }))
   },
@@ -114,9 +128,9 @@ export const astronomyTopicsData = {
     ].map(item => ({
       ...item,
       subLessons: [
-        { name: `${item.name} Design`, videoUrl: "https://www.youtube.com/embed/921VbEMAwwY" },
-        { name: `${item.name} Launch History`, videoUrl: "https://www.youtube.com/embed/libKVRa01L8" },
-        { name: `${item.name} Mission Impact`, videoUrl: "https://www.youtube.com/embed/XJSKezIdHJY" }
+        { name: `${item.name} Design` },
+        { name: `${item.name} Launch History` },
+        { name: `${item.name} Mission Impact` }
       ]
     }))
   },
@@ -131,9 +145,9 @@ export const astronomyTopicsData = {
     ].map(body => ({
       name: body,
       subLessons: [
-        { name: `Understanding ${body}`, videoUrl: "https://www.youtube.com/embed/HCDVN7DCzYE" },
-        { name: `Physics of ${body}`, videoUrl: "https://www.youtube.com/embed/0KBjnN7kUKo" },
-        { name: `Observations of ${body}`, videoUrl: "https://www.youtube.com/embed/libKVRa01L8" }
+        { name: `Understanding ${body}` },
+        { name: `Physics of ${body}` },
+        { name: `Observations of ${body}` }
       ]
     }))
   }
