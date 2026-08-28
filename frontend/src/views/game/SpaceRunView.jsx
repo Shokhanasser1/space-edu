@@ -331,7 +331,7 @@ export default function SpaceRunView() {
             {/* Shield HUD Bar */}
             <div className="sr-hud-bar" style={{ borderColor: 'rgba(34,211,238,0.35)', boxShadow: '0 0 18px rgba(34,211,238,0.08), inset 0 0 12px rgba(34,211,238,0.04)' }}>
               <div className="flex justify-between text-[10px] uppercase tracking-wider font-bold mb-2">
-                <span className="text-cyan-200" style={{ textShadow: '0 0 8px rgba(34,211,238,0.6)' }}>Shield</span>
+                <span className="text-cyan-200" style={{ textShadow: '0 0 8px rgba(34,211,238,0.6)' }}>{t('game', 'shield')}</span>
                 <span className="text-cyan-300 tabular-nums" style={{ textShadow: '0 0 6px rgba(34,211,238,0.5)' }}>{Math.round(shield)}%</span>
               </div>
               <div className="h-[6px] rounded-[3px] bg-black/40 overflow-hidden" style={{ boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.5)' }}>
@@ -341,7 +341,7 @@ export default function SpaceRunView() {
             {/* Boost HUD Bar */}
             <div className="sr-hud-bar" style={{ borderColor: 'rgba(217,70,239,0.35)', boxShadow: '0 0 18px rgba(217,70,239,0.08), inset 0 0 12px rgba(217,70,239,0.04)' }}>
               <div className="flex justify-between text-[10px] uppercase tracking-wider font-bold mb-2">
-                <span className="text-fuchsia-200" style={{ textShadow: '0 0 8px rgba(217,70,239,0.6)' }}>Boost</span>
+                <span className="text-fuchsia-200" style={{ textShadow: '0 0 8px rgba(217,70,239,0.6)' }}>{t('game', 'boost')}</span>
                 <span className="text-fuchsia-300 tabular-nums" style={{ textShadow: '0 0 6px rgba(217,70,239,0.5)' }}>{Math.round(boost)}%</span>
               </div>
               <div className="h-[6px] rounded-[3px] bg-black/40 overflow-hidden" style={{ boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.5)' }}>
@@ -504,7 +504,7 @@ export default function SpaceRunView() {
                     {t('game', 'title')}
                   </h1>
                   <p className="text-cyan-200/60 text-xs tracking-[0.3em] uppercase mt-2 font-semibold">
-                    Arcade · Dodge · Collect
+                    {t('game', 'arcadeTag')}
                   </p>
                 </div>
               </div>

@@ -910,7 +910,8 @@
     "boostBtn": "BOOST",
     "home": "Home",
     "pressToPlay": "Press to play",
-    "steer": "Arrows or WASD to steer. Hold Shift or Space for boost."
+    "steer": "Arrows or WASD to steer. Hold Shift or Space for boost.",
+    "arcadeTag": "Arcade · Dodge · Collect"
   },
   "quiz": {
     "title": "Quiz-Test",

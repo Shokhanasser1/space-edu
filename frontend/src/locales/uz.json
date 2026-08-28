@@ -910,7 +910,8 @@
     "boostBtn": "TEZLANISH",
     "home": "Bosh sahifa",
     "pressToPlay": "O'ynash uchun bosing",
-    "steer": "Strelkalar yoki WASD — boshqarish. Shift yoki Probel — tezlanish."
+    "steer": "Strelkalar yoki WASD — boshqarish. Shift yoki Probel — tezlanish.",
+    "arcadeTag": "Arkada · Qoching · Yig'ing"
   },
   "quiz": {
     "title": "Quiz-Test",
