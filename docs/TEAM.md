@@ -242,9 +242,11 @@ python manage.py seed_satellites      # 10 satellites for the Live page, Samarka
 python manage.py seed_events          # 17 events for the calendar
 ```
 
-`seed_market` takes `--no-images` if you would rather not wait for the photos,
-and `--fresh` to wipe the catalogue first. The rest are idempotent: run them
-twice and they update rather than duplicate.
+`seed_market` takes `--no-images` if you would rather not wait for the photos.
+It also takes `--fresh`, which deletes every item and category before writing
+its own — that one is on the never-against-the-shared-database list above, and
+this is the line someone reads first, so it is repeated here. The rest are
+idempotent: run them twice and they update rather than duplicate.
 
 Do that for anything structural, anything you are unsure of, and any time you
 are on a train. The content is committed as fixtures and seed commands
