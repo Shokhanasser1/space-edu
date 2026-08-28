@@ -197,8 +197,9 @@ It also means one person can ruin everyone's afternoon.
    `main` after the migration has merged.** Test your migration locally first —
    unset `DB_URL` and you are on your own SQLite file in seconds.
 2. **Never run a destructive command against it.** `flush`,
-   `seed_learn_content --prune`, `rotate_leaked_credentials`, an unfiltered
-   `delete()` in `manage.py shell`. If you are about to type one, you want your
+   `seed_learn_content --prune`, `seed_market --fresh` (it deletes every item
+   and category before writing its own), `rotate_leaked_credentials`, an
+   unfiltered `delete()` in `manage.py shell`. If you are about to type one, you want your
    local database, not this one.
 3. **Never point a deployed thing at it.** This is a development database. It
    holds throwaway accounts and half-written lessons.
