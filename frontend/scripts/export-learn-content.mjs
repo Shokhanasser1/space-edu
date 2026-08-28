@@ -62,6 +62,14 @@ const SUBJECTS = [
  * Slugs are derived from names, not from (parent, order): re-ordering a topic
  * must not orphan every progress row under it. Duplicate names inside one
  * subject get a numeric suffix in walk order, which is stable for a given file.
+ *
+ * The sharp edge of deriving from the name is that *correcting* a name moves
+ * the slug — and a topic's slug prefixes every lesson slug beneath it, so one
+ * fixed word in a title re-slugs the whole subtree and `seed_learn_content`
+ * leaves the old rows behind, holding the progress, unreachable. A curriculum
+ * this size will be corrected for years, so a topic or a lesson may carry an
+ * explicit `slug` and keep the one it already had. Set it when you fix a name;
+ * never change one that is already set.
  */
 function slugify(text) {
   return String(text)
@@ -89,7 +97,9 @@ function readLessonTree(topic, slugFor, prefix) {
   const walk = (items, parentPrefix) =>
     items.map((item, index) => {
       const name = typeof item === 'string' ? item : item.name;
-      const slug = slugFor(parentPrefix, name);
+      const slug = typeof item === 'string' || !item.slug
+        ? slugFor(parentPrefix, name)
+        : slugFor(item.slug);
       const children = typeof item === 'string'
         ? []
         : walk(item.subLessons ?? item.lessons ?? [], parentPrefix);
@@ -165,7 +175,9 @@ function build() {
       return {
         ...sphere,
         topics: Object.values(data).map((topic) => {
-          const topicSlug = slugFor(sphere.slug, topic.titleEn || topic.title);
+          const topicSlug = topic.slug
+            ? slugFor(topic.slug)
+            : slugFor(sphere.slug, topic.titleEn || topic.title);
           return {
             slug: topicSlug,
             // The numeric key the pre-API routes used, and the display order.

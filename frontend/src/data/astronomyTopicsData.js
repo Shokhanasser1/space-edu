@@ -26,7 +26,14 @@ export const astronomyTopicsData = {
         subLessons: [
           { name: "The Runaway Greenhouse Effect" },
           { name: "Venusian Surface & Volcanism" },
-          { name: "Exploration of the Morning Star" }
+          // Venus is the evening star as often as it is the morning star —
+          // NASA, Venus Facts: the ancients thought it "was two objects: a
+          // morning star and an evening star".
+          // https://science.nasa.gov/venus/venus-facts/
+          {
+            name: "Exploration of the Morning and Evening Star",
+            slug: "astronomy-solar-system-exploration-of-the-morning-star",
+          }
         ]
       },
       { 
@@ -58,7 +65,14 @@ export const astronomyTopicsData = {
         subLessons: [
           { name: "Lord of the Rings" },
           { name: "Saturn's Hexagon Storm" },
-          { name: "Titan: A World with Liquid Lakes" }
+          // The liquid is methane and ethane at about -180 C, not water —
+          // NASA, Titan: "rivers, lakes and seas of liquid hydrocarbons like
+          // methane and ethane".
+          // https://science.nasa.gov/saturn/moons/titan/
+          {
+            name: "Titan: Lakes of Liquid Methane and Ethane",
+            slug: "astronomy-solar-system-titan-a-world-with-liquid-lakes",
+          }
         ]
       },
       { 

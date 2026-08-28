@@ -1890,8 +1890,8 @@
                 {
                   "slug": "astronomy-solar-system-exploration-of-the-morning-star",
                   "order": 2,
-                  "name": "Exploration of the Morning Star",
-                  "name_en": "Exploration of the Morning Star",
+                  "name": "Exploration of the Morning and Evening Star",
+                  "name_en": "Exploration of the Morning and Evening Star",
                   "name_ru": "",
                   "video_url": "",
                   "children": []
@@ -2038,8 +2038,8 @@
                 {
                   "slug": "astronomy-solar-system-titan-a-world-with-liquid-lakes",
                   "order": 2,
-                  "name": "Titan: A World with Liquid Lakes",
-                  "name_en": "Titan: A World with Liquid Lakes",
+                  "name": "Titan: Lakes of Liquid Methane and Ethane",
+                  "name_en": "Titan: Lakes of Liquid Methane and Ethane",
                   "name_ru": "",
                   "video_url": "",
                   "children": []
@@ -4675,9 +4675,9 @@
         {
           "slug": "interviews-cosmonauts",
           "order": 2,
-          "title": "Kosmonavtlar",
-          "title_en": "Cosmonauts",
-          "title_ru": "Космонавты",
+          "title": "Astronavtlar va kosmonavtlar",
+          "title_en": "Astronauts and Cosmonauts",
+          "title_ru": "Астронавты и космонавты",
           "color": "#3b82f6",
           "lessons": [
             {
