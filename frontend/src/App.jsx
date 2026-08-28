@@ -6,6 +6,7 @@ import ParticleBackground from '@/components/layout/ParticleBackground';
 import PageTransition from '@/components/layout/PageTransition';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import GuestRoute from '@/components/GuestRoute';
+import IntroGate from '@/components/IntroGate';
 import StaffRoute from '@/components/StaffRoute';
 import Footer from '@/components/layout/Footer';
 import CosmicLoader from '@/components/ui/CosmicLoader';
@@ -17,6 +18,7 @@ import RegisterView from '@/views/auth/RegisterView';
 import ForgotPasswordView from '@/views/auth/ForgotPasswordView';
 import VerifyEmailView    from '@/views/auth/VerifyEmailView';
 import HomeView     from '@/views/home/HomeView';
+import IntroView    from '@/views/intro/IntroView';
 import NotFoundView from '@/views/misc/NotFoundView';
 
 // Lazy — everything else
@@ -65,7 +67,7 @@ export default function App() {
   const isGame  = location.pathname === GAME_PATH;
   // The chrome-free screens: no navigation, no particles, no footer. A new
   // auth route that is not in here gets the whole site around it.
-  const isAuth  = ['/login', '/register', '/forgot-password', '/verify-email']
+  const isAuth  = ['/welcome', '/login', '/register', '/forgot-password', '/verify-email']
     .includes(location.pathname);
   const isAdmin = location.pathname === '/admin-panel';
   const isHome  = location.pathname === '/';
@@ -86,11 +88,13 @@ export default function App() {
         <Suspense fallback={<CosmicLoader />}>
           <Routes>
             {/* Public */}
-            <Route path="/"         element={<PT><HomeView /></PT>} />
+            {/* A first-time visitor who is signed out is sent to /welcome first. */}
+            <Route path="/"         element={<IntroGate><PT><HomeView /></PT></IntroGate>} />
             {/* Signed out only. Reaching the sign-in form while somebody else is
                 still signed in on a shared computer is how one child ends up
                 looking at another child's account. */}
             <Route element={<GuestRoute />}>
+              <Route path="/welcome"         element={<IntroView />} />
               <Route path="/login"           element={<LoginView />} />
               <Route path="/register"        element={<RegisterView />} />
               <Route path="/forgot-password" element={<ForgotPasswordView />} />
