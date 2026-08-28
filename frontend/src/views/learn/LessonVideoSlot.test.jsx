@@ -101,3 +101,41 @@ describe('the source', () => {
     expect(src).not.toMatch(/libKVRa01L8/);
   });
 });
+
+/**
+ * A lesson that has a video should not start playing it by itself.
+ *
+ * The pool is gone, but the embed a lesson's *own* video was given still
+ * carried `autoplay=1&mute=0`. That is wrong twice over: thirty children
+ * opening a lesson in one room is thirty soundtracks, and Chrome and Safari
+ * refuse an unmuted autoplay anyway — so the flag bought a video that usually
+ * did not play, and sometimes one that did, loudly.
+ */
+async function srcForLessonWithVideo(videoUrl) {
+  api.get.mockResolvedValue({ data: treeWith(videoUrl) });
+  renderLesson();
+  await screen.findAllByText("Coulomb's law");
+  return document.querySelector('iframe').getAttribute('src');
+}
+
+describe('a lesson video waits to be asked', () => {
+  it('does not autoplay the lesson\'s own video', async () => {
+    const src = await srcForLessonWithVideo('https://www.youtube.com/embed/abc123');
+
+    expect(src).not.toMatch(/autoplay=1/);
+    expect(src).not.toMatch(/mute=0/);
+  });
+
+  it('still keeps YouTube from offering unrelated videos afterwards', async () => {
+    const src = await srcForLessonWithVideo('https://www.youtube.com/embed/abc123');
+
+    expect(src).toMatch(/rel=0/);
+  });
+
+  it('still turns a watch link into an embed link', async () => {
+    const src = await srcForLessonWithVideo('https://www.youtube.com/watch?v=abc123');
+
+    expect(src).toMatch(/\/embed\/abc123/);
+    expect(src).not.toMatch(/watch\?v=/);
+  });
+});
