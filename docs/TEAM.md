@@ -223,13 +223,31 @@ Unset `DB_URL` and you are on `backend/db.sqlite3`, alone:
 
 ```bash
 python manage.py migrate
-python manage.py seed_learn_content   # the whole /learn tree, from the fixture
 python manage.py createsuperuser
 ```
 
+Then fill it. **Every one of these matters** — a fresh clone that runs only the
+first of them opens on an empty Market, empty News and an empty Live page, and
+looks broken when it is merely unseeded. Checked on a clean clone on
+28 August 2026; the counts are what you should see.
+
+```bash
+python manage.py seed_learn_content   # 474 lesson nodes, 30 problems, the /learn tree
+python manage.py seed_challenges      # 95 questions — the daily challenge and the quizzes
+python manage.py seed_market          # 10 categories, 40 virtual items
+python manage.py seed_real_products   # 21 real products with links to the shops that sell them
+python manage.py seed_news            # 8 sourced articles
+python manage.py seed_satellites      # 10 satellites for the Live page, Samarkand-2028 among them
+python manage.py seed_events          # 17 events for the calendar
+```
+
+`seed_market` takes `--no-images` if you would rather not wait for the photos,
+and `--fresh` to wipe the catalogue first. The rest are idempotent: run them
+twice and they update rather than duplicate.
+
 Do that for anything structural, anything you are unsure of, and any time you
-are on a train. The learn content is committed as a fixture precisely so a local
-database is one command from being useful.
+are on a train. The content is committed as fixtures and seed commands
+precisely so a local database is a few commands from being useful.
 
 ### Why the migration rule is the strict one
 
