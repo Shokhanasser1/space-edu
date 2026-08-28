@@ -192,7 +192,7 @@ export default function RegisterView() {
               onClick={() => setShowPass((v) => !v)}
               aria-label={showPass ? 'hide password' : 'show password'}
               aria-pressed={showPass}
-              className="absolute right-4 top-1/2 -translate-y-1/2 transition-colors"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-xl transition-colors"
               style={{ color: 'var(--auth-text-faint)' }}
             >
               {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}

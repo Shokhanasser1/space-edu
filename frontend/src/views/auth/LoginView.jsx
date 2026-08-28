@@ -107,7 +107,7 @@ export default function LoginView() {
               onClick={() => setShowPass((v) => !v)}
               aria-label={showPass ? 'hide password' : 'show password'}
               aria-pressed={showPass}
-              className="absolute right-4 top-1/2 -translate-y-1/2 transition-colors"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-xl transition-colors"
               style={{ color: 'var(--auth-text-faint)' }}
             >
               {showPass ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
@@ -148,8 +148,8 @@ export default function LoginView() {
           </span>
         </button>
 
-        <div className="text-center -mt-2">
-          <Link to="/forgot-password" className="text-xs font-[700] transition-colors" style={{ color: 'var(--auth-text-muted)' }}>
+        <div className="text-center -my-3">
+          <Link to="/forgot-password" className="inline-block py-3 px-2 text-xs font-[700] transition-colors" style={{ color: 'var(--auth-text-muted)' }}>
             {t('loginPage', 'forgotPasswordLink')}
           </Link>
         </div>
