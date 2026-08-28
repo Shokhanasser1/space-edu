@@ -104,6 +104,9 @@ export default function App() {
             <Route path="/market"       element={<PT><MarketView /></PT>} />
             <Route path="/space-game"   element={<PT><SpaceRunView /></PT>} />
             <Route path="/lab"          element={<PT><SpaceLabView /></PT>} />
+            {/* The module is part of the address, so a Learn topic can open the
+                one it is about instead of dropping every reader on Apollo. */}
+            <Route path="/lab/:moduleId" element={<PT><SpaceLabView /></PT>} />
             <Route path="/3d-solar-system" element={<PT><SolarSystemView /></PT>} />
             <Route path="/star-finder"  element={<PT><StarFinderView /></PT>} />
             <Route path="/calendar"     element={<PT><CalendarView /></PT>} />

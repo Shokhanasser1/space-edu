@@ -222,177 +222,176 @@
     "oneMonthPerSec": "1 OY/S",
     "speed": "Tezlik",
     "realTimeValue": "REAL VAQT",
-      "solar": {
-        "title": "Quyosh tizimi",
-        "subtitle": "Joylashuvlar — VSOP87 efemeridalari (astronomy-engine), NASA JPL Horizons bilan solishtirilgan. Sun'iy yo'ldoshlar — CelesTrak, zondlar — JPL Horizons, yulduzlar — Yale Bright Star Catalogue.",
-        "speed": {
-          "live": "Jonli",
-          "hour": "1 soat/s",
-          "day": "1 kun/s",
-          "week": "1 hafta/s",
-          "month": "1 oy/s",
-          "year": "1 yil/s"
-        },
-        "speedLabel": "Tezlik",
-        "play": "Davom ettirish",
-        "pause": "To'xtatish",
-        "reverse": "Orqaga",
-        "forward": "Oldinga",
-        "today": "Hozir",
-        "date": "Sana",
-        "atEdge": "Efemeridalar 1800–2200 yillar uchun ishonchli — soat chegarada to'xtadi.",
-        "overview": "Umumiy ko'rinish",
-        "escHint": "Esc — panelni yopish, keyin umumiy ko'rinishga qaytish",
-        "bodies": "Jismlar",
-        "star": "Yulduz",
-        "planets": "Sayyoralar",
-        "dwarfs": "Mitti sayyoralar",
-        "moons": "Yo'ldoshlar",
-        "kind": {
-          "star": "Yulduz",
-          "planet": "Sayyora",
-          "dwarf": "Mitti sayyora",
-          "moon": "Tabiiy yo'ldosh",
-          "satellite": "Sun'iy yo'ldosh",
-          "spacecraft": "Kosmik zond"
-        },
-        "facts": {
-          "radius": "Radius",
-          "mass": "Massa",
-          "gravity": "Erkin tushish tezlanishi",
-          "temp": "O'rtacha harorat",
-          "day": "Sutka uzunligi",
-          "tilt": "O'q og'ishi",
-          "atmosphere": "Atmosfera",
-          "none": "Yo'q",
-          "moonsCount": "Yo'ldoshlar",
-          "retrograde": "teskari aylanadi"
-        },
-        "live": {
-          "title": "Ayni paytda",
-          "distSun": "Quyoshgacha masofa",
-          "distEarth": "Yergacha masofa",
-          "light": "Yorug'lik yetib keladi",
-          "period": "Aylanish davri",
-          "orbits": "Atrofida aylanadi"
-        },
-        "units": {
-          "km": "km",
-          "au": "a.b.",
-          "mkm": "mln km",
-          "min": "daq",
-          "h": "soat",
-          "d": "kun",
-          "years": "yil",
-          "days": "kun"
-        },
-        "layers": {
-          "title": "Qatlamlar",
-          "orbits": "Orbitalar",
-          "labels": "Nomlar",
-          "asteroids": "Asteroidlar va Koyper kamari",
-          "stars": "Haqiqiy yulduzlar",
-          "satellites": "Sun'iy yo'ldoshlar (XKS, stansiyalar)",
-          "spacecraft": "Kosmik zondlar",
-          "trueScale": "Haqiqiy masshtab",
-          "scaleNote": "Haqiqiy masshtabda sayyoralar nuqtaga aylanadi — Quyosh tizimi aslida shunchalik bo'sh."
-        },
-        "satStatus": {
-          "loading": "Orbital elementlar yuklanmoqda…",
-          "noWebGL": "Bu sahifaga WebGL 2 kerak, bu brauzer yoki video-drayver esa uni bermaydi. Ishlaydigan video-drayverli kompyuterda Chrome yoki Firefox'ni sinab ko'ring.",
-          "ready": "Sun'iy yo'ldoshlar: {n}",
-          "error": "Sun'iy yo'ldosh ma'lumotlari mavjud emas (server o'chiq)",
-          "outOfRange": "Sun'iy yo'ldosh orbitalari faqat bugundan ±30 kun oralig'ida ma'lum"
-        },
-        "craftStatus": {
-          "loading": "JPL Horizons so'ralmoqda…",
-          "error": "Zondlar ma'lumotlari mavjud emas (server o'chiq)"
-        },
-        "events": {
-          "title": "Yaqin voqealar",
-          "fullMoon": "To'lin oy",
-          "newMoon": "Yangi oy",
-          "lunarEclipse": "Oy tutilishi",
-          "solarEclipse": "Quyosh tutilishi",
-          "opposition": "qarama-qarshi turish",
-          "jump": "Soatni shu lahzaga o'tkazish",
-          "kinds": {
-            "penumbral": "yarim soyali",
-            "partial": "qisman",
-            "total": "to'liq",
-            "annular": "halqasimon"
-          }
-        },
-        "sat": {
-          "norad": "NORAD raqami",
-          "altitude": "Balandlik",
-          "speed": "Tezlik",
-          "inclination": "Og'ish burchagi",
-          "position": "Ustida (kenglik, uzunlik)"
-        },
-        "loading": "Teksturalar yuklanmoqda…",
-          "quiz": {
-            "title": "O'zingizni sinang",
-            "intro": "Osmon hozir javob beradigan beshta savol — javoblar sana bilan o'zgaradi.",
-            "start": "Boshlash",
-            "next": "Keyingi",
-            "finish": "Tayyor",
-            "again": "Yana",
-            "show": "ko'rsatish",
-            "question": "{i} / {n}",
-            "correct": "To'g'ri.",
-            "wrong": "Yo'q — to'g'ri javob: {answer}.",
-            "score": "{n} tadan {score} tasi to'g'ri.",
-            "best": "eng yaxshi {best}",
-            "noXp": "Mashq — buning uchun XP hozircha berilmaydi.",
-            "unitsDays": "{n} kun",
-            "q": {
-              "closestPlanet": "Hozir Yerga eng yaqin sayyora qaysi?",
-              "farthest": "Bulardan qaysi biri hozir Quyoshdan eng uzoqda?",
-              "lightTime": "Quyosh yorug'ligi {body} sayyorasiga hozir qancha vaqtda yetib boradi?",
-              "nextOpposition": "Keyingi qarama-qarshi turish qaysi sayyorada?",
-              "longestDay": "Bulardan qaysi birida sutka eng uzun?",
-              "retrograde": "Bulardan qaysi biri teskari aylanadi?",
-              "daysToFullMoon": "Keyingi to'lin oygacha necha kun qoldi?"
-            }
-          },
-          "probeNote": "Traektoriya: NASA/JPL Horizons. Model: NASA VTAD.",
-          "launched": "Uchirilgan"
+    "solar": {
+      "title": "Quyosh tizimi",
+      "subtitle": "Joylashuvlar — VSOP87 efemeridalari (astronomy-engine), NASA JPL Horizons bilan solishtirilgan. Sun'iy yo'ldoshlar — CelesTrak, zondlar — JPL Horizons, yulduzlar — Yale Bright Star Catalogue.",
+      "speed": {
+        "live": "Jonli",
+        "hour": "1 soat/s",
+        "day": "1 kun/s",
+        "week": "1 hafta/s",
+        "month": "1 oy/s",
+        "year": "1 yil/s"
       },
-      "bodies": {
-        "sun": "Quyosh",
-        "mercury": "Merkuriy",
-        "venus": "Venera",
-        "earth": "Yer",
-        "mars": "Mars",
-        "jupiter": "Yupiter",
-        "saturn": "Saturn",
-        "uranus": "Uran",
-        "neptune": "Neptun",
-        "pluto": "Pluton",
-        "ceres": "Serera",
-        "eris": "Erida",
-        "haumea": "Haumea",
-        "makemake": "Makemake",
-        "moon": "Oy",
-        "phobos": "Fobos",
-        "deimos": "Deymos",
-        "io": "Io",
-        "europa": "Yevropa",
-        "ganymede": "Ganimed",
-        "callisto": "Kallisto",
-        "mimas": "Mimas",
-        "enceladus": "Enselad",
-        "rhea": "Reya",
-        "titan": "Titan",
-        "iapetus": "Yapet",
-        "titania": "Titaniya",
-        "oberon": "Oberon",
-        "triton": "Triton",
-        "charon": "Xaron",
-        "iss": "XKS"
-      }
-
+      "speedLabel": "Tezlik",
+      "play": "Davom ettirish",
+      "pause": "To'xtatish",
+      "reverse": "Orqaga",
+      "forward": "Oldinga",
+      "today": "Hozir",
+      "date": "Sana",
+      "atEdge": "Efemeridalar 1800–2200 yillar uchun ishonchli — soat chegarada to'xtadi.",
+      "overview": "Umumiy ko'rinish",
+      "escHint": "Esc — panelni yopish, keyin umumiy ko'rinishga qaytish",
+      "bodies": "Jismlar",
+      "star": "Yulduz",
+      "planets": "Sayyoralar",
+      "dwarfs": "Mitti sayyoralar",
+      "moons": "Yo'ldoshlar",
+      "kind": {
+        "star": "Yulduz",
+        "planet": "Sayyora",
+        "dwarf": "Mitti sayyora",
+        "moon": "Tabiiy yo'ldosh",
+        "satellite": "Sun'iy yo'ldosh",
+        "spacecraft": "Kosmik zond"
+      },
+      "facts": {
+        "radius": "Radius",
+        "mass": "Massa",
+        "gravity": "Erkin tushish tezlanishi",
+        "temp": "O'rtacha harorat",
+        "day": "Sutka uzunligi",
+        "tilt": "O'q og'ishi",
+        "atmosphere": "Atmosfera",
+        "none": "Yo'q",
+        "moonsCount": "Yo'ldoshlar",
+        "retrograde": "teskari aylanadi"
+      },
+      "live": {
+        "title": "Ayni paytda",
+        "distSun": "Quyoshgacha masofa",
+        "distEarth": "Yergacha masofa",
+        "light": "Yorug'lik yetib keladi",
+        "period": "Aylanish davri",
+        "orbits": "Atrofida aylanadi"
+      },
+      "units": {
+        "km": "km",
+        "au": "a.b.",
+        "mkm": "mln km",
+        "min": "daq",
+        "h": "soat",
+        "d": "kun",
+        "years": "yil",
+        "days": "kun"
+      },
+      "layers": {
+        "title": "Qatlamlar",
+        "orbits": "Orbitalar",
+        "labels": "Nomlar",
+        "asteroids": "Asteroidlar va Koyper kamari",
+        "stars": "Haqiqiy yulduzlar",
+        "satellites": "Sun'iy yo'ldoshlar (XKS, stansiyalar)",
+        "spacecraft": "Kosmik zondlar",
+        "trueScale": "Haqiqiy masshtab",
+        "scaleNote": "Haqiqiy masshtabda sayyoralar nuqtaga aylanadi — Quyosh tizimi aslida shunchalik bo'sh."
+      },
+      "satStatus": {
+        "loading": "Orbital elementlar yuklanmoqda…",
+        "noWebGL": "Bu sahifaga WebGL 2 kerak, bu brauzer yoki video-drayver esa uni bermaydi. Ishlaydigan video-drayverli kompyuterda Chrome yoki Firefox'ni sinab ko'ring.",
+        "ready": "Sun'iy yo'ldoshlar: {n}",
+        "error": "Sun'iy yo'ldosh ma'lumotlari mavjud emas (server o'chiq)",
+        "outOfRange": "Sun'iy yo'ldosh orbitalari faqat bugundan ±30 kun oralig'ida ma'lum"
+      },
+      "craftStatus": {
+        "loading": "JPL Horizons so'ralmoqda…",
+        "error": "Zondlar ma'lumotlari mavjud emas (server o'chiq)"
+      },
+      "events": {
+        "title": "Yaqin voqealar",
+        "fullMoon": "To'lin oy",
+        "newMoon": "Yangi oy",
+        "lunarEclipse": "Oy tutilishi",
+        "solarEclipse": "Quyosh tutilishi",
+        "opposition": "qarama-qarshi turish",
+        "jump": "Soatni shu lahzaga o'tkazish",
+        "kinds": {
+          "penumbral": "yarim soyali",
+          "partial": "qisman",
+          "total": "to'liq",
+          "annular": "halqasimon"
+        }
+      },
+      "sat": {
+        "norad": "NORAD raqami",
+        "altitude": "Balandlik",
+        "speed": "Tezlik",
+        "inclination": "Og'ish burchagi",
+        "position": "Ustida (kenglik, uzunlik)"
+      },
+      "loading": "Teksturalar yuklanmoqda…",
+      "quiz": {
+        "title": "O'zingizni sinang",
+        "intro": "Osmon hozir javob beradigan beshta savol — javoblar sana bilan o'zgaradi.",
+        "start": "Boshlash",
+        "next": "Keyingi",
+        "finish": "Tayyor",
+        "again": "Yana",
+        "show": "ko'rsatish",
+        "question": "{i} / {n}",
+        "correct": "To'g'ri.",
+        "wrong": "Yo'q — to'g'ri javob: {answer}.",
+        "score": "{n} tadan {score} tasi to'g'ri.",
+        "best": "eng yaxshi {best}",
+        "noXp": "Mashq — buning uchun XP hozircha berilmaydi.",
+        "unitsDays": "{n} kun",
+        "q": {
+          "closestPlanet": "Hozir Yerga eng yaqin sayyora qaysi?",
+          "farthest": "Bulardan qaysi biri hozir Quyoshdan eng uzoqda?",
+          "lightTime": "Quyosh yorug'ligi {body} sayyorasiga hozir qancha vaqtda yetib boradi?",
+          "nextOpposition": "Keyingi qarama-qarshi turish qaysi sayyorada?",
+          "longestDay": "Bulardan qaysi birida sutka eng uzun?",
+          "retrograde": "Bulardan qaysi biri teskari aylanadi?",
+          "daysToFullMoon": "Keyingi to'lin oygacha necha kun qoldi?"
+        }
+      },
+      "probeNote": "Traektoriya: NASA/JPL Horizons. Model: NASA VTAD.",
+      "launched": "Uchirilgan"
+    },
+    "bodies": {
+      "sun": "Quyosh",
+      "mercury": "Merkuriy",
+      "venus": "Venera",
+      "earth": "Yer",
+      "mars": "Mars",
+      "jupiter": "Yupiter",
+      "saturn": "Saturn",
+      "uranus": "Uran",
+      "neptune": "Neptun",
+      "pluto": "Pluton",
+      "ceres": "Serera",
+      "eris": "Erida",
+      "haumea": "Haumea",
+      "makemake": "Makemake",
+      "moon": "Oy",
+      "phobos": "Fobos",
+      "deimos": "Deymos",
+      "io": "Io",
+      "europa": "Yevropa",
+      "ganymede": "Ganimed",
+      "callisto": "Kallisto",
+      "mimas": "Mimas",
+      "enceladus": "Enselad",
+      "rhea": "Reya",
+      "titan": "Titan",
+      "iapetus": "Yapet",
+      "titania": "Titaniya",
+      "oberon": "Oberon",
+      "triton": "Triton",
+      "charon": "Xaron",
+      "iss": "XKS"
+    }
   },
   "lab": {
     "title": "Kosmik",
@@ -477,7 +476,18 @@
     "launchTimeRate": "Vaqt tezligi",
     "launchTimeRateNote": "Soat qanchalik tez yurishi. Raketaning o'ziga hech qanday ta'siri yo'q.",
     "launchScaleNote": "Raketa balandlik ustuni miqyosida chizilmagan. Belgilangan ikki balandlik NASA ma'lumoti; ular orasidagi chiziq to'g'ri chizilgan.",
-    "statusOrbit": "IKKINCHI BOSQICH O'CHDI"
+    "statusOrbit": "IKKINCHI BOSQICH O'CHDI",
+    "moduleFailed": "Bu modulni yuklab bo'lmadi. Laboratoriyaning qolgan qismi ishlayapti - ro'yxatdan boshqasini tanlang.",
+    "orbitalPeriod": "Orbital davr",
+    "velocity": "Orbital tezlik",
+    "orbitType": "Orbita turi",
+    "revolutionsPerDay": "Kunlik aylanishlar",
+    "orbitScaleNote": "Sayyora va orbita bir xil masshtabda chizilgan, shuning uchun past orbita haqiqatan ham yer yuzasiga yaqin turadi. Davr va tezlik balandlikdan Yerning gravitatsion parametri (WGS-84) yordamida hisoblanadi.",
+    "orbitLeo": "Past Yer orbitasi (LEO)",
+    "orbitMeo": "O'rta Yer orbitasi (MEO)",
+    "orbitGeo": "Geostatsionar orbita (GEO)",
+    "orbitHeo": "Yuqori elliptik orbita (HEO)",
+    "orbitUnknown": "Noma'lum"
   },
   "forgotPassword": {
     "title": "Parolni",
@@ -1708,34 +1718,34 @@
     "noPasswordSet": "Bu hisobda hali parol yo'q. Avval xatdagi kod orqali parol qo'ying.",
     "unknown": "Nimadir xato ketdi. Yana urinib ko'ring."
   },
-    "dates": {
-      "monthsLong": [
-        "yanvar",
-        "fevral",
-        "mart",
-        "aprel",
-        "may",
-        "iyun",
-        "iyul",
-        "avgust",
-        "sentabr",
-        "oktabr",
-        "noyabr",
-        "dekabr"
-      ],
-      "monthsShort": [
-        "yan",
-        "fev",
-        "mar",
-        "apr",
-        "may",
-        "iyn",
-        "iyl",
-        "avg",
-        "sen",
-        "okt",
-        "noy",
-        "dek"
-      ]
-    }
+  "dates": {
+    "monthsLong": [
+      "yanvar",
+      "fevral",
+      "mart",
+      "aprel",
+      "may",
+      "iyun",
+      "iyul",
+      "avgust",
+      "sentabr",
+      "oktabr",
+      "noyabr",
+      "dekabr"
+    ],
+    "monthsShort": [
+      "yan",
+      "fev",
+      "mar",
+      "apr",
+      "may",
+      "iyn",
+      "iyl",
+      "avg",
+      "sen",
+      "okt",
+      "noy",
+      "dek"
+    ]
+  }
 }

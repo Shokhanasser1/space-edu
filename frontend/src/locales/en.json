@@ -222,177 +222,176 @@
     "oneMonthPerSec": "1 MO/S",
     "speed": "Speed",
     "realTimeValue": "REAL TIME",
-      "solar": {
-        "title": "Solar System",
-        "subtitle": "Positions from VSOP87 ephemerides (astronomy-engine), checked against NASA JPL Horizons. Satellites from CelesTrak, probes from JPL Horizons, stars from the Yale Bright Star Catalogue.",
-        "speed": {
-          "live": "Live",
-          "hour": "1 h/s",
-          "day": "1 day/s",
-          "week": "1 wk/s",
-          "month": "1 mo/s",
-          "year": "1 yr/s"
-        },
-        "speedLabel": "Speed",
-        "play": "Play",
-        "pause": "Pause",
-        "reverse": "Backwards",
-        "forward": "Forwards",
-        "today": "Now",
-        "date": "Date",
-        "atEdge": "The ephemerides are valid from 1800 to 2200 — the clock stopped at the edge.",
-        "overview": "Overview",
-        "escHint": "Esc — close the panel, then back to the overview",
-        "bodies": "Bodies",
-        "star": "Star",
-        "planets": "Planets",
-        "dwarfs": "Dwarf planets",
-        "moons": "Moons",
-        "kind": {
-          "star": "Star",
-          "planet": "Planet",
-          "dwarf": "Dwarf planet",
-          "moon": "Moon",
-          "satellite": "Satellite",
-          "spacecraft": "Space probe"
-        },
-        "facts": {
-          "radius": "Radius",
-          "mass": "Mass",
-          "gravity": "Surface gravity",
-          "temp": "Mean temperature",
-          "day": "Day length",
-          "tilt": "Axial tilt",
-          "atmosphere": "Atmosphere",
-          "none": "None",
-          "moonsCount": "Moons",
-          "retrograde": "spins backwards"
-        },
-        "live": {
-          "title": "Right now",
-          "distSun": "Distance from the Sun",
-          "distEarth": "Distance from Earth",
-          "light": "Light travel time",
-          "period": "Orbital period",
-          "orbits": "Orbits"
-        },
-        "units": {
-          "km": "km",
-          "au": "au",
-          "mkm": "M km",
-          "min": "min",
-          "h": "h",
-          "d": "d",
-          "years": "years",
-          "days": "days"
-        },
-        "layers": {
-          "title": "Layers",
-          "orbits": "Orbits",
-          "labels": "Names",
-          "asteroids": "Asteroid & Kuiper belts",
-          "stars": "Real stars",
-          "satellites": "Satellites (ISS, stations)",
-          "spacecraft": "Space probes",
-          "trueScale": "True scale",
-          "scaleNote": "At true scale the planets become dots — this is how empty the Solar System really is."
-        },
-        "satStatus": {
-          "loading": "Loading element sets…",
-          "noWebGL": "This page needs WebGL 2, which this browser or graphics driver does not provide. Try Chrome or Firefox on a computer with a working graphics driver.",
-          "ready": "{n} satellites",
-          "error": "Satellite data unavailable (server offline)",
-          "outOfRange": "Satellite orbits are only known within ±30 days of today"
-        },
-        "craftStatus": {
-          "loading": "Asking JPL Horizons…",
-          "error": "Probe data unavailable (server offline)"
-        },
-        "events": {
-          "title": "Coming up",
-          "fullMoon": "Full Moon",
-          "newMoon": "New Moon",
-          "lunarEclipse": "Lunar eclipse",
-          "solarEclipse": "Solar eclipse",
-          "opposition": "opposition",
-          "jump": "Jump the clock to this moment",
-          "kinds": {
-            "penumbral": "penumbral",
-            "partial": "partial",
-            "total": "total",
-            "annular": "annular"
-          }
-        },
-        "sat": {
-          "norad": "NORAD ID",
-          "altitude": "Altitude",
-          "speed": "Speed",
-          "inclination": "Inclination",
-          "position": "Above (lat, lon)"
-        },
-        "loading": "Loading textures…",
-          "quiz": {
-            "title": "Check yourself",
-            "intro": "Five questions the sky answers right now — the answers change with the date.",
-            "start": "Start",
-            "next": "Next",
-            "finish": "Finish",
-            "again": "Again",
-            "show": "show",
-            "question": "{i} / {n}",
-            "correct": "Correct.",
-            "wrong": "No — it is {answer}.",
-            "score": "You got {score} of {n}.",
-            "best": "best {best}",
-            "noXp": "Practice only — no XP for this yet.",
-            "unitsDays": "{n} days",
-            "q": {
-              "closestPlanet": "Which planet is closest to the Earth right now?",
-              "farthest": "Which of these is farthest from the Sun right now?",
-              "lightTime": "How long does sunlight take to reach {body} right now?",
-              "nextOpposition": "Which planet is next at opposition?",
-              "longestDay": "Which of these has the longest day?",
-              "retrograde": "Which of these spins backwards?",
-              "daysToFullMoon": "How many days until the next full Moon?"
-            }
-          },
-          "probeNote": "Trajectory: NASA/JPL Horizons. Model: NASA VTAD.",
-          "launched": "Launched"
+    "solar": {
+      "title": "Solar System",
+      "subtitle": "Positions from VSOP87 ephemerides (astronomy-engine), checked against NASA JPL Horizons. Satellites from CelesTrak, probes from JPL Horizons, stars from the Yale Bright Star Catalogue.",
+      "speed": {
+        "live": "Live",
+        "hour": "1 h/s",
+        "day": "1 day/s",
+        "week": "1 wk/s",
+        "month": "1 mo/s",
+        "year": "1 yr/s"
       },
-      "bodies": {
-        "sun": "Sun",
-        "mercury": "Mercury",
-        "venus": "Venus",
-        "earth": "Earth",
-        "mars": "Mars",
-        "jupiter": "Jupiter",
-        "saturn": "Saturn",
-        "uranus": "Uranus",
-        "neptune": "Neptune",
-        "pluto": "Pluto",
-        "ceres": "Ceres",
-        "eris": "Eris",
-        "haumea": "Haumea",
-        "makemake": "Makemake",
+      "speedLabel": "Speed",
+      "play": "Play",
+      "pause": "Pause",
+      "reverse": "Backwards",
+      "forward": "Forwards",
+      "today": "Now",
+      "date": "Date",
+      "atEdge": "The ephemerides are valid from 1800 to 2200 — the clock stopped at the edge.",
+      "overview": "Overview",
+      "escHint": "Esc — close the panel, then back to the overview",
+      "bodies": "Bodies",
+      "star": "Star",
+      "planets": "Planets",
+      "dwarfs": "Dwarf planets",
+      "moons": "Moons",
+      "kind": {
+        "star": "Star",
+        "planet": "Planet",
+        "dwarf": "Dwarf planet",
         "moon": "Moon",
-        "phobos": "Phobos",
-        "deimos": "Deimos",
-        "io": "Io",
-        "europa": "Europa",
-        "ganymede": "Ganymede",
-        "callisto": "Callisto",
-        "mimas": "Mimas",
-        "enceladus": "Enceladus",
-        "rhea": "Rhea",
-        "titan": "Titan",
-        "iapetus": "Iapetus",
-        "titania": "Titania",
-        "oberon": "Oberon",
-        "triton": "Triton",
-        "charon": "Charon",
-        "iss": "ISS"
-      }
-
+        "satellite": "Satellite",
+        "spacecraft": "Space probe"
+      },
+      "facts": {
+        "radius": "Radius",
+        "mass": "Mass",
+        "gravity": "Surface gravity",
+        "temp": "Mean temperature",
+        "day": "Day length",
+        "tilt": "Axial tilt",
+        "atmosphere": "Atmosphere",
+        "none": "None",
+        "moonsCount": "Moons",
+        "retrograde": "spins backwards"
+      },
+      "live": {
+        "title": "Right now",
+        "distSun": "Distance from the Sun",
+        "distEarth": "Distance from Earth",
+        "light": "Light travel time",
+        "period": "Orbital period",
+        "orbits": "Orbits"
+      },
+      "units": {
+        "km": "km",
+        "au": "au",
+        "mkm": "M km",
+        "min": "min",
+        "h": "h",
+        "d": "d",
+        "years": "years",
+        "days": "days"
+      },
+      "layers": {
+        "title": "Layers",
+        "orbits": "Orbits",
+        "labels": "Names",
+        "asteroids": "Asteroid & Kuiper belts",
+        "stars": "Real stars",
+        "satellites": "Satellites (ISS, stations)",
+        "spacecraft": "Space probes",
+        "trueScale": "True scale",
+        "scaleNote": "At true scale the planets become dots — this is how empty the Solar System really is."
+      },
+      "satStatus": {
+        "loading": "Loading element sets…",
+        "noWebGL": "This page needs WebGL 2, which this browser or graphics driver does not provide. Try Chrome or Firefox on a computer with a working graphics driver.",
+        "ready": "{n} satellites",
+        "error": "Satellite data unavailable (server offline)",
+        "outOfRange": "Satellite orbits are only known within ±30 days of today"
+      },
+      "craftStatus": {
+        "loading": "Asking JPL Horizons…",
+        "error": "Probe data unavailable (server offline)"
+      },
+      "events": {
+        "title": "Coming up",
+        "fullMoon": "Full Moon",
+        "newMoon": "New Moon",
+        "lunarEclipse": "Lunar eclipse",
+        "solarEclipse": "Solar eclipse",
+        "opposition": "opposition",
+        "jump": "Jump the clock to this moment",
+        "kinds": {
+          "penumbral": "penumbral",
+          "partial": "partial",
+          "total": "total",
+          "annular": "annular"
+        }
+      },
+      "sat": {
+        "norad": "NORAD ID",
+        "altitude": "Altitude",
+        "speed": "Speed",
+        "inclination": "Inclination",
+        "position": "Above (lat, lon)"
+      },
+      "loading": "Loading textures…",
+      "quiz": {
+        "title": "Check yourself",
+        "intro": "Five questions the sky answers right now — the answers change with the date.",
+        "start": "Start",
+        "next": "Next",
+        "finish": "Finish",
+        "again": "Again",
+        "show": "show",
+        "question": "{i} / {n}",
+        "correct": "Correct.",
+        "wrong": "No — it is {answer}.",
+        "score": "You got {score} of {n}.",
+        "best": "best {best}",
+        "noXp": "Practice only — no XP for this yet.",
+        "unitsDays": "{n} days",
+        "q": {
+          "closestPlanet": "Which planet is closest to the Earth right now?",
+          "farthest": "Which of these is farthest from the Sun right now?",
+          "lightTime": "How long does sunlight take to reach {body} right now?",
+          "nextOpposition": "Which planet is next at opposition?",
+          "longestDay": "Which of these has the longest day?",
+          "retrograde": "Which of these spins backwards?",
+          "daysToFullMoon": "How many days until the next full Moon?"
+        }
+      },
+      "probeNote": "Trajectory: NASA/JPL Horizons. Model: NASA VTAD.",
+      "launched": "Launched"
+    },
+    "bodies": {
+      "sun": "Sun",
+      "mercury": "Mercury",
+      "venus": "Venus",
+      "earth": "Earth",
+      "mars": "Mars",
+      "jupiter": "Jupiter",
+      "saturn": "Saturn",
+      "uranus": "Uranus",
+      "neptune": "Neptune",
+      "pluto": "Pluto",
+      "ceres": "Ceres",
+      "eris": "Eris",
+      "haumea": "Haumea",
+      "makemake": "Makemake",
+      "moon": "Moon",
+      "phobos": "Phobos",
+      "deimos": "Deimos",
+      "io": "Io",
+      "europa": "Europa",
+      "ganymede": "Ganymede",
+      "callisto": "Callisto",
+      "mimas": "Mimas",
+      "enceladus": "Enceladus",
+      "rhea": "Rhea",
+      "titan": "Titan",
+      "iapetus": "Iapetus",
+      "titania": "Titania",
+      "oberon": "Oberon",
+      "triton": "Triton",
+      "charon": "Charon",
+      "iss": "ISS"
+    }
   },
   "lab": {
     "title": "Space",
@@ -477,7 +476,18 @@
     "launchTimeRate": "Time rate",
     "launchTimeRateNote": "How fast the clock runs. It changes nothing about the rocket.",
     "launchScaleNote": "The rocket is not drawn to the scale of the altitude column. The two marked altitudes are NASA's; the line between them is drawn straight.",
-    "statusOrbit": "SECOND STAGE CUTOFF"
+    "statusOrbit": "SECOND STAGE CUTOFF",
+    "moduleFailed": "This module could not be loaded. The rest of the Laboratory still works - pick another one from the list.",
+    "orbitalPeriod": "Orbital period",
+    "velocity": "Orbital speed",
+    "orbitType": "Orbit type",
+    "revolutionsPerDay": "Orbits per day",
+    "orbitScaleNote": "The planet and the orbit are drawn to the same scale, so a low orbit really does sit close to the surface. Period and speed are calculated from the altitude using Earth's gravitational parameter (WGS-84).",
+    "orbitLeo": "Low Earth orbit (LEO)",
+    "orbitMeo": "Medium Earth orbit (MEO)",
+    "orbitGeo": "Geostationary orbit (GEO)",
+    "orbitHeo": "Highly elliptical orbit (HEO)",
+    "orbitUnknown": "Unknown"
   },
   "forgotPassword": {
     "title": "Lost your",
@@ -1708,34 +1718,34 @@
     "noPasswordSet": "This account has no password yet. Set one first, using a code sent to your e-mail.",
     "unknown": "Something went wrong. Please try again."
   },
-    "dates": {
-      "monthsLong": [
-        "January",
-        "February",
-        "March",
-        "April",
-        "May",
-        "June",
-        "July",
-        "August",
-        "September",
-        "October",
-        "November",
-        "December"
-      ],
-      "monthsShort": [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec"
-      ]
-    }
+  "dates": {
+    "monthsLong": [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December"
+    ],
+    "monthsShort": [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec"
+    ]
+  }
 }
