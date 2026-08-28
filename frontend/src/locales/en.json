@@ -907,7 +907,10 @@
     "power": "Power",
     "controlsDesc": "Hold Shift/Space to boost · blue shield · purple slow · green magnet",
     "escPause": "Esc pause",
-    "boostBtn": "BOOST"
+    "boostBtn": "BOOST",
+    "home": "Home",
+    "pressToPlay": "Press to play",
+    "steer": "Arrows or WASD to steer. Hold Shift or Space for boost."
   },
   "quiz": {
     "title": "Quiz-Test",
@@ -1391,7 +1394,10 @@
     "refreshFailed": "Refresh failed",
     "couldNotLoad": "Could not load profile data",
     "changePhoto": "Change Photo",
-    "levelExplorer": "Level {level}: Galactic Explorer"
+    "levelExplorer": "Level {level}: Galactic Explorer",
+    "dailyChallenges": "Daily challenges",
+    "bestScore": "Best score",
+    "activeMissions": "Active missions"
   },
   "chat": {
     "verifyToWrite": "Confirm your e-mail address before writing here.",
@@ -1491,7 +1497,9 @@
     "successDesc": "You have successfully completed the lesson and earned the following rewards:",
     "gotIt": "Got it",
     "progressSaved": "Progress saved!",
-    "progressNotSaved": "Saved on this device only — could not reach the server."
+    "progressNotSaved": "Saved on this device only — could not reach the server.",
+    "feedOnline": "[SYS.FEED: ONLINE // DECODING...]",
+    "secureLink": "SECURE COGNITIVE LINK"
   },
   "learnViews": {
     "lessonCount": "{count} lessons",

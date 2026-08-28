@@ -747,7 +747,7 @@ export default function ProfileView() {
                 {quizStats.categories.map((cat) => (
                   <div key={cat.category} className="rounded-2xl border border-white/10 bg-white/5 p-4 hover:bg-white/10 transition-all">
                     <p className="text-sm font-medium text-white">{cat.category_name}</p>
-                    <p className="text-[11px] text-white/40 mt-0.5">{cat.total_attempts} attempts</p>
+                    <p className="text-[11px] text-white/40 mt-0.5">{cat.total_attempts} {t('profilePage', 'attempts')}</p>
                     <div className="mt-3 flex items-end justify-between">
                       <span className="text-xl font-bold text-white">{cat.best_percentage}%</span>
                       <span className="text-[10px] text-blue-400 font-bold uppercase tracking-wider">Best</span>
@@ -854,7 +854,7 @@ export default function ProfileView() {
           {/* Daily Challenges */}
           <div className="rounded-3xl border border-white/10 bg-space-900/70 p-5">
             <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-              <Target className="w-5 h-5 text-orange-400" /> Daily Challenges
+              <Target className="w-5 h-5 text-orange-400" /> {t('profilePage', 'dailyChallenges')}
             </h2>
             <div className="flex items-center gap-4 text-sm">
               <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-5 flex-1 hover:bg-white/10 transition-all text-center">
@@ -862,7 +862,7 @@ export default function ProfileView() {
                 <span className="font-black text-white text-3xl">{dailyStats.total_completed || 0}</span>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-5 flex-1 hover:bg-white/10 transition-all text-center">
-                <span className="block text-xs font-bold text-white/50 uppercase tracking-widest mb-1">Best Score</span>
+                <span className="block text-xs font-bold text-white/50 uppercase tracking-widest mb-1">{t('profilePage', 'bestScore')}</span>
                 <span className="font-black text-white text-3xl">{dailyStats.best_score || 0}<span className="text-lg text-white/40">/5</span></span>
               </div>
             </div>
@@ -872,7 +872,7 @@ export default function ProfileView() {
           <div className="rounded-3xl border border-white/10 bg-space-900/70 p-5">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold text-white flex items-center gap-2">
-                <Rocket className="w-5 h-5 text-violet-400" /> Active Missions
+                <Rocket className="w-5 h-5 text-violet-400" /> {t('profilePage', 'activeMissions')}
               </h2>
               {missions.length > 3 && (
                 <button 

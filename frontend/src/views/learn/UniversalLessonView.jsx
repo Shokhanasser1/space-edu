@@ -216,7 +216,7 @@ export default function UniversalLessonView() {
                 borderRadius: '4px',
                 border: '1px solid rgba(255,255,255,0.1)',
               }}>
-                [SYS.FEED: ONLINE // DECODING...]
+                {t('lesson', 'feedOnline')}
               </div>
               <div style={{
                 position: 'absolute',
@@ -233,7 +233,7 @@ export default function UniversalLessonView() {
                 borderRadius: '4px',
                 border: `1px solid ${color}40`,
               }}>
-                SECURE COGNITIVE LINK
+                {t('lesson', 'secureLink')}
               </div>
 
               <iframe

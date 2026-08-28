@@ -907,7 +907,10 @@
     "power": "Kuch",
     "controlsDesc": "Tezlanish uchun Shift/Probelni bosing · ko'k qalqon · binafsha sekinlashuv · yashil magnit",
     "escPause": "Esc pauza",
-    "boostBtn": "TEZLANISH"
+    "boostBtn": "TEZLANISH",
+    "home": "Bosh sahifa",
+    "pressToPlay": "O'ynash uchun bosing",
+    "steer": "Strelkalar yoki WASD — boshqarish. Shift yoki Probel — tezlanish."
   },
   "quiz": {
     "title": "Quiz-Test",
@@ -1391,7 +1394,10 @@
     "refreshFailed": "Yangilash muvaffaqiyatsiz",
     "couldNotLoad": "Profil ma'lumotlarini yuklab bo'lmadi",
     "changePhoto": "Rasmni o'zgartirish",
-    "levelExplorer": "{level}-daraja: Galaktik tadqiqotchi"
+    "levelExplorer": "{level}-daraja: Galaktik tadqiqotchi",
+    "dailyChallenges": "Kunlik topshiriqlar",
+    "bestScore": "Eng yaxshi natija",
+    "activeMissions": "Faol missiyalar"
   },
   "chat": {
     "verifyToWrite": "Bu yerga yozishdan oldin pochta manzilingizni tasdiqlang.",
@@ -1491,7 +1497,9 @@
     "successDesc": "Siz darsni muvaffaqiyatli yakunladingiz va quyidagi mukofotlarga ega bo'ldingiz:",
     "gotIt": "Tushunarli",
     "progressSaved": "Natija saqlandi!",
-    "progressNotSaved": "Faqat shu qurilmada saqlandi — serverga ulanib bo'lmadi."
+    "progressNotSaved": "Faqat shu qurilmada saqlandi — serverga ulanib bo'lmadi.",
+    "feedOnline": "[TIZIM: ALOQADA // DEKODLASH...]",
+    "secureLink": "HIMOYALANGAN BILIM KANALI"
   },
   "learnViews": {
     "lessonCount": "{count} dars",

@@ -208,7 +208,7 @@ export default function SpaceRunView() {
                 <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-500/15 text-cyan-300 ring-1 ring-cyan-400/20 group-hover:bg-cyan-500/25">
                   <ArrowLeft className="w-4 h-4" strokeWidth={2.25} />
                 </span>
-                <span className="hidden min-[380px]:inline">Home</span>
+                <span className="hidden min-[380px]:inline">{t('game', 'home')}</span>
               </Link>
               <div className="hidden sm:flex items-center gap-2 min-w-0 ml-2 border-l border-white/10 pl-3">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-fuchsia-600/30 to-cyan-500/25 ring-1 ring-white/10">
@@ -501,7 +501,7 @@ export default function SpaceRunView() {
                 {/* Title inside portal */}
                 <div className="relative z-10 flex flex-col items-center">
                   <h1 className="sr-neon-title font-display leading-none">
-                    Space Run
+                    {t('game', 'title')}
                   </h1>
                   <p className="text-cyan-200/60 text-xs tracking-[0.3em] uppercase mt-2 font-semibold">
                     Arcade · Dodge · Collect
@@ -512,8 +512,8 @@ export default function SpaceRunView() {
               {/* Instructions */}
               <p className="text-white/60 max-w-md mb-8 text-sm sm:text-base leading-relaxed"
                 style={{ textShadow: '0 2px 8px rgba(0,0,0,0.5)' }}>
-                Survive the asteroid field, collect glowing energy cores, and push distance.
-                <span className="hidden sm:inline"> Arrows or WASD to steer. Hold Shift or Space for boost.</span>
+                {t('game', 'introDesc')}
+                <span className="hidden sm:inline"> {t('game', 'steer')}</span>
               </p>
 
               {/* Play button */}
@@ -530,7 +530,7 @@ export default function SpaceRunView() {
               {/* Game controller icon — psychological trigger */}
               <div className="mt-5 flex flex-col items-center gap-1.5 sr-controller-icon">
                 <Gamepad2 className="w-9 h-9 text-cyan-300" strokeWidth={1.5} />
-                <span className="text-[10px] uppercase tracking-[0.2em] text-cyan-300/50 font-bold">Press to Play</span>
+                <span className="text-[10px] uppercase tracking-[0.2em] text-cyan-300/50 font-bold">{t('game', 'pressToPlay')}</span>
               </div>
             </div>
           </div>
