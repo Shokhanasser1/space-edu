@@ -100,7 +100,7 @@ afternoon writing lessons in the panel and nothing changed on the site.
   nests topic → section → lesson → sub-lesson, which the fixed tree could not
   hold. Measured depths across the four subjects: 1, 2, 2, 3.
 - Content had **four** copies (static files, a hand-written copy inside
-  `seed_learn_data`, and an inline list in `PhysicsView`). It has one:
+  `seed_learn_content`, and an inline list in `PhysicsView`). It has one:
   `npm run content:export` turns `src/data/*TopicsData.js` into a fixture,
   `manage.py seed_learn_content` loads it keyed on slug, and CI fails if the
   committed fixture is stale.
