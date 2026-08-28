@@ -50,7 +50,7 @@ function FuiButton({ icon: Icon, label, accentColor, onClick }) {
 }
 
 /* ─── Lesson row card ─── */
-function LessonBlock({ lesson, index, color, topicColor, onClick, onTest }) {
+function LessonBlock({ lesson, index, color, topicColor, onClick, onTest, onLab }) {
   const [hovered, setHovered] = useState(false);
   const { t } = useTranslation();
 
@@ -135,7 +135,7 @@ function LessonBlock({ lesson, index, color, topicColor, onClick, onTest }) {
           icon={FlaskConical}
           label={t('learnViews', 'labButton') || 'Lab'}
           accentColor={blueColor}
-          onClick={onClick}
+          onClick={onLab}
         />
       </div>
     </motion.div>
@@ -175,6 +175,7 @@ export default function PhysicsTopicView() {
               color={topic.color}
               onClick={() => navigate(`/learn/physics/${topicId}/lesson/${i}`)}
               onTest={() => navigate(quizPath('physics', lesson))}
+              onLab={() => navigate('/lab')}
             />
           ))}
         </div>

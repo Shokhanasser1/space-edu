@@ -49,7 +49,7 @@ function FuiButton({ icon: Icon, label, accentColor, onClick }) {
   );
 }
 
-function LessonBlock({ lesson, index, color, onClick }) {
+function LessonBlock({ lesson, index, color, onClick, onLab }) {
   const [hovered, setHovered] = useState(false);
   const { t } = useTranslation();
 
@@ -133,7 +133,7 @@ function LessonBlock({ lesson, index, color, onClick }) {
           icon={FlaskConical}
           label={t('learnViews', 'labButton') || 'Lab'}
           accentColor={blueColor}
-          onClick={onClick}
+          onClick={onLab}
         />
       </div>
     </motion.div>
@@ -175,6 +175,7 @@ export default function SubTopicView() {
               index={i}
               color={topic.color}
               onClick={() => navigate(`/learn/${subject}/${topicId}/sub/${subIdx}/lesson/${i}`)}
+              onLab={() => navigate('/lab')}
             />
           ))}
         </div>

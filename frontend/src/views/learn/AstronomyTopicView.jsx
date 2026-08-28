@@ -15,7 +15,7 @@ const blockVariants = {
   }),
 };
 
-function LessonBlock({ lesson, index, color, onClick, onTest }) {
+function LessonBlock({ lesson, index, color, onClick, onTest, onLab }) {
   const [hovered, setHovered] = useState(false);
   const { t, i18n } = useTranslation();
   const colorLight = `${color}1A`;
@@ -96,6 +96,7 @@ function LessonBlock({ lesson, index, color, onClick, onTest }) {
           {t('learnViews', 'testButton')}
         </button>
         <button
+          onClick={(e) => { e.stopPropagation(); onLab?.(); }}
           style={{
             display: 'flex', alignItems: 'center', gap: '6px',
             padding: '8px 16px', borderRadius: '10px',
@@ -147,6 +148,7 @@ export default function AstronomyTopicView() {
               color={topic.color}
               onClick={() => navigate(`/learn/astronomy/${topicId}/sub/${i}`)}
               onTest={() => navigate(quizPath('astronomy', lesson))}
+              onLab={() => navigate('/lab')}
             />
           ))}
         </div>
