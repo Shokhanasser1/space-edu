@@ -6,6 +6,7 @@ import SectionPageHeader from '@/components/layout/SectionPageHeader';
 import { checkProblem, useProblems } from '@/hooks/useProblems';
 import { useProblemsStore } from '@/store/useProblemsStore';
 import { useTranslation } from '@/hooks/useTranslation';
+import { explanationText, questionText } from '@/lib/questionText';
 
 export default function ProblemDetailView() {
   const { id } = useParams();
@@ -127,7 +128,7 @@ export default function ProblemDetailView() {
                {t('learnViews', 'questionHeader')}
              </span>
              <h2 style={{ fontSize: '24px', color: '#fff', lineHeight: 1.6, fontWeight: 500 }}>
-               {problem.question}
+               {questionText(problem, i18n.language)}
              </h2>
           </div>
 
@@ -272,6 +273,39 @@ export default function ProblemDetailView() {
                     <CheckCircle2 size={24} />
                     <span style={{ fontSize: '18px', fontWeight: 700 }}>{revealed?.answer}</span>
                   </div>
+
+                  {explanationText(revealed, i18n.language) && (
+                    <div
+                      data-testid="problem-explanation"
+                      style={{
+                        marginTop: '16px',
+                        background: 'rgba(255,255,255,0.04)',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        borderRadius: '16px',
+                        padding: '16px 20px',
+                        textAlign: 'left',
+                      }}
+                    >
+                      <p style={{
+                        margin: '0 0 8px',
+                        fontSize: '11px',
+                        fontWeight: 800,
+                        letterSpacing: '0.1em',
+                        textTransform: 'uppercase',
+                        color: 'rgba(255,255,255,0.4)',
+                      }}>
+                        {t('learnViews', 'explanationHeader')}
+                      </p>
+                      <p style={{
+                        margin: 0,
+                        color: 'rgba(255,255,255,0.75)',
+                        fontSize: '15px',
+                        lineHeight: 1.65,
+                      }}>
+                        {explanationText(revealed, i18n.language)}
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
 
