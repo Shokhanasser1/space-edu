@@ -11,8 +11,8 @@ import { useSolarTextures } from '@/solar/textures';
  * off the Earth's limb — to a three-quarter view of the lit face, after
  * which the camera sways gently for as long as the page is open.
  *
- * Deliberately small: three 2k maps (under 1 MB together), no clouds, no
- * post-processing, DPR capped at 1.5. The full solar system is a page of
+ * Deliberately small: a 4k Earth over a 2k first frame, 2k Moon and Sun
+ * (1.6 MB together), no clouds, no post-processing, DPR capped at 2. The full solar system is a page of
  * its own; this is a doorstep. The atmosphere shader is borrowed from it and
  * assumes the Sun at the origin, which is why the Sun is at the origin.
  */
@@ -26,8 +26,15 @@ const END_OFFSET = new THREE.Vector3(-14, 5, -18);
 const SWAY_R = Math.hypot(END_OFFSET.x, END_OFFSET.z);
 const SWAY_CENTRE = Math.atan2(END_OFFSET.z, END_OFFSET.x);
 
+// Best first, as the solar system's catalogue does: the 2k map is on screen
+// within a second, the 4k one replaces it when it arrives. The 2k Earth is
+// 167 KB and looks it; the 4k one (558 KB) is what the visitor keeps. No 8k
+// here — a decoded 8k map is 134 MB of GPU memory, for a doorstep.
 const TEXTURES = {
-  earth: { map: ['/textures/2k_earth_daymap.webp'], night: ['/textures/2k_earth_nightmap.webp'] },
+  earth: {
+    map: ['/textures/4k_earth_daymap.webp', '/textures/2k_earth_daymap.webp'],
+    night: ['/textures/4k_earth_nightmap.webp', '/textures/2k_earth_nightmap.webp'],
+  },
   moon: { map: ['/textures/2k_moon.webp'] },
   sun: { map: ['/textures/2k_sun.webp'] },
 };
@@ -90,7 +97,7 @@ function Moon() {
 }
 
 function Earth() {
-  const textures = useSolarTextures(TEXTURES.earth);
+  const textures = useSolarTextures(TEXTURES.earth, { hiRes: true });
   const spin = useRef();
   const atmosphere = useMemo(
     () => ({ color: { value: new THREE.Color('#6fb3ff') }, strength: { value: 1.15 } }),
@@ -172,7 +179,7 @@ function Rig() {
 export default function IntroScene({ onReady }) {
   return (
     <Canvas
-      dpr={[1, 1.5]}
+      dpr={[1, 2]}
       camera={{ fov: 42, near: 0.1, far: 3000, position: [-44, 9, 20] }}
       gl={{ antialias: true, powerPreference: 'high-performance', alpha: false }}
       onCreated={({ gl }) => {
