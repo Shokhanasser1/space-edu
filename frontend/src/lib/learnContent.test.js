@@ -9,7 +9,7 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { adaptTopic, adaptTree, findBySlug, slugAtPath } from './learnContent';
+import { adaptTopic, adaptTree, findBySlug, lessonName, slugAtPath } from './learnContent';
 
 vi.mock('@/lib/api', () => ({ default: { get: vi.fn(), post: vi.fn() } }));
 
@@ -97,6 +97,64 @@ Jism tezligining o‘zgarishi.`;
 
   it('gives an unwritten lesson an empty string, not undefined', () => {
     expect(adaptTopic(topic({ lessons: [node('a', 'One')] })).lessons[0].content).toBe('');
+  });
+
+  /*
+   * 28 Aug 2026. `TopicLesson.name_en` and `name_ru` have existed since ADR
+   * 0001, are editable in the admin panel and are sent by the serializer — and
+   * this function read only `name`. The same defect that lost `content` until
+   * 24 August, one field over: a translator could write every lesson title in
+   * Russian, save it, open the page in Russian and still see Uzbek.
+   *
+   * The topic titles were never affected, which is why nobody noticed — the
+   * heading changed language and the list underneath it did not.
+   */
+  it('carries the translated lesson names through', () => {
+    const lesson = node('a', 'Kinematika');
+    lesson.name_en = 'Kinematics';
+    lesson.name_ru = 'Кинематика';
+    const adapted = adaptTopic(topic({ lessons: [lesson] })).lessons[0];
+    expect(adapted.nameEn).toBe('Kinematics');
+    expect(adapted.nameRu).toBe('Кинематика');
+  });
+
+  it('falls back to the base name when a lesson translation is empty', () => {
+    // The rule the topic titles already follow, so the two cannot disagree.
+    const adapted = adaptTopic(topic({ lessons: [node('a', 'Kinematika')] })).lessons[0];
+    expect(adapted.nameEn).toBe('Kinematika');
+    expect(adapted.nameRu).toBe('Kinematika');
+  });
+
+  it('carries them through a sub-lesson too', () => {
+    const child = node('a1', 'Quyosh tuzilishi');
+    child.name_ru = 'Строение Солнца';
+    const adapted = adaptTopic(topic({ lessons: [node('a', 'Quyosh', [child])] }));
+    expect(adapted.lessons[0].subLessons[0].nameRu).toBe('Строение Солнца');
+  });
+});
+
+describe('lessonName', () => {
+  const lesson = { name: 'Kinematika', nameEn: 'Kinematics', nameRu: 'Кинематика' };
+
+  it('gives each reader the name in their own language', () => {
+    expect(lessonName(lesson, 'uz')).toBe('Kinematika');
+    expect(lessonName(lesson, 'en')).toBe('Kinematics');
+    expect(lessonName(lesson, 'ru')).toBe('Кинематика');
+  });
+
+  it('falls back to the base name rather than showing nothing', () => {
+    expect(lessonName({ name: 'Kinematika' }, 'ru')).toBe('Kinematika');
+  });
+
+  it('takes a bare string, which is what the static files hold', () => {
+    // physicsTopicsData is a list of strings, and every screen that renders a
+    // lesson row has to cope with both shapes.
+    expect(lessonName("Newton's second law", 'ru')).toBe("Newton's second law");
+  });
+
+  it('returns an empty string for a missing lesson rather than throwing', () => {
+    expect(lessonName(null, 'en')).toBe('');
+    expect(lessonName(undefined, 'uz')).toBe('');
   });
 });
 

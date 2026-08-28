@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import SectionPageHeader from '@/components/layout/SectionPageHeader';
 import { useLearnTopics } from '@/hooks/useLearnTopics';
-import { slugAtPath } from '@/lib/learnContent';
+import { lessonName, slugAtPath } from '@/lib/learnContent';
 import { Play, Info, CheckCircle2, Trophy, Coins, Heart, Rocket } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useGamificationStore } from '@/store/useGamificationStore';
@@ -91,7 +91,7 @@ export default function UniversalLessonView() {
     );
   }
 
-  const lessonName = typeof lesson === 'object' ? lesson.name : lesson;
+  const name = lessonName(lesson, i18n.language);
   // Written in the admin panel, stored on TopicLesson.content. Empty for most
   // lessons today — they are titles and, sometimes, a video — so the generic
   // line below stays as the fallback rather than leaving a blank page.
@@ -102,8 +102,8 @@ export default function UniversalLessonView() {
   // language too, which is why the whole label is one key rather than a number
   // glued to a translated noun.
   const displayTitle = partIdx
-    ? `${lessonName} — ${t('lesson', 'partLabel').replace('{n}', String(parseInt(partIdx) + 1))}`
-    : lessonName;
+    ? `${name} — ${t('lesson', 'partLabel').replace('{n}', String(parseInt(partIdx) + 1))}`
+    : name;
 
   const handleComplete = async () => {
     if (completed) return;
@@ -225,7 +225,7 @@ export default function UniversalLessonView() {
                 width="100%"
                 height="100%"
                 src={finalVideoUrl}
-                title={lessonName}
+                title={name}
                 frameBorder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
@@ -348,7 +348,7 @@ export default function UniversalLessonView() {
                 <p style={{ fontSize: '18px', color: 'rgba(255,255,255,0.6)', lineHeight: 1.7, maxWidth: '800px' }}>
                   {/* The video wording only holds when there is a video. */}
                   {t('lesson', finalVideoUrl ? 'lessonDescription' : 'lessonDescriptionNoVideo')
-                    .replace('{lessonName}', lessonName)}
+                    .replace('{lessonName}', name)}
                 </p>
               )}
             </div>

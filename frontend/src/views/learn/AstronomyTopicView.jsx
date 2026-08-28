@@ -2,7 +2,7 @@ import { useParams, Navigate, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import SectionPageHeader from '@/components/layout/SectionPageHeader';
 import { useLearnTopics } from '@/hooks/useLearnTopics';
-import { quizPath } from '@/lib/learnContent';
+import { lessonName, quizPath } from '@/lib/learnContent';
 import { BookOpen, Beaker, Satellite, Rocket } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -22,7 +22,7 @@ function LessonBlock({ lesson, index, color, onClick, onTest, onLab }) {
   const colorBorder = `${color}40`;
 
   const isObject = typeof lesson === 'object';
-  const name = isObject ? lesson.name : lesson;
+  const name = lessonName(lesson, i18n.language);
   const type = isObject ? lesson.type : null;
 
   return (
