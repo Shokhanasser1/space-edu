@@ -5,6 +5,13 @@ import { useSphereSummaries } from '@/hooks/useSphereSummaries';
 
 /* ─────────── section definitions ─────────── */
 /*
+ * The title, the description and the four topic pills are NOT in this table.
+ * They live in `learnPage` in the three locale files, keyed on `id` —
+ * `physics`, `physicsDesc`, `physicsTopic1..4`. They were there all along, in
+ * all three languages; this table used to carry Uzbek copies and the cards
+ * printed those under an English heading, so the landing page of the whole
+ * section had no Russian on it at all.
+ *
  * `lessonsCount` here is the fallback shown before the API answers, or if it
  * does not. Every one of these numbers used to be hand-written and wrong by a
  * factor of three to six — physics said 24 against 144 real lessons. They are
@@ -23,8 +30,6 @@ const sections = [
     colorLight: '#a78bfa',
     badge: 'TOP',
     gridClass: 'physics-card',
-    description: 'Kosmik mexanika, gravitatsiya va energiya asoslari',
-    topics: ['Nyuton qonunlari', 'Gravitatsiya', 'Termodinamika', 'Kvant fizikasi'],
     lessonsCount: 144,
   },
   {
@@ -36,8 +41,6 @@ const sections = [
     color: '#10b981',
     colorLight: '#34d399',
     gridClass: 'problems-card',
-    description: 'Amaliy masalalar va olimpiada savollari',
-    topics: ['Hisoblash', 'Olimpiada', 'Laboratoriya', 'Real loyihalar'],
     lessonsCount: 145,
   },
   {
@@ -50,8 +53,6 @@ const sections = [
     colorLight: '#f472b6',
     badge: 'NEW',
     gridClass: 'creativity-card',
-    description: "Kosmik san'at, yozish va dizayn loyihalari",
-    topics: ["Kosmik san'at", 'Ilmiy fantastika', '3D modellash', 'Infografika'],
     lessonsCount: 57,
   },
   {
@@ -63,8 +64,6 @@ const sections = [
     color: '#fbbf24',
     colorLight: '#fbbf24',
     gridClass: 'astronomy-card',
-    description: 'Yulduzlar, galaktikalar va koinot tuzilishi',
-    topics: ['Quyosh tizimi', 'Yulduzlar evolyutsiyasi', 'Galaktikalar', 'Qora tuynuklar'],
     lessonsCount: 126,
   },
   {
@@ -76,8 +75,6 @@ const sections = [
     color: '#38bdf8',
     colorLight: '#38bdf8',
     gridClass: 'interviews-card',
-    description: 'Olimlar, astronavtlar va muhandislar bilan suhbatlar',
-    topics: ["O'zbek tadqiqotchilari", "O'zbek olimlari", 'Astronavtlar', 'Muhandislar'],
     lessonsCount: 63,
   },
 ];
@@ -86,9 +83,16 @@ const sections = [
 function BentoCard({ section, index, lessonsCount }) {
   const navigate = useNavigate();
   const Icon = section.icon;
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const isHorizontal = section.id === 'interviews';
+
+  // Heading in the reader's language with the other name under it — the pairing
+  // the four subject screens already use for their topic cards.
+  const heading = t('learnPage', section.id);
+  const subheading = i18n.language === 'en' ? section.title : section.titleEn;
+  const description = t('learnPage', `${section.id}Desc`);
+  const topicPills = [1, 2, 3, 4].map((n) => t('learnPage', `${section.id}Topic${n}`));
 
   return (
     <div
@@ -181,7 +185,7 @@ function BentoCard({ section, index, lessonsCount }) {
                 letterSpacing: '0.02em',
                 textTransform: 'uppercase',
               }}>
-                {section.titleEn}
+                {heading}
               </h3>
               <span style={{
                 fontSize: '13px',
@@ -189,7 +193,7 @@ function BentoCard({ section, index, lessonsCount }) {
                 color: section.colorLight,
                 letterSpacing: '0.03em',
               }}>
-                {section.title}
+                {subheading}
               </span>
             </div>
             <p style={{
@@ -198,12 +202,12 @@ function BentoCard({ section, index, lessonsCount }) {
               lineHeight: 1.5,
               margin: 0,
             }}>
-              {section.description}
+              {description}
             </p>
 
             {/* Tag Pills */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}>
-              {section.topics.map((topic) => (
+              {topicPills.map((topic) => (
                 <span
                   key={topic}
                   style={{
@@ -331,7 +335,7 @@ function BentoCard({ section, index, lessonsCount }) {
                 letterSpacing: '0.02em',
                 textTransform: 'uppercase',
               }}>
-                {section.titleEn}
+                {heading}
               </h3>
               <span style={{
                 fontSize: '13px',
@@ -339,7 +343,7 @@ function BentoCard({ section, index, lessonsCount }) {
                 color: section.colorLight,
                 letterSpacing: '0.03em',
               }}>
-                {section.title}
+                {subheading}
               </span>
             </div>
 
@@ -350,12 +354,12 @@ function BentoCard({ section, index, lessonsCount }) {
               lineHeight: 1.5,
               margin: 0,
             }}>
-              {section.description}
+              {description}
             </p>
 
             {/* Tag Pills */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-              {section.topics.map((topic) => (
+              {topicPills.map((topic) => (
                 <span
                   key={topic}
                   style={{
