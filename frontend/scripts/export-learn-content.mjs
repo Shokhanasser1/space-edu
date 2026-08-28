@@ -92,6 +92,31 @@ function makeSlugger() {
   };
 }
 
+/**
+ * A lesson node, in the three languages the site is read in.
+ *
+ * `name` and `content` are the Uzbek originals and the base every other
+ * language falls back to — the same rule `Topic.title` follows. Until
+ * 28 Aug 2026 this emitted `name_en: name` and `name_ru: ''` for every node,
+ * so an Uzbek reader got the English title, a Russian reader got the English
+ * title, and there was nowhere at all to put the lesson itself.
+ *
+ * A lesson still written as a bare string is a title and nothing else: its
+ * English name is that string, and the rest is empty until somebody writes it.
+ */
+function translations(item, name) {
+  if (typeof item === 'string') {
+    return { name_en: name, name_ru: '', content: '', content_en: '', content_ru: '' };
+  }
+  return {
+    name_en: item.nameEn ?? name,
+    name_ru: item.nameRu ?? '',
+    content: item.content ?? '',
+    content_en: item.contentEn ?? '',
+    content_ru: item.contentRu ?? '',
+  };
+}
+
 /** The static files use three shapes; normalise them into one tree. */
 function readLessonTree(topic, slugFor, prefix) {
   const walk = (items, parentPrefix) =>
@@ -107,8 +132,7 @@ function readLessonTree(topic, slugFor, prefix) {
         slug,
         order: index,
         name,
-        name_en: name,
-        name_ru: '',
+        ...translations(item, name),
         video_url: typeof item === 'string' ? '' : (item.videoUrl ?? ''),
         children,
       };
@@ -121,8 +145,7 @@ function readLessonTree(topic, slugFor, prefix) {
         slug: slugFor(prefix, section.name),
         order: index,
         name: section.name,
-        name_en: section.name,
-        name_ru: '',
+        ...translations(section, section.name),
         video_url: '',
         children: walk(section.lessons ?? [], prefix),
       }))

@@ -55,10 +55,14 @@ function renderAt(subject, View) {
 
 const testButtons = () => screen.getAllByRole('button', { name: /^(test|тест)$/i });
 
+// The third value is the index of a lesson in the subject's static topic 1 that
+// is still a bare title. `physics-kinematics` lessons 0-9 were written on
+// 28 Aug 2026 and carry an explicit slug, so they have one even with the API
+// down — which is the point of the two cases below being separate.
 describe.each([
-  ['physics', () => PhysicsTopicView],
-  ['astronomy', () => AstronomyTopicView],
-])('%s: the Test button', (subject, view) => {
+  ['physics', () => PhysicsTopicView, 10],
+  ['astronomy', () => AstronomyTopicView, 0],
+])('%s: the Test button', (subject, view, unwritten) => {
   it('opens the quiz for that lesson, not the lecture', async () => {
     api.get.mockResolvedValue({ data: tree(subject, `${subject}-lesson-one`) });
     renderAt(subject, view());
@@ -76,9 +80,24 @@ describe.each([
     api.get.mockRejectedValue(new Error('offline'));
     renderAt(subject, view());
 
-    fireEvent.click(testButtons()[0]);
+    fireEvent.click(testButtons()[unwritten]);
 
     expect(screen.getByTestId('where')).toHaveTextContent(`/quiz/${subject}`);
     expect(screen.getByTestId('where')).not.toHaveTextContent('lesson=');
+  });
+});
+
+describe('a written lesson with the API down', () => {
+  it('still opens its own quiz, because the static file now carries its slug', async () => {
+    // A lesson written in `src/data/*TopicsData.js` pins the slug it already
+    // had, so the offline copy names the same row the server does.
+    api.get.mockRejectedValue(new Error('offline'));
+    renderAt('physics', PhysicsTopicView);
+
+    fireEvent.click(testButtons()[0]);
+
+    expect(screen.getByTestId('where')).toHaveTextContent(
+      '/quiz/physics?lesson=physics-kinematics-basic-concepts-in-mechanics',
+    );
   });
 });

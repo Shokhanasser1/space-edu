@@ -116,6 +116,12 @@ class Command(BaseCommand):
                     'name_en': node.get('name_en', ''),
                     'name_ru': node.get('name_ru', ''),
                     'video_url': node.get('video_url', ''),
+                    # The lesson itself. Left out until 28 Aug 2026, so a
+                    # lesson written in the source file seeded as a bare
+                    # title and the page under it stayed empty.
+                    'content': node.get('content', ''),
+                    'content_en': node.get('content_en', ''),
+                    'content_ru': node.get('content_ru', ''),
                 },
             )
             self.seen_lessons.add(lesson.pk)

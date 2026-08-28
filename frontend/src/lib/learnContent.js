@@ -53,7 +53,12 @@ const toSubLesson = (node) => ({
   // administrator could write a lesson in the panel, save it, open the page and
   // find nothing on it — the field went all the way from the model through the
   // serializer to this function and stopped.
+  //
+  // Three languages since 28 Aug 2026. `content` is the Uzbek original and the
+  // fallback for the other two, exactly as `name` is for `nameEn`/`nameRu`.
   content: node.content || '',
+  contentEn: node.content_en || '',
+  contentRu: node.content_ru || '',
 });
 
 /**
@@ -73,6 +78,24 @@ export function lessonName(lesson, lang) {
   if (lang === 'en') return lesson.nameEn || lesson.name || '';
   if (lang === 'ru') return lesson.nameRu || lesson.name || '';
   return lesson.name || '';
+}
+
+/**
+ * A lesson's body in the reader's language, falling back to the Uzbek original.
+ *
+ * Same contract as `lessonName` above — an ISO code, and a lesson that may be a
+ * bare string from the static file, which has no body at all.
+ *
+ * The fallback is deliberate and it is not the same choice as showing an
+ * untranslated title. A lesson whose Russian half is still outstanding shows
+ * the Uzbek text, which a pupil in Uzbekistan can read; showing nothing would
+ * put them back on the blank page this branch exists to remove.
+ */
+export function lessonText(lesson, lang) {
+  if (!lesson || typeof lesson !== 'object') return '';
+  if (lang === 'en') return lesson.contentEn || lesson.content || '';
+  if (lang === 'ru') return lesson.contentRu || lesson.content || '';
+  return lesson.content || '';
 }
 
 const toLesson = (node) => {

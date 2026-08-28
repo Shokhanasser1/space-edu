@@ -17,9 +17,14 @@ describe('the lesson body', () => {
     // TopicLesson.content went from the model through the serializer to the
     // adapter and stopped. An administrator could write a lesson, save it, open
     // the page and find their work nowhere on it.
+    //
+    // The body picks its language through `lessonText` from 28 Aug 2026 — the
+    // field it reads is `lesson.content` / `contentEn` / `contentRu` rather than
+    // `lesson.content` alone. `LessonTextLanguage.test.jsx` renders the view and
+    // checks all three; this stays as the cheap guard that the call is there.
     const src = await source();
     expect(src).toMatch(/LessonBody/);
-    expect(src).toMatch(/lesson\.content/);
+    expect(src).toMatch(/lessonText\(lesson, i18n\.language\)/);
   });
 
   it('still says something when a lesson has no text yet', async () => {

@@ -54,6 +54,19 @@ class SeedLearnContentTests(TestCase):
         self.assertEqual(Topic.objects.count(), 23)
         self.assertGreater(TopicLesson.objects.count(), 400)
 
+    def test_it_loads_the_lesson_text_in_three_languages(self):
+        # `content` was not in the seed's defaults at all until 28 Aug 2026, so
+        # a lesson written in `src/data/*TopicsData.js` seeded as a bare title
+        # and the page under it stayed empty.
+        _seed('seed_learn_content')
+        lesson = TopicLesson.objects.get(
+            slug='physics-kinematics-straight-line-uniform-motion',
+        )
+        for field in ('content', 'content_en', 'content_ru'):
+            self.assertTrue(getattr(lesson, field), f'{field} did not reach the database')
+        self.assertIn('72', lesson.content, 'the Uzbek original lost its worked example')
+        self.assertNotEqual(lesson.content, lesson.content_ru)
+
     def test_it_is_idempotent(self):
         _seed('seed_learn_content')
         counts = (Sphere.objects.count(), Topic.objects.count(), TopicLesson.objects.count())
@@ -150,6 +163,40 @@ class FixtureShapeTests(TestCase):
             for topic in sphere['topics']:
                 for field in ('title', 'title_en', 'title_ru'):
                     self.assertTrue(topic[field], f"{topic['slug']} is missing {field}")
+
+    def _all_lessons(self):
+        def walk(nodes):
+            for node in nodes:
+                yield node
+                yield from walk(node['children'])
+
+        for sphere in self.data['spheres']:
+            for topic in sphere['topics']:
+                yield from walk(topic['lessons'])
+
+    def test_a_lesson_that_has_text_has_it_in_all_three_languages(self):
+        """Half-written is worse than not started.
+
+        A lesson filled in Uzbek and blank in Russian looks broken to a Russian
+        reader in a way an untouched lesson does not — it is the same defect PR
+        #14 fixed for the titles. Writing a lesson means writing it three times,
+        and this is what says so.
+        """
+        half = [
+            node['slug'] for node in self._all_lessons()
+            if any(node[f] for f in ('content', 'content_en', 'content_ru'))
+            and not all(node[f] for f in ('content', 'content_en', 'content_ru'))
+        ]
+        self.assertEqual(half, [], 'written in one language and not the others')
+
+    def test_a_lesson_that_has_text_has_its_name_in_all_three_languages(self):
+        # A translated body under an untranslated heading is the same mismatch
+        # one level down.
+        mismatched = [
+            node['slug'] for node in self._all_lessons()
+            if node['content'] and not (node['name'] and node['name_en'] and node['name_ru'])
+        ]
+        self.assertEqual(mismatched, [])
 
 
 class SeedProblemsTests(TestCase):

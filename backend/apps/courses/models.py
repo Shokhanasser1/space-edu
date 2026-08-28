@@ -112,7 +112,13 @@ class TopicLesson(models.Model):
     name_en = models.CharField(max_length=300, blank=True, default='')
     name_ru = models.CharField(max_length=300, blank=True, default='')
     video_url = models.URLField(blank=True, default='')
-    content = models.TextField(blank=True, default='', help_text='Lesson text/markdown content')
+    content = models.TextField(
+        blank=True, default='',
+        help_text="Lesson text, markdown, in Uzbek. The original — the other "
+                  "two are written from it, and both fall back to it.",
+    )
+    content_en = models.TextField(blank=True, default='')
+    content_ru = models.TextField(blank=True, default='')
 
     xp_reward = models.PositiveIntegerField(default=25)
     fuel_reward = models.PositiveIntegerField(default=25)
