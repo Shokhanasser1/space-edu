@@ -112,92 +112,15 @@ export const videoData = [
   },
 ];
 
-export const newsData = [
-  {
-    id: 6,
-    title_en: 'James Webb Space Telescope Reveals New Exoplanet Atmosphere Data',
-    title_uz: 'James Webb (JWST) teleskopidan yangi ekzosayyora atmosferasi tasvirlari',
-    title_ru: 'Телескоп Джеймс Уэбб (JWST) представил новые данные об атмосфере экзопланет',
-    summary_en: 'NASA released new images from JWST showing methane and carbon dioxide ratios on K2-18b type planets, supporting theories of potential oceans.',
-    summary_uz: 'NASA JWST dan "K2-18b" tipidagi sayyoralarda metan va karbonat angidridning yangi nisbatlari aniqlangan tasvirlarni e’lon qildi, bu esa okeanlar ehtimolini oshiradi.',
-    summary_ru: 'НАСА опубликовало снимки JWST, на которых обнаружены новые соотношения метана и углекислого газа на планетах типа K2-18b, что подтверждает теорию об океанах.',
-    date: '2026-04-30',
-    image_url: 'https://picsum.photos/seed/jwst/600/400',
-    category: 'discovery',
-  },
-  {
-    id: 7,
-    title_en: 'Perseverance Rover Completes Delta Sample Analysis in Jezero Crater',
-    title_uz: 'Perseverance roveri "Ezero" kraterida namuna tahlilini yakunladi',
-    title_ru: 'Марсоход Perseverance завершил анализ образцов дельты в кратере Езеро',
-    summary_en: 'The rover finished analyzing samples from an ancient river delta, providing new data on organic molecule traces on Mars.',
-    summary_uz: 'Rover qadimgi daryo deltasidan olingan namunalar tahlilini yakunladi va organik molekulalar izlari haqida yangi ma’lumotlar berdi.',
-    summary_ru: 'Марсоход завершил анализ образцов из дельты древней реки, предоставив новые данные о следах органических молекул на Марсе.',
-    date: '2026-04-30',
-    image_url: 'https://picsum.photos/seed/perseverance/600/400',
-    category: 'exploration',
-  },
-  {
-    id: 1,
-    title_en: 'James Webb Space Telescope Discovers New Exoplanet',
-    title_uz: 'James Webb teleskopi yangi ekzosayyorani kashf etdi',
-    title_ru: 'Телескоп Джеймс Уэбб открыл новую экзопланету',
-    summary_en: "NASA's flagship telescope has identified a potentially habitable world just 40 light-years away, featuring signs of water vapor in its atmosphere.",
-    summary_uz: 'NASA ning yetakchi teleskopi atigi 40 yorugʻlik yili uzoqlikda, atmosferasida suv bugʻi izlari boʻlgan, yashashga yaroqli boʻlishi mumkin boʻlgan dunyoni aniqladi.',
-    summary_ru: 'Флагманский телескоп НАСА обнаружил потенциально пригодный для жизни мир всего в 40 световых годах, с признаками водяного пара в атмосфере.',
-    date: '2026-04-04',
-    image_url: 'https://picsum.photos/seed/space1/600/400',
-    category: 'discovery',
-  },
-  {
-    id: 2,
-    title_en: 'SpaceX Successfully Launches Next-Gen Starship',
-    title_uz: 'SpaceX yangi avlod Starship kemasini muvaffaqiyatli uchirdi',
-    title_ru: 'SpaceX успешно запустила Starship нового поколения',
-    summary_en: 'The latest iteration of the Starship vehicle completed a flawless orbital flight and precision landing, paving the way for future Mars missions.',
-    summary_uz: 'Starship kemasining soʻnggi versiyasi benuqson orbital parvoz va aniq qoʻnishni yakunladi, bu kelgusi Mars missiyalariga yoʻl ochadi.',
-    summary_ru: 'Новейшая версия Starship совершила безупречный орбитальный полёт и точную посадку, открыв путь будущим миссиям к Марсу.',
-    date: '2026-04-02',
-    image_url: 'https://picsum.photos/seed/rocket/600/400',
-    category: 'technology',
-  },
-  {
-    id: 3,
-    title_en: 'Artemis Base Camp Construction Begins',
-    title_uz: 'Artemis bazaviy lagerini qurish boshlandi',
-    title_ru: 'Началось строительство базового лагеря Artemis',
-    summary_en: 'International partners have officially started deploying the first modules for the permanent human settlement at the lunar south pole.',
-    summary_uz: 'Xalqaro hamkorlar Oyning janubiy qutbidagi doimiy aholi punkti uchun birinchi modullarni oʻrnatishni rasman boshladilar.',
-    summary_ru: 'Международные партнёры официально приступили к развёртыванию первых модулей постоянного поселения на южном полюсе Луны.',
-    date: '2026-03-28',
-    image_url: 'https://picsum.photos/seed/moon/600/400',
-    category: 'exploration',
-  },
-  {
-    id: 4,
-    title_en: 'Uzbekistan Announces New Space Agency Initiative',
-    title_uz: 'Oʻzbekiston yangi kosmik agentlik tashabbusini eʼlon qildi',
-    title_ru: 'Узбекистан объявил о новой инициативе космического агентства',
-    summary_en: 'A new program aimed at funding student research in astrophysics and satellite technology has been launched in Tashkent.',
-    summary_uz: 'Toshkentda astrofizika va sunʼiy yoʻldosh texnologiyalari boʻyicha talabalar tadqiqotlarini moliyalashtirishga qaratilgan yangi dastur ishga tushirildi.',
-    summary_ru: 'В Ташкенте запущена новая программа финансирования студенческих исследований в области астрофизики и спутниковых технологий.',
-    date: '2026-03-15',
-    image_url: 'https://picsum.photos/seed/tashkent/600/400',
-    category: 'local',
-  },
-  {
-    id: 5,
-    title_en: 'Breakthrough in Fusion Propulsion',
-    title_uz: 'Termoyadro dvigatelida yutuq',
-    title_ru: 'Прорыв в термоядерном двигателе',
-    summary_en: 'Scientists have achieved a sustained fusion reaction that could potentially cut travel time to Mars in half.',
-    summary_uz: 'Olimlar Marsga sayohat vaqtini ikki baravar qisqartirishi mumkin boʻlgan barqaror termoyadro reaksiyasiga erishdilar.',
-    summary_ru: 'Учёные добились устойчивой термоядерной реакции, которая может вдвое сократить время полёта к Марсу.',
-    date: '2026-03-10',
-    image_url: 'https://picsum.photos/seed/fusion/600/400',
-    category: 'technology',
-  },
-];
+/*
+ * `newsData` lived here: seven invented articles with stock photographs from
+ * `picsum.photos`, which NewsView rendered whenever `/news/` failed or was
+ * empty — in exactly the same cards as real reporting, and fetching a
+ * third-party host from every reader's browser to do it. Removed on
+ * 28 August 2026 with the News rebuild; the page now says it has nothing
+ * rather than making something up. `newsHonesty.test.jsx` fails if it or
+ * anything like it comes back.
+ */
 
 export const factsData = [
   "A day on Venus is longer than a year on Venus. It takes 243 Earth days to rotate once!",

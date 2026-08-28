@@ -1232,11 +1232,70 @@
     "title": "Kosmik",
     "titleHighlight": "Yangiliklar",
     "subtitle": "Koinotdagi so'nggi kashfiyotlar, uchirish va yutuqlar.",
-    "dailyFact": "Kunlik fakt",
     "readFull": "To'liq o'qish",
     "loadingDispatches": "Xabarlar yuklanmoqda...",
     "noArticles": "Bu toifada hali maqolalar yo'q.",
-    "all": "Barchasi"
+    "all": "Barchasi",
+    "feedTitle": "So'nggi yangiliklar",
+    "feedFailed": "Yangiliklarni hozir yuklay olmadik. Birozdan so'ng qayta urinib ko'ring.",
+    "noArticlesYet": "Bu yerda hali yangilik yo'q.",
+    "categories": {
+      "discovery": "Kashfiyot",
+      "technology": "Texnologiya",
+      "exploration": "O'rganish",
+      "local": "O'zbekiston",
+      "science": "Fan",
+      "mission": "Missiya",
+      "milestone": "Muhim voqea"
+    },
+    "onThisDay": {
+      "eyebrow": "Shu kuni",
+      "subtitle": "Shu sanada kosmosda nimalar bo'lgan.",
+      "notToday": "Siz bugungi emas, boshqa kunni ko'ryapsiz.",
+      "today": "Bugun",
+      "previous": "Yozuvi bor oldingi kun",
+      "next": "Yozuvi bor keyingi kun",
+      "loading": "Taqvim o'qilmoqda...",
+      "failed": "Bu kunni hozir yuklay olmadik. Birozdan so'ng qayta urinib ko'ring.",
+      "emptyTitle": "Bu kun haqida hali yozmaganmiz.",
+      "emptyBody": "Boshqa kunning voqeasini bugungidek ko'rsatgandan ko'ra, hech narsa ko'rsatmaymiz. Bu taqvim qo'lda, har bir sana tekshirilib yoziladi.",
+      "jumpToNext": "Biz yozgan keyingi kunga o'tish",
+      "coverage": "yilning shuncha kuni yozilgan",
+      "source": "Manba",
+      "yearsAgo": {
+        "one": "yil oldin",
+        "few": "yil oldin",
+        "many": "yil oldin",
+        "other": "yil oldin"
+      },
+      "kinds": {
+        "birth": "Tug'ilgan",
+        "death": "Vafot etgan",
+        "launch": "Uchirilish",
+        "landing": "Qo'nish",
+        "flight": "Parvoz",
+        "first": "Birinchi",
+        "loss": "Yo'qotish",
+        "discovery": "Kashfiyot",
+        "milestone": "Muhim voqea"
+      },
+      "regions": {
+        "uz": "O'zbekiston",
+        "central_asia": "Markaziy Osiyo",
+        "world": "Dunyo"
+      }
+    },
+    "telegram": {
+      "eyebrow": "Telegram",
+      "title": "Uzcosmos kanalidan",
+      "subtitle": "Uzcosmos agentligining rasmiy kanali. Serverimiz o'qiydi va bu yerda o'zi yozilganidek ko'rsatiladi.",
+      "loading": "Kanal o'qilmoqda...",
+      "unavailable": "Kanalga hozir ulana olmadik. Uni quyidagi havola orqali ochishingiz mumkin.",
+      "stale": "Kanal javob bermayapti, shuning uchun bu bizdagi oxirgi nusxa.",
+      "openPost": "Postni ochish",
+      "openChannel": "Kanalni ochish",
+      "hasMedia": "Bu postda rasm yoki video bor — ko'rish uchun Telegramda oching."
+    }
   },
   "profilePage": {
     "securityTitle": "Hisob",
@@ -1632,5 +1691,35 @@
       "diphda": "Diphda",
       "eltanin": "Eltanin"
     }
-  }
+  },
+    "dates": {
+      "monthsLong": [
+        "yanvar",
+        "fevral",
+        "mart",
+        "aprel",
+        "may",
+        "iyun",
+        "iyul",
+        "avgust",
+        "sentabr",
+        "oktabr",
+        "noyabr",
+        "dekabr"
+      ],
+      "monthsShort": [
+        "yan",
+        "fev",
+        "mar",
+        "apr",
+        "may",
+        "iyn",
+        "iyl",
+        "avg",
+        "sen",
+        "okt",
+        "noy",
+        "dek"
+      ]
+    }
 }

@@ -1232,11 +1232,70 @@
     "title": "Space",
     "titleHighlight": "News",
     "subtitle": "Latest discoveries, launches, and breakthroughs from across the cosmos.",
-    "dailyFact": "Daily Fact",
     "readFull": "Read Full Story",
     "loadingDispatches": "Loading dispatches...",
     "noArticles": "No articles in this category yet.",
-    "all": "All"
+    "all": "All",
+    "feedTitle": "Latest news",
+    "feedFailed": "We could not load the news just now. Please try again later.",
+    "noArticlesYet": "There is no news here yet.",
+    "categories": {
+      "discovery": "Discovery",
+      "technology": "Technology",
+      "exploration": "Exploration",
+      "local": "Uzbekistan",
+      "science": "Science",
+      "mission": "Mission",
+      "milestone": "Milestone"
+    },
+    "onThisDay": {
+      "eyebrow": "On this day",
+      "subtitle": "What happened in space on this date.",
+      "notToday": "You are looking at another day, not today.",
+      "today": "Today",
+      "previous": "Previous day with an entry",
+      "next": "Next day with an entry",
+      "loading": "Reading the calendar...",
+      "failed": "We could not load this day just now. Please try again later.",
+      "emptyTitle": "We have not written this day yet.",
+      "emptyBody": "Rather than show you something from another day, we show you nothing. This calendar is written by hand, one checked date at a time.",
+      "jumpToNext": "Go to the next day we have written",
+      "coverage": "days of the year written so far",
+      "source": "Source",
+      "yearsAgo": {
+        "one": "year ago",
+        "few": "years ago",
+        "many": "years ago",
+        "other": "years ago"
+      },
+      "kinds": {
+        "birth": "Born",
+        "death": "Died",
+        "launch": "Launch",
+        "landing": "Landing",
+        "flight": "Flight",
+        "first": "First",
+        "loss": "Loss",
+        "discovery": "Discovery",
+        "milestone": "Milestone"
+      },
+      "regions": {
+        "uz": "Uzbekistan",
+        "central_asia": "Central Asia",
+        "world": "World"
+      }
+    },
+    "telegram": {
+      "eyebrow": "Telegram",
+      "title": "From the Uzcosmos channel",
+      "subtitle": "The official channel of the Uzcosmos agency, read by our server and shown here as it was written.",
+      "loading": "Reading the channel...",
+      "unavailable": "We could not reach the channel just now. You can open it directly below.",
+      "stale": "The channel is not answering, so this is the last copy we have.",
+      "openPost": "Open this post",
+      "openChannel": "Open the channel",
+      "hasMedia": "This post has a photo or a video — open it on Telegram to see it."
+    }
   },
   "profilePage": {
     "securityTitle": "Account",
@@ -1632,5 +1691,35 @@
       "diphda": "Diphda",
       "eltanin": "Eltanin"
     }
-  }
+  },
+    "dates": {
+      "monthsLong": [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December"
+      ],
+      "monthsShort": [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec"
+      ]
+    }
 }
