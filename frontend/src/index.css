@@ -771,3 +771,132 @@
 }
 
 
+
+/* ─────────────────── AUTH SCREENS — warm graphite ground ───────────────────
+   Scoped to `.auth-theme` on purpose: the sign-in, registration and intro
+   screens are lighter and warmer than the rest of the site, and the rest of
+   the site is not being redesigned yet (decision of 22 Aug 2026). Nothing in
+   here touches --color-space-* or body. */
+.auth-theme {
+  --auth-bg-top: #1b1723;
+  --auth-bg-bottom: #0d0b12;
+  --auth-surface: rgba(255, 255, 255, 0.06);
+  --auth-surface-strong: rgba(255, 255, 255, 0.09);
+  --auth-border: rgba(255, 255, 255, 0.12);
+  --auth-border-strong: rgba(255, 255, 255, 0.22);
+  --auth-text: rgba(255, 255, 255, 0.9);
+  --auth-text-muted: rgba(255, 255, 255, 0.6);
+  --auth-text-faint: rgba(255, 255, 255, 0.42);
+  --auth-accent: #8b5cf6;
+  --auth-accent-light: #a78bfa;
+  --auth-warm: #c08a2e;
+  --auth-warm-light: #e3b45c;
+  --auth-glow: rgba(139, 92, 246, 0.16);
+  --auth-glow-warm: rgba(192, 138, 46, 0.14);
+  --auth-danger: #f87171;
+  --auth-radius: 16px;
+  --auth-ease: cubic-bezier(0.16, 1, 0.3, 1);
+
+  color: var(--auth-text);
+  background:
+    radial-gradient(60% 50% at 12% 0%, var(--auth-glow) 0%, transparent 70%),
+    radial-gradient(50% 45% at 90% 100%, var(--auth-glow-warm) 0%, transparent 70%),
+    linear-gradient(180deg, var(--auth-bg-top) 0%, var(--auth-bg-bottom) 100%);
+}
+
+.auth-card {
+  background: var(--auth-surface);
+  border: 1px solid var(--auth-border);
+  border-radius: 24px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.auth-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--auth-text-muted);
+  margin-left: 4px;
+}
+
+.auth-input {
+  width: 100%;
+  background: var(--auth-surface);
+  border: 1px solid var(--auth-border);
+  border-radius: var(--auth-radius);
+  padding: 14px 18px;
+  font-size: 15px;
+  color: var(--auth-text);
+  outline: none;
+  transition: border-color 0.2s var(--auth-ease), background 0.2s var(--auth-ease), box-shadow 0.2s var(--auth-ease);
+  color-scheme: dark;
+}
+.auth-input::placeholder { color: var(--auth-text-faint); }
+.auth-input:focus {
+  border-color: var(--auth-accent-light);
+  background: var(--auth-surface-strong);
+  box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.18);
+}
+.auth-input[aria-invalid="true"] {
+  border-color: rgba(248, 113, 113, 0.6);
+}
+.auth-input[aria-invalid="true"]:focus {
+  box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.18);
+}
+
+.auth-error {
+  color: var(--auth-danger);
+  font-size: 12px;
+  font-weight: 600;
+  margin-left: 4px;
+}
+
+.auth-btn-primary {
+  position: relative;
+  width: 100%;
+  padding: 15px 20px;
+  border-radius: var(--auth-radius);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #fff;
+  background: linear-gradient(135deg, #7c3aed 0%, var(--auth-accent) 60%, #6366f1 100%);
+  box-shadow: 0 10px 30px rgba(139, 92, 246, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  transition: transform 0.15s var(--auth-ease), box-shadow 0.2s var(--auth-ease), filter 0.2s;
+}
+.auth-btn-primary:hover:not(:disabled) { filter: brightness(1.06); box-shadow: 0 14px 36px rgba(139, 92, 246, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.18); }
+.auth-btn-primary:active:not(:disabled) { transform: scale(0.985); }
+.auth-btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.auth-btn-ghost {
+  padding: 15px 20px;
+  border-radius: var(--auth-radius);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--auth-text-muted);
+  border: 1px solid var(--auth-border);
+  background: transparent;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+.auth-btn-ghost:hover { color: var(--auth-text); border-color: var(--auth-border-strong); background: var(--auth-surface); }
+
+.auth-link {
+  color: var(--auth-accent-light);
+  font-weight: 700;
+  transition: color 0.2s;
+}
+.auth-link:hover { color: var(--auth-warm-light); }
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-theme *, .auth-theme *::before, .auth-theme *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

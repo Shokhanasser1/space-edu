@@ -1061,6 +1061,16 @@
     "encrypted": "Shifrlangan ulanish",
     "tooManyAttempts": "Bu tarmoqdan juda koʻp notoʻgʻri parol kiritildi. {{minutes}} daqiqadan soʻng qayta urinib koʻring."
   },
+  "intro": {
+    "eyebrow": "UZ COSMOS × Oxford International School",
+    "title": "Koinotga",
+    "titleHighlight": "birinchi qadam",
+    "tagline": "Fizika, astronomiya va O'zbekiston ustidagi tungi osmon — maktab uchun darslar, viktorinalar va 3D Quyosh tizimi.",
+    "start": "Boshlash",
+    "skip": "O'tkazib yuborish",
+    "hint": "Boshlash uchun Enter bosing",
+    "loading": "Osmon tayyorlanmoqda…"
+  },
   "registerPage": {
     "passwordsDoNotMatch": "Ikkala parol bir xil emas.",
     "checkYourEmail": "Pochtangizni tekshiring",
@@ -1081,7 +1091,23 @@
     "haveAccount": "Hisobingiz bormi?",
     "signIn": "Kirish",
     "secureEnroll": "Xavfsiz ro'yxatdan o'tish protokoli",
-    "tooManyAttempts": "Bu tarmoqdan hozir juda koʻp roʻyxatdan oʻtish boʻldi. {{minutes}} daqiqadan soʻng qayta urinib koʻring."
+    "tooManyAttempts": "Bu tarmoqdan hozir juda koʻp roʻyxatdan oʻtish boʻldi. {{minutes}} daqiqadan soʻng qayta urinib koʻring.",
+    "stepOf": "{{total}} qadamdan {{n}}-si",
+    "step1Title": "O'zingiz haqingizda",
+    "step2Title": "Kirish ma'lumotlari",
+    "next": "Davom etish",
+    "back": "Orqaga",
+    "required": "Bu maydonni to'ldiring.",
+    "invalidEmail": "Bu elektron pochta manziliga o'xshamaydi.",
+    "dobFuture": "Tug'ilgan sana o'tmishda bo'lishi kerak.",
+    "dobInvalid": "Yilni tekshiring.",
+    "tooShort": "Kamida 8 ta belgi.",
+    "allDigits": "Harflar qo'shing — faqat raqamlarni topish oson.",
+    "strengthLabel": "Parol mustahkamligi",
+    "strength1": "Zaif",
+    "strength2": "O'rtacha",
+    "strength3": "Yaxshi",
+    "strength4": "Mustahkam"
   },
   "learnPage": {
     "headerTitle": "Koinot",

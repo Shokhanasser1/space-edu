@@ -1,60 +1,129 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { motion } from 'motion/react';
-import { Eye, EyeOff, Rocket, Star, ShieldCheck } from 'lucide-react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { ArrowLeft, ArrowRight, Eye, EyeOff, Rocket } from 'lucide-react';
 import api from '@/lib/api';
 import { retryAfterMinutes } from '@/lib/retryAfter';
 
 import { useAuthStore } from '@/store/useAuthStore';
 import { useTranslation } from '@/hooks/useTranslation';
-import GlassCard from '@/components/ui/GlassCard';
+import { STEP_FIELDS, STEP_OF_FIELD, validateFields, validateField } from '@/lib/authValidation';
+import AuthShell from '@/components/auth/AuthShell';
+import GoogleSignInButton from '@/components/auth/GoogleSignInButton';
+import PasswordStrength from '@/components/auth/PasswordStrength';
+import StepIndicator from '@/components/auth/StepIndicator';
 
+const TOTAL_STEPS = 2;
+const EASE = [0.16, 1, 0.3, 1];
+
+// `autoComplete` takes tokens from a fixed list, not our field names. The
+// first password box used to be sent as `password`, which is not a token —
+// browsers ignored it, and neither offered to generate a password nor to save
+// the one that was typed.
+const AUTOCOMPLETE = {
+  first_name: 'given-name',
+  last_name: 'family-name',
+  email: 'email',
+  date_of_birth: 'bday',
+  password: 'new-password',
+  password2: 'new-password',
+};
+
+const EMPTY_FORM = {
+  first_name: '', last_name: '', email: '',
+  date_of_birth: '', password: '', password2: '',
+};
+
+const firstOf = (value) => (Array.isArray(value) ? value[0] : value);
+
+/**
+ * Registration in two steps: who you are, then how you sign in.
+ *
+ * The request the server sees is the same six-field POST it always was; only
+ * the screen is split. Validation here is the cheap subset in
+ * lib/authValidation — the server remains the authority and its field errors
+ * are shown against the field, on whichever step that field lives.
+ */
 export default function RegisterView() {
   const navigate = useNavigate();
   const login = useAuthStore((s) => s.login);
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const reduce = useReducedMotion();
 
-  const FIELDS = [
-    { name: 'first_name',     label: t('registerPage', 'firstName'),    type: 'text',     placeholder: 'Alisher' },
-    { name: 'last_name',      label: t('registerPage', 'lastName'),     type: 'text',     placeholder: 'Navoi' },
-    { name: 'email',          label: t('registerPage', 'email'),        type: 'email',    placeholder: 'cosmonaut@cosmos.uz' },
-    { name: 'date_of_birth',  label: t('registerPage', 'dob'),          type: 'date',     placeholder: '' },
-    { name: 'password',       label: t('registerPage', 'securityKey'),  type: 'password', placeholder: t('registerPage', 'placeholder8chars') },
-    { name: 'password2',      label: t('registerPage', 'confirmKey'),   type: 'password', placeholder: t('registerPage', 'repeatKey') },
-  ];
-
-  // `autoComplete` takes tokens from a fixed list, not our field names. Both
-  // password inputs were sent as-is, so the first one asked for `password`,
-  // which is not a token at all — browsers ignored it, and neither offered to
-  // generate a password nor to save the one that was typed.
-  const AUTOCOMPLETE = {
-    first_name: 'given-name',
-    last_name: 'family-name',
-    email: 'email',
-    date_of_birth: 'bday',
-    password: 'new-password',
-    password2: 'new-password',
-  };
-
-  const [form, setForm] = useState({
-    first_name: '', last_name: '', email: '',
-    date_of_birth: '', password: '', password2: '',
-  });
-  const [showPass, setShowPass] = useState(false);
+  const [step, setStep] = useState(1);
+  const [form, setForm] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState({});
+  const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
+  const direction = useRef(1);
+  const focusRequest = useRef(null);
+
+  const FIELDS = {
+    first_name:    { label: t('registerPage', 'firstName'),   type: 'text',     placeholder: 'Alisher' },
+    last_name:     { label: t('registerPage', 'lastName'),    type: 'text',     placeholder: 'Navoi' },
+    date_of_birth: { label: t('registerPage', 'dob'),         type: 'date',     placeholder: '' },
+    email:         { label: t('registerPage', 'email'),       type: 'email',    placeholder: 'cosmonaut@cosmos.uz' },
+    password:      { label: t('registerPage', 'securityKey'), type: 'password', placeholder: t('registerPage', 'placeholder8chars') },
+    password2:     { label: t('registerPage', 'confirmKey'),  type: 'password', placeholder: t('registerPage', 'repeatKey') },
+  };
+  const STEP_TITLES = [t('registerPage', 'step1Title'), t('registerPage', 'step2Title')];
+
+  // After a step change (or a server error that sends us back), put the caret
+  // where the reader needs it: the first field with an error, else the first
+  // field of the step.
+  useEffect(() => {
+    const wanted = focusRequest.current || STEP_FIELDS[step][0];
+    focusRequest.current = null;
+    const el = document.getElementById(`reg-${wanted}`);
+    if (el) el.focus({ preventScroll: true });
+  }, [step]);
+
+  const translated = (keyed) => Object.fromEntries(
+    Object.entries(keyed).map(([field, key]) => [field, t('registerPage', key)]),
+  );
 
   const handleChange = (e) => {
-    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
-    setErrors((er) => ({ ...er, [e.target.name]: undefined, detail: undefined }));
+    const { name, value } = e.target;
+    setForm((f) => ({ ...f, [name]: value }));
+    setErrors((er) => ({ ...er, [name]: undefined, detail: undefined }));
+  };
+
+  const handleBlur = (e) => {
+    const { name } = e.target;
+    if (!form[name]) return; // an untouched box is not yet a mistake
+    const key = validateField(name, form);
+    if (key) setErrors((er) => ({ ...er, [name]: t('registerPage', key) }));
+  };
+
+  const showErrors = (keyed) => {
+    const fields = Object.keys(keyed);
+    setErrors((er) => ({ ...er, ...translated(keyed) }));
+    const el = document.getElementById(`reg-${fields[0]}`);
+    if (el) el.focus({ preventScroll: true });
+  };
+
+  const goTo = (next, focusField) => {
+    direction.current = next > step ? 1 : -1;
+    focusRequest.current = focusField || null;
+    setStep(next);
+  };
+
+  const goNext = () => {
+    const keyed = validateFields(STEP_FIELDS[1], form);
+    if (Object.keys(keyed).length) {
+      showErrors(keyed);
+      return;
+    }
+    goTo(2);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     // Caught here rather than at the server, because a round trip to be told
     // the two boxes differ is a round trip nobody needed.
-    if (form.password !== form.password2) {
-      setErrors({ password2: [t('registerPage', 'passwordsDoNotMatch')] });
+    const keyed = validateFields(STEP_FIELDS[2], form);
+    if (Object.keys(keyed).length) {
+      showErrors(keyed);
       return;
     }
     setLoading(true);
@@ -73,132 +142,169 @@ export default function RegisterView() {
         setErrors({ detail: t('registerPage', 'tooManyAttempts').replace('{{minutes}}', minutes) });
         return;
       }
-      const errorData = err.response?.data || {};
+      const errorData = { ...(err.response?.data || {}) };
       if (errorData.non_field_errors && !errorData.detail) {
-        errorData.detail = errorData.non_field_errors[0];
+        errorData.detail = firstOf(errorData.non_field_errors);
       }
-      setErrors(errorData.detail ? errorData : { ...errorData, detail: errorData.detail || t('registerPage', 'regFailed') });
+      const fieldErrors = Object.fromEntries(
+        Object.entries(errorData)
+          .filter(([field]) => field in STEP_OF_FIELD)
+          .map(([field, value]) => [field, firstOf(value)]),
+      );
+      const detail = errorData.detail
+        || (Object.keys(fieldErrors).length ? undefined : t('registerPage', 'regFailed'));
+      setErrors({ ...fieldErrors, detail });
+
+      // A complaint about a step-one field has to be seen on step one.
+      const backTo = Object.keys(fieldErrors).find((field) => STEP_OF_FIELD[field] === 1);
+      if (backTo) goTo(1, backTo);
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <div className="relative min-h-screen flex items-center justify-center px-4 py-20 overflow-hidden">
-      {/* Decorative ambient glows */}
-      <div className="fixed top-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full blur-[140px] pointer-events-none z-0"
-        style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.06) 0%, transparent 70%)' }} />
-      <div className="fixed bottom-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full blur-[140px] pointer-events-none z-0"
-        style={{ background: 'radial-gradient(circle, rgba(0,229,255,0.03) 0%, transparent 70%)' }} />
-
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-        className="w-full max-w-[540px] relative z-10"
-      >
-        {/* Logo */}
-        <div className="text-center mb-10">
-          <motion.div 
-            initial={{ y: -20, opacity: 0 }} 
-            animate={{ y: 0, opacity: 1 }} 
-            transition={{ delay: 0.2 }}
-            className="inline-flex items-center gap-3 mb-6 p-2 px-4 rounded-2xl bg-white/[0.03] border border-white/5 backdrop-blur-xl"
-          >
-            <Star className="w-5 h-5 text-violet-light" />
-            <span className="text-xl font-[900] tracking-tighter text-white">Space edu</span>
-          </motion.div>
-          <h1 className="text-4xl font-[900] text-white tracking-tight mb-3">{t('registerPage', 'joinTitle')} <span className="text-glow-purple text-violet">{t('registerPage', 'joinHighlight')}</span></h1>
-          <p className="text-white/30 text-sm font-[500]">{t('registerPage', 'subtitle')}</p>
+  const renderField = (name) => {
+    const { label, type, placeholder } = FIELDS[name];
+    const isPassword = type === 'password';
+    const id = `reg-${name}`;
+    const error = errors[name];
+    return (
+      <div key={name} className="flex flex-col gap-2">
+        <label htmlFor={id} className="auth-label">{label}</label>
+        <div className="relative">
+          <input
+            id={id}
+            name={name}
+            type={isPassword && showPass ? 'text' : type}
+            autoComplete={AUTOCOMPLETE[name]}
+            value={form[name]}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            placeholder={placeholder}
+            aria-invalid={Boolean(error) || undefined}
+            aria-describedby={error ? `${id}-error` : undefined}
+            max={type === 'date' ? new Date().toISOString().slice(0, 10) : undefined}
+            className={`auth-input ${isPassword ? 'pr-14' : ''}`}
+          />
+          {isPassword && (
+            <button
+              type="button"
+              onClick={() => setShowPass((v) => !v)}
+              aria-label={showPass ? 'hide password' : 'show password'}
+              aria-pressed={showPass}
+              className="absolute right-4 top-1/2 -translate-y-1/2 transition-colors"
+              style={{ color: 'var(--auth-text-faint)' }}
+            >
+              {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          )}
         </div>
+        {name === 'password' && form.password && <PasswordStrength value={form.password} />}
+        {error && <p id={`${id}-error`} className="auth-error">{error}</p>}
+      </div>
+    );
+  };
 
-        <GlassCard accent="#8b5cf6" className="!p-8 sm:!p-10 shadow-2xl">
-          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              {FIELDS.map(({ name, label, type, placeholder }) => (
-                <div key={name} className={`flex flex-col gap-2 ${['email', 'password', 'password2'].includes(name) ? 'sm:col-span-2' : ''}`}>
-                  <label className="text-[10px] font-[800] text-white/30 uppercase tracking-[0.2em] ml-1">{label}</label>
-                  <div className="relative">
-                    <input
-                      name={name}
-                      type={(type === 'password' && showPass) ? 'text' : type}
-                      autoComplete={AUTOCOMPLETE[name] || name}
-                      value={form[name]}
-                      onChange={handleChange}
-                      placeholder={placeholder}
-                      className={`w-full bg-white/[0.03] border rounded-2xl px-5 py-3.5 text-white placeholder-white/20 outline-none transition-all text-sm
-                        ${errors[name] ? 'border-red-500/40 focus:border-red-500' : 'border-white/10 focus:border-violet/40 focus:bg-white/[0.06]'}`}
-                    />
-                    {type === 'password' && (
-                      <button
-                        type="button"
-                        onClick={() => setShowPass((v) => !v)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 hover:text-white/60 transition-colors"
-                      >
-                        {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    )}
-                  </div>
-                  {errors[name] && (
-                    <p className="text-red-400 text-[10px] font-[700] ml-1">
-                      {Array.isArray(errors[name]) ? errors[name][0] : errors[name]}
-                    </p>
-                  )}
+  const slide = reduce
+    ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } }
+    : {
+      initial: { opacity: 0, x: 28 * direction.current },
+      animate: { opacity: 1, x: 0 },
+      exit: { opacity: 0, x: -28 * direction.current },
+    };
+
+  return (
+    <AuthShell
+      title={t('registerPage', 'joinTitle')}
+      highlight={t('registerPage', 'joinHighlight')}
+      subtitle={t('registerPage', 'subtitle')}
+      footer={t('registerPage', 'secureEnroll')}
+      width={520}
+    >
+      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
+        <StepIndicator step={step} total={TOTAL_STEPS} labels={STEP_TITLES} />
+
+        <div className="overflow-hidden -m-1 p-1">
+          <AnimatePresence mode="wait" initial={false}>
+            {step === 1 ? (
+              <motion.div key="step-1" {...slide} transition={{ duration: 0.3, ease: EASE }} className="flex flex-col gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  {renderField('first_name')}
+                  {renderField('last_name')}
+                  <div className="sm:col-span-2">{renderField('date_of_birth')}</div>
                 </div>
-              ))}
-            </div>
 
-            {errors.detail && (
-              <motion.div 
-                initial={{ opacity: 0, height: 0 }} 
-                animate={{ opacity: 1, height: 'auto' }}
-                className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-400 text-xs font-[700] text-center"
-              >
-                {errors.detail}
+                <button type="button" onClick={goNext} className="auth-btn-primary group mt-1">
+                  <span className="flex items-center justify-center gap-2">
+                    {t('registerPage', 'next')}
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </span>
+                </button>
+
+                <div className="pt-2">
+                  <GoogleSignInButton text="signup_with" onDone={() => navigate('/')} />
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div key="step-2" {...slide} transition={{ duration: 0.3, ease: EASE }} className="flex flex-col gap-5">
+                {renderField('email')}
+                {renderField('password')}
+                {renderField('password2')}
+
+                {errors.detail && (
+                  <motion.div
+                    role="alert"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    className="bg-red-500/10 border border-red-500/25 rounded-xl px-4 py-3 text-red-300 text-xs font-[700] text-center"
+                  >
+                    {errors.detail}
+                  </motion.div>
+                )}
+
+                <div className="flex gap-3 mt-1">
+                  <button type="button" onClick={() => goTo(1)} className="auth-btn-ghost flex items-center gap-2" aria-label={t('registerPage', 'back')}>
+                    <ArrowLeft className="w-4 h-4" />
+                    <span className="hidden sm:inline">{t('registerPage', 'back')}</span>
+                  </button>
+                  <button type="submit" disabled={loading} className="auth-btn-primary group flex-1">
+                    <span className="flex items-center justify-center gap-2">
+                      {loading ? (
+                        <Loader className="w-4 h-4" />
+                      ) : (
+                        <>
+                          {t('registerPage', 'initProfile')}
+                          <Rocket className="w-4 h-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                        </>
+                      )}
+                    </span>
+                  </button>
+                </div>
               </motion.div>
             )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative w-full py-4 mt-2 rounded-2xl font-[800] text-sm uppercase tracking-widest text-white overflow-hidden transition-all active:scale-[0.98]"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-violet to-indigo opacity-100 group-hover:opacity-90 transition-opacity" />
-              <div className="absolute inset-0 shadow-[inset_0_0_20px_rgba(255,255,255,0.2)]" />
-              <span className="relative z-10 flex items-center justify-center gap-2">
-                {loading ? (
-                  <Loader className="w-4 h-4 animate-spin" />
-                ) : (
-                  <>
-                    {t('registerPage', 'initProfile')} <Rocket className="w-4 h-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                  </>
-                )}
-              </span>
-            </button>
-
-            <div className="mt-4 pt-6 border-t border-white/5 text-center">
-              <p className="text-white/30 text-xs font-[600]">
-                {t('registerPage', 'haveAccount')}{' '}
-                <Link to="/login" className="text-violet-light hover:text-white font-[800] transition-colors">
-                  {t('registerPage', 'signIn')}
-                </Link>
-              </p>
-            </div>
-          </form>
-        </GlassCard>
-
-        {/* Footer info */}
-        <div className="mt-12 flex items-center justify-center gap-2 text-white/10 uppercase text-[9px] font-[800] tracking-[0.4em]">
-          <ShieldCheck className="w-3 h-3" /> {t('registerPage', 'secureEnroll')}
+          </AnimatePresence>
         </div>
-      </motion.div>
-    </div>
+
+        {errors.detail && step === 1 && (
+          <div role="alert" className="bg-red-500/10 border border-red-500/25 rounded-xl px-4 py-3 text-red-300 text-xs font-[700] text-center">
+            {errors.detail}
+          </div>
+        )}
+
+        <div className="mt-2 pt-6 text-center" style={{ borderTop: '1px solid var(--auth-border)' }}>
+          <p className="text-xs font-[600]" style={{ color: 'var(--auth-text-muted)' }}>
+            {t('registerPage', 'haveAccount')}{' '}
+            <Link to="/login" className="auth-link">{t('registerPage', 'signIn')}</Link>
+          </p>
+        </div>
+      </form>
+    </AuthShell>
   );
 }
 
 function Loader({ className }) {
   return (
-    <svg className={`animate-spin ${className}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+    <svg className={`animate-spin ${className}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
     </svg>

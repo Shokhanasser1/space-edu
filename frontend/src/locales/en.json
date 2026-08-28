@@ -1061,6 +1061,16 @@
     "encrypted": "Encrypted Connection",
     "tooManyAttempts": "Too many wrong passwords from this network. Try again in {{minutes}} min."
   },
+  "intro": {
+    "eyebrow": "UZ COSMOS × Oxford International School",
+    "title": "Your first step",
+    "titleHighlight": "into space",
+    "tagline": "Physics, astronomy and the night sky over Uzbekistan — lessons, quizzes and a 3D solar system built for school.",
+    "start": "Start",
+    "skip": "Skip intro",
+    "hint": "Press Enter to start",
+    "loading": "Preparing the sky…"
+  },
   "registerPage": {
     "passwordsDoNotMatch": "The two passwords are not the same.",
     "checkYourEmail": "Check your e-mail",
@@ -1081,7 +1091,23 @@
     "haveAccount": "Already have an account?",
     "signIn": "Sign In",
     "secureEnroll": "Secure Enrollment Protocol",
-    "tooManyAttempts": "Too many sign-ups from this network just now. Try again in {{minutes}} min."
+    "tooManyAttempts": "Too many sign-ups from this network just now. Try again in {{minutes}} min.",
+    "stepOf": "Step {{n}} of {{total}}",
+    "step1Title": "About you",
+    "step2Title": "Your sign-in",
+    "next": "Continue",
+    "back": "Back",
+    "required": "This field is required.",
+    "invalidEmail": "That does not look like an e-mail address.",
+    "dobFuture": "Date of birth must be in the past.",
+    "dobInvalid": "Please check the year.",
+    "tooShort": "At least 8 characters.",
+    "allDigits": "Add some letters — digits alone are easy to guess.",
+    "strengthLabel": "Password strength",
+    "strength1": "Weak",
+    "strength2": "Fair",
+    "strength3": "Good",
+    "strength4": "Strong"
   },
   "learnPage": {
     "headerTitle": "Cosmic",

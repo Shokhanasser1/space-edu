@@ -5,8 +5,11 @@
  * is a round trip nobody needed and, on a school connection, a visible wait for
  * an answer the page already had. The rest of the checking stays on the server,
  * where it belongs.
+ *
+ * 28 Aug 2026: the form became two steps. The request is the same six-field
+ * POST; the tests below walk both steps to send it.
  */
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -30,23 +33,36 @@ beforeEach(async () => {
   ({ default: RegisterView } = await import('./RegisterView'));
 });
 
-async function fillIn({ password, password2 }) {
-  render(
+function renderView() {
+  return render(
     <MemoryRouter>
       <RegisterView />
     </MemoryRouter>,
   );
+}
 
+const nextButton = () => screen.getByRole('button', { name: /continue|davom|продолжить/i });
+const submitButton = () => screen.getByRole('button', { name: /initialize|yaratish|создать/i });
+
+async function fillStepOne() {
   const boxes = document.querySelectorAll('input');
   await userEvent.type(boxes[0], 'Aziz');
   await userEvent.type(boxes[1], 'Karimov');
+  fireEvent.change(document.querySelector('input[type="date"]'), { target: { value: '2012-05-01' } });
+  await userEvent.click(nextButton());
+  await waitFor(() => expect(document.querySelector('input[type="email"]')).toBeInTheDocument());
+}
+
+async function fillIn({ password, password2 }) {
+  renderView();
+  await fillStepOne();
   await userEvent.type(document.querySelector('input[type="email"]'), 'aziz@school.uz');
 
   const passwords = document.querySelectorAll('input[type="password"]');
   await userEvent.type(passwords[0], password);
   await userEvent.type(passwords[1], password2);
 
-  await userEvent.click(screen.getByRole('button', { name: /initialize|yaratish|создать/i }));
+  await userEvent.click(submitButton());
 }
 
 describe('two passwords that differ', () => {
@@ -92,5 +108,71 @@ describe('what the server says', () => {
       expect(screen.getByText(/10/)).toBeInTheDocument();
     });
     expect(screen.queryByText(/Request was throttled/)).not.toBeInTheDocument();
+  });
+
+  it('goes back to step one when the complaint is about a step-one field', async () => {
+    api.post.mockRejectedValue({
+      response: {
+        status: 400,
+        headers: {},
+        data: { date_of_birth: ['Date of birth must be in the past.'] },
+      },
+    });
+
+    await fillIn({ password: 'Str0ngPassw0rd!x', password2: 'Str0ngPassw0rd!x' });
+
+    await waitFor(() => {
+      expect(screen.getByText(/must be in the past/i)).toBeInTheDocument();
+    });
+    expect(document.querySelector('input[type="date"]')).toBeInTheDocument();
+    expect(document.querySelector('input[type="email"]')).not.toBeInTheDocument();
+  });
+});
+
+describe('the first step', () => {
+  it('does not move on with empty boxes, and says which', async () => {
+    renderView();
+    await userEvent.click(nextButton());
+
+    expect(await screen.findAllByText(/required|to'ldiring|заполните/i)).not.toHaveLength(0);
+    expect(document.querySelector('input[type="email"]')).not.toBeInTheDocument();
+    expect(api.post).not.toHaveBeenCalled();
+  });
+
+  it('refuses a date of birth in the future', async () => {
+    renderView();
+    const boxes = document.querySelectorAll('input');
+    await userEvent.type(boxes[0], 'Aziz');
+    await userEvent.type(boxes[1], 'Karimov');
+    fireEvent.change(document.querySelector('input[type="date"]'), { target: { value: '2099-01-01' } });
+    await userEvent.click(nextButton());
+
+    expect(await screen.findByText(/in the past|o'tmishda|в прошлом/i)).toBeInTheDocument();
+    expect(document.querySelector('input[type="email"]')).not.toBeInTheDocument();
+  });
+});
+
+describe('the request', () => {
+  it('is the same six-field POST the server always received', async () => {
+    api.post.mockResolvedValue({ data: { user: { id: 1, email: 'aziz@school.uz' }, access: 'a', refresh: 'r' } });
+
+    await fillIn({ password: 'Str0ngPassw0rd!x', password2: 'Str0ngPassw0rd!x' });
+
+    await waitFor(() => expect(api.post).toHaveBeenCalledTimes(1));
+    expect(api.post).toHaveBeenCalledWith('/auth/register/', {
+      first_name: 'Aziz',
+      last_name: 'Karimov',
+      date_of_birth: '2012-05-01',
+      email: 'aziz@school.uz',
+      password: 'Str0ngPassw0rd!x',
+      password2: 'Str0ngPassw0rd!x',
+    });
+  });
+
+  it('warns about a password of digits alone before sending anything', async () => {
+    await fillIn({ password: '12345678', password2: '12345678' });
+
+    expect(await screen.findByText(/digits alone|raqamlarni|одни цифры/i)).toBeInTheDocument();
+    expect(api.post).not.toHaveBeenCalled();
   });
 });
