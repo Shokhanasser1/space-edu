@@ -11,14 +11,21 @@ in CONTRIBUTING.
 """
 from . import astronomy, courses, general, physics, problems
 from .builder import spread_answers
+from .lesson_links import LESSON_LINKS, LESSON_OF_QUESTION
 
-QUESTIONS = spread_answers(
-    general.QUESTIONS
-    + astronomy.QUESTIONS
-    + physics.QUESTIONS
-    + problems.QUESTIONS
-    + courses.QUESTIONS
-)
+# `lesson` carries the slug of the lesson a question belongs to, or None for one
+# that lives only in the category pool. `seed_challenges` resolves it to the row.
+# Which question sits under which lesson, and why, is in `lesson_links.py`.
+QUESTIONS = [
+    {**item, 'lesson': LESSON_OF_QUESTION.get(item['question'])}
+    for item in spread_answers(
+        general.QUESTIONS
+        + astronomy.QUESTIONS
+        + physics.QUESTIONS
+        + problems.QUESTIONS
+        + courses.QUESTIONS
+    )
+]
 
 # Uzbek texts an earlier version of the pool seeded and this one no longer
 # stands behind. They are switched off rather than deleted, so a finished quiz
@@ -37,3 +44,6 @@ RETIRED = [
     'Saturning halqalari asosan nimadan iborat?',    # Saturnning, with the genitive -ning
     "Jupiterning eng katta yo'ldoshi qaysi?",        # Yupiter, as the rest of the pool spells it
 ]
+
+# Re-exported so the seed and its tests read the map from one place.
+__all__ = ['LESSON_LINKS', 'LESSON_OF_QUESTION', 'QUESTIONS', 'RETIRED']

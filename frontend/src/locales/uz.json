@@ -924,6 +924,8 @@
     "savingScore": "Natija saqlanmoqda…",
     "lessonQuiz": "Dars boʻyicha test",
     "categoryEmpty": "Toifa topilmadi yoki bo'sh.",
+    "lessonNoTest": "Bu darsning hozircha testi yo'q.",
+    "lessonPoolFallback": "Bu darsning hozircha o'z testi yo'q, shuning uchun savollar butun fan bo'yicha berilmoqda.",
     "goBack": "Orqaga"
   },
   "market": {
