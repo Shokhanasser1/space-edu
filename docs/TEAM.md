@@ -454,6 +454,14 @@ Three different hashes means this. Recover:
 The rule that avoids all of it: **never reinstall `node_modules` while the dev
 server is running.**
 
+**And a reinstall is not the only trigger.** If you share one `node_modules`
+between git worktrees by symlinking it, *starting a second Vite dev server* is
+enough: it re-optimises the same `.vite/deps` directory the first server is
+serving from, and the first server does not notice. Someone hit this while the
+main clone was serving on 3000 and caught it with the curl above. Either give
+each worktree its own `node_modules`, or use `vite build` plus `vite preview`
+for verification — those never touch the deps cache.
+
 ### A symlink that ate everyone's `node_modules`
 
 `.gitignore` listed `backend/venv/` and `frontend/node_modules/` **with a
