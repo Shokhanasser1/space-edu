@@ -4,24 +4,21 @@
  * Findings (22 Aug 2026 audit):
  *  - three topics had no `titleRu`, so the Russian UI silently showed the Uzbek
  *    title — the translation fallback hides this rather than failing;
- *  - `newsData` carried three incompatible shapes across seven entries, so five
- *    of seven rendered English text in the Uzbek and Russian UI;
- *  - its category casing was inconsistent, so CATEGORY_COLORS missed four
- *    entries and the filter row showed one category as two separate chips;
- *  - every entry used `image` while NewsView reads `image_url`, so all seven
- *    showed the empty placeholder.
+ *  - `newsData` carried three incompatible shapes across seven entries, and the
+ *    checks for it lived here until 28 August 2026. The data is gone with the
+ *    News rebuild — the page no longer invents articles when the API is down —
+ *    so what replaced those checks is `views/community/newsHonesty.test.jsx`,
+ *    which asserts the stronger thing: that no such fallback exists.
  */
 import { describe, expect, it } from 'vitest';
 
 import { locations, stars as featuredStars } from './stars';
 import { starsByHr } from './skyCatalog';
 
-import { newsData } from './mockData';
 import { astronomyTopicsData } from './astronomyTopicsData';
 import { creativityTopicsData } from './creativityTopicsData';
 import { interviewsTopicsData } from './interviewsTopicsData';
 import { physicsTopicsData } from './physicsTopicsData';
-import newsViewSource from '../views/community/NewsView.jsx?raw';
 
 const TOPIC_SETS = {
   astronomyTopicsData,
@@ -49,68 +46,6 @@ describe('topic titles exist in every language', () => {
       expect(new Set(ids).size).toBe(ids.length);
     });
   }
-});
-
-describe('fallback news', () => {
-  // Read straight from the view so the two cannot drift apart.
-  const viewSource = newsViewSource;
-  const colorBlock = viewSource.slice(
-    viewSource.indexOf('const CATEGORY_COLORS'),
-    viewSource.indexOf('};', viewSource.indexOf('const CATEGORY_COLORS')),
-  );
-  const knownCategories = [...colorBlock.matchAll(/^\s{2}(\w+):/gm)].map((m) => m[1]);
-
-  it('the view really does define categories', () => {
-    expect(knownCategories.length).toBeGreaterThan(3);
-  });
-
-  it('every entry has all three languages', () => {
-    for (const article of newsData) {
-      for (const field of ['title_en', 'title_uz', 'title_ru', 'summary_en', 'summary_uz', 'summary_ru']) {
-        expect(article[field], `article ${article.id} is missing ${field}`).toBeTruthy();
-      }
-    }
-  });
-
-  it('no entry uses the old bare title/summary shape', () => {
-    for (const article of newsData) {
-      expect(article, `article ${article.id}`).not.toHaveProperty('title');
-      expect(article, `article ${article.id}`).not.toHaveProperty('summary');
-    }
-  });
-
-  it('uses image_url, the field the view reads', () => {
-    for (const article of newsData) {
-      expect(article.image_url, `article ${article.id}`).toBeTruthy();
-      expect(article).not.toHaveProperty('image');
-    }
-  });
-
-  it('every category matches one the view can colour', () => {
-    for (const article of newsData) {
-      expect(
-        knownCategories,
-        `article ${article.id} has category "${article.category}"`,
-      ).toContain(article.category);
-    }
-  });
-
-  it('category values are lowercase, so the filter shows one chip per category', () => {
-    for (const article of newsData) {
-      expect(article.category).toBe(article.category.toLowerCase());
-    }
-  });
-
-  it('dates parse', () => {
-    for (const article of newsData) {
-      expect(Number.isNaN(new Date(article.date).getTime())).toBe(false);
-    }
-  });
-
-  it('ids are unique', () => {
-    const ids = newsData.map((a) => a.id);
-    expect(new Set(ids).size).toBe(ids.length);
-  });
 });
 
 /**

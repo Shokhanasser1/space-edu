@@ -23,6 +23,8 @@ import {
   formatNumber,
   formatTime,
   localeTag,
+  pluralForm,
+  repairNamedMonth,
 } from './format';
 
 describe('a number', () => {
@@ -96,5 +98,86 @@ describe('the language-to-locale mapping', () => {
     expect(localeTag('ENG')).toBe('en-US');
     expect(localeTag('UZB')).toBe('uz-UZ');
     expect(localeTag('RUS')).toBe('ru-RU');
+  });
+});
+
+/**
+ * Chromium has no Uzbek month names.
+ *
+ * `new Date().toLocaleDateString('uz-UZ', { month: 'long' })` answers "M08 28"
+ * in Chrome — ICU's root-locale fallback — while `supportedLocalesOf(['uz-UZ'])`
+ * still says the locale is supported, so nothing warns you. The News page's
+ * heading is a date in 44px type, and it read "M08 28" to the readers this site
+ * exists for.
+ *
+ * Node's ICU has the names, so a test that went through `formatDate` would take
+ * the other branch and pass without touching any of this. These give
+ * `repairNamedMonth` the string a browser would have produced, which makes both
+ * branches deterministic wherever the suite runs.
+ */
+describe('a browser with no month names for the reader s language', () => {
+  const august = new Date(2026, 7, 28);
+
+  it('rebuilds an Uzbek date instead of printing M08', () => {
+    expect(repairNamedMonth('M08 28', august, 'UZB', { day: 'numeric', month: 'long' }))
+      .toBe('28-avgust');
+  });
+
+  it('keeps the year when the caller asked for one', () => {
+    expect(repairNamedMonth('2026 M08 28', august, 'UZB',
+      { year: 'numeric', month: 'short', day: 'numeric' })).toBe('28-avg, 2026');
+  });
+
+  it('does not put the month before the day, which is what a swap would do', () => {
+    const rebuilt = repairNamedMonth('2026 M08 28', august, 'UZB',
+      { year: 'numeric', month: 'long', day: 'numeric' });
+    expect(rebuilt).toBe('28-avgust, 2026');
+    expect(rebuilt).not.toMatch(/^2026/);
+  });
+
+  it('leaves a date alone when the browser managed it', () => {
+    // Every browser has these, and this branch must never touch them.
+    expect(repairNamedMonth('28 августа', august, 'RUS', { day: 'numeric', month: 'long' }))
+      .toBe('28 августа');
+    expect(repairNamedMonth('August 28', august, 'ENG', { day: 'numeric', month: 'long' }))
+      .toBe('August 28');
+  });
+
+  it('is not fooled by an M-number that is not a month token', () => {
+    expect(repairNamedMonth('M13 28', august, 'UZB', { day: 'numeric', month: 'long' }))
+      .toBe('M13 28');
+    expect(repairNamedMonth('M00 28', august, 'UZB', { day: 'numeric', month: 'long' }))
+      .toBe('M00 28');
+  });
+
+  it('formatDate passes a working browser s output straight through', () => {
+    // Node has full ICU, so this is the other branch, and it must be untouched.
+    expect(formatDate(august, 'ENG', { day: 'numeric', month: 'long' })).toBe('August 28');
+  });
+});
+
+/**
+ * Russian needs three plural forms and an anniversary line prints one every
+ * time: "1 год назад", "33 года назад", "237 лет назад".
+ */
+describe('plural forms', () => {
+  it('picks the Russian form the number actually takes', () => {
+    expect(pluralForm(1, 'RUS')).toBe('one');
+    expect(pluralForm(33, 'RUS')).toBe('few');
+    expect(pluralForm(237, 'RUS')).toBe('many');
+    expect(pluralForm(11, 'RUS')).toBe('many');
+  });
+
+  it('gives English and Uzbek the two forms they have', () => {
+    expect(pluralForm(1, 'ENG')).toBe('one');
+    expect(pluralForm(2, 'ENG')).toBe('other');
+    expect(pluralForm(1, 'UZB')).toBe('one');
+    expect(pluralForm(69, 'UZB')).toBe('other');
+  });
+
+  it('never throws on rubbish, so a missing count cannot blank a page', () => {
+    for (const bad of [null, undefined, '', NaN, 'many']) {
+      expect(pluralForm(bad, 'RUS')).toBe('other');
+    }
   });
 });

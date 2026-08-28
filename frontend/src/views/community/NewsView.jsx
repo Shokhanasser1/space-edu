@@ -1,205 +1,170 @@
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { ExternalLink, Calendar, RefreshCw, Loader, Newspaper } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { motion } from 'motion/react';
+import { AlertTriangle, Loader, Newspaper } from 'lucide-react';
 import api from '@/lib/api';
-import GlassCard from '@/components/ui/GlassCard';
-import { useUserStore } from '@/store/useUserStore';
 import { useTranslation } from '@/hooks/useTranslation';
-import { newsData } from '@/data/mockData';
-import { localeTag } from '@/lib/format';
+import OnThisDay from '@/components/news/OnThisDay';
+import TelegramFeed from '@/components/news/TelegramFeed';
+import NewsCard, { categoryLabel } from '@/components/news/NewsCard';
 
-const SPACE_FACTS = [
-  'A day on Venus is longer than its year.',
-  'Neutron stars can spin 600 times per second.',
-  'The Milky Way galaxy is about 100,000 light-years wide.',
-  'One million Earths could fit inside the Sun.',
-  'The footprints left on the Moon will last millions of years.',
-  'Space is completely silent — there is no medium for sound to travel.',
-  'The largest known star (UY Scuti) is 1,700 times wider than the Sun.',
-  'Olympus Mons on Mars is the tallest volcano in the solar system at 22 km.',
-  'Light from the Sun takes 8 minutes and 20 seconds to reach Earth.',
-  'Saturn would float in water — it is less dense than water.',
-];
-
-const CATEGORY_COLORS = {
-  discovery:   { text: 'text-yellow-400',  bg: 'bg-yellow-400/10',  border: 'border-yellow-400/30' },
-  technology:  { text: 'text-neon-blue',   bg: 'bg-neon-blue/10',   border: 'border-neon-blue/30' },
-  exploration: { text: 'text-green-400',   bg: 'bg-green-400/10',   border: 'border-green-400/30' },
-  local:       { text: 'text-violet-light', bg: 'bg-violet/10',      border: 'border-violet/30' },
-  science:     { text: 'text-pink-400',    bg: 'bg-pink-400/10',    border: 'border-pink-400/30' },
-  mission:     { text: 'text-orange-400',  bg: 'bg-orange-400/10',  border: 'border-orange-400/30' },
-};
-
-function NewsCard({ article, index }) {
-  const { language } = useUserStore();
-  const langSuffix = language === 'UZB' ? 'uz' : language === 'RUS' ? 'ru' : 'en';
-
-  const color = CATEGORY_COLORS[article.category] || CATEGORY_COLORS.science;
-  const date = new Date(article.published_at || article.date).toLocaleDateString(localeTag(language), {
-    month: 'short', day: 'numeric', year: 'numeric',
-  });
-
-  const title = article[`title_${langSuffix}`] || article.title || article.title_en;
-  const summary = article[`summary_${langSuffix}`] || article.summary || article.summary_en;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 24 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ delay: index * 0.06, duration: 0.5 }}
-      layout
-    >
-      <GlassCard delay={0} className="h-full flex flex-col group cursor-default">
-        {/* Image */}
-        <div className="relative h-44 -mx-7 -mt-7 mb-6 rounded-t-[1.4rem] overflow-hidden bg-white/[0.03]">
-          {article.image_url ? (
-            <img
-              src={article.image_url}
-              alt={article.title_en}
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <Newspaper className="w-12 h-12 text-white/5" />
-            </div>
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
-          <div className="absolute top-4 left-4">
-            <span className={`px-3 py-1 rounded-full text-[10px] font-[800] uppercase tracking-widest border ${color.text} ${color.bg} ${color.border}`}>
-              {article.category}
-            </span>
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="flex flex-col flex-1">
-          <div className="flex items-center gap-2 text-[11px] text-white/30 font-[600] mb-3">
-            <Calendar className="w-3.5 h-3.5" />
-            {date}
-            {article.source && <span className="ml-auto text-white/20">{article.source}</span>}
-          </div>
-
-          <h3 className="text-lg font-[800] text-white leading-snug mb-3 group-hover:text-violet-light transition-colors line-clamp-2">
-            {title}
-          </h3>
-          <p className="text-white/40 text-[13px] leading-relaxed flex-1 line-clamp-3">
-            {summary}
-          </p>
-
-          {article.source_url && (
-            <a
-              href={article.source_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-6 pt-5 border-t border-white/5 flex items-center gap-2 text-[11px] font-[800] uppercase tracking-wider text-white/30 hover:text-violet-light transition-colors"
-            >
-              Read Full Story <ExternalLink className="w-3.5 h-3.5" />
-            </a>
-          )}
-        </div>
-      </GlassCard>
-    </motion.div>
-  );
-}
-
+/**
+ * The News page, rebuilt around the one thing that makes it worth opening
+ * twice: what happened in space on today's date.
+ *
+ * Three things changed and each is a rule as much as a layout decision.
+ *
+ * **It no longer invents news.** When `/news/` failed — or simply had nothing
+ * in it — this page rendered seven hard-coded "articles" from
+ * `src/data/mockData.js`, drawn in exactly the same cards as real ones,
+ * complete with stock photographs pulled from `picsum.photos` in the reader's
+ * own browser. That is the Live page's bug, in a second place: invented
+ * content presented as reporting, plus a third-party host called directly,
+ * which is what commit `b8d1ac2` exists to stop. It says it has nothing now.
+ *
+ * **Nothing on it is hard-coded English any more.** The category chips printed
+ * the database value ("exploration") in every language, "Read Full Story" was
+ * a string in the JSX, and the Daily Fact panel held ten English sentences
+ * that no Uzbek or Russian reader could read. "On this day" replaces that
+ * panel with something that changes daily, is sourced, and exists in all three
+ * languages.
+ *
+ * **The anniversaries and the Telegram channel both come from our own API.**
+ * The browser makes no request to any third-party host — `apps.news` fetches
+ * the channel server-side and hands over plain text.
+ */
 export default function NewsView() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [articles, setArticles] = useState([]);
-  const [activeCategory, setActiveCategory] = useState('All');
+  const [activeCategory, setActiveCategory] = useState('all');
   const [loading, setLoading] = useState(true);
-  const [fact, setFact] = useState(() => SPACE_FACTS[Math.floor(Math.random() * SPACE_FACTS.length)]);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
+    let active = true;
     api.get('/news/')
       .then(({ data }) => {
-        const list = Array.isArray(data) ? data : data.results || [];
-        setArticles(list.length > 0 ? list : newsData);
+        if (!active) return;
+        setArticles(Array.isArray(data) ? data : data.results || []);
       })
-      .catch(() => {
-        setArticles(newsData);
+      .catch((error) => {
+        if (!active) return;
+        // Never swallowed, and never replaced with something that looks like
+        // news — rules C-10 and "the page says what it does not know".
+        console.warn('Could not load the news articles', error);
+        setFailed(true);
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => { active = false; };
   }, []);
 
-  const categories = ['All', ...Array.from(new Set(articles.map((a) => a.category)))];
-  const filtered = activeCategory === 'All' ? articles : articles.filter((a) => a.category === activeCategory);
+  const categories = useMemo(
+    () => ['all', ...Array.from(new Set(articles.map((a) => a.category))).sort()],
+    [articles],
+  );
+  const filtered = activeCategory === 'all'
+    ? articles
+    : articles.filter((a) => a.category === activeCategory);
 
   return (
-    <div className="relative min-h-screen pt-32 pb-24 px-4 overflow-hidden">
-      <div className="fixed top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full blur-[140px] pointer-events-none z-0"
-        style={{ background: 'radial-gradient(circle, rgba(0,229,255,0.03) 0%, transparent 70%)' }} />
-      <div className="fixed bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full blur-[140px] pointer-events-none z-0"
-        style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.03) 0%, transparent 70%)' }} />
+    <div className="relative min-h-screen overflow-hidden px-4 pb-24 pt-28 sm:pt-32">
+      <div
+        aria-hidden
+        className="pointer-events-none fixed left-[-10%] top-[-10%] z-0 h-[50%] w-[50%] rounded-full blur-[140px]"
+        style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.05) 0%, transparent 70%)' }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none fixed bottom-[-10%] right-[-10%] z-0 h-[50%] w-[50%] rounded-full blur-[140px]"
+        style={{ background: 'radial-gradient(circle, rgba(0,229,255,0.04) 0%, transparent 70%)' }}
+      />
 
-      <div className="max-w-7xl mx-auto relative z-10">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8 mb-16">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <p className="text-[11px] font-[800] tracking-[0.3em] uppercase text-neon-blue mb-3">{t('news', 'dispatch')}</p>
-            <h1 className="text-[clamp(36px,5vw,56px)] font-[900] tracking-tight text-white leading-[1]">
-              {t('news', 'title')} <span className="text-glow-purple text-violet">{t('news', 'titleHighlight')}</span>
-            </h1>
-            <p className="text-white/40 mt-4 max-w-md font-[500]">
-              {t('news', 'subtitle')}
-            </p>
-          </motion.div>
+      <div className="relative z-10 mx-auto max-w-7xl">
+        <motion.header
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-10"
+        >
+          <p className="mb-3 text-[11px] font-[800] uppercase tracking-[0.3em] text-neon-blue">
+            {t('news', 'dispatch')}
+          </p>
+          <h1 className="text-[clamp(34px,5vw,56px)] font-[900] leading-[1] tracking-tight text-white">
+            {t('news', 'title')}{' '}
+            <span className="text-glow-purple text-violet">{t('news', 'titleHighlight')}</span>
+          </h1>
+          <p className="mt-4 max-w-xl font-[500] text-white/40">{t('news', 'subtitle')}</p>
+        </motion.header>
 
-          {/* Daily Fact */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="max-w-sm p-5 rounded-2xl bg-white/[0.02] border border-white/5 border-l-2 border-l-neon-blue/50"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-[10px] font-[800] uppercase tracking-[0.2em] text-neon-blue">{t('news', 'dailyFact')}</p>
-              <button
-                onClick={() => setFact(SPACE_FACTS[Math.floor(Math.random() * SPACE_FACTS.length)])}
-                className="text-white/20 hover:text-white/60 transition-colors"
+        <div className="mb-12">
+          <OnThisDay />
+        </div>
+
+        {/* `items-start` matters: without it both columns stretch to the taller
+            one, and the Telegram feed is much the taller of the two. */}
+        <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-10">
+          <section aria-labelledby="news-feed-heading">
+            <div className="mb-6 flex flex-wrap items-center gap-3">
+              <h2
+                id="news-feed-heading"
+                className="mr-auto text-[11px] font-[800] uppercase tracking-[0.25em] text-white/40"
               >
-                <RefreshCw className="w-4 h-4" />
-              </button>
+                {t('news', 'feedTitle')}
+              </h2>
             </div>
-            <p className="text-white/60 text-[13px] leading-relaxed">{fact}</p>
-          </motion.div>
-        </div>
 
-        {/* Category filters */}
-        <div className="flex flex-wrap gap-2 mb-12">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={`px-5 py-2 rounded-full text-[10px] font-[800] uppercase tracking-widest transition-all ${
-                activeCategory === cat
-                  ? 'bg-violet text-white shadow-lg shadow-violet/20'
-                  : 'bg-white/[0.03] border border-white/5 text-white/40 hover:text-white hover:bg-white/[0.08]'
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
+            {categories.length > 1 && (
+              <div className="mb-8 flex flex-wrap gap-2">
+                {categories.map((category) => (
+                  <button
+                    key={category}
+                    type="button"
+                    onClick={() => setActiveCategory(category)}
+                    aria-pressed={activeCategory === category}
+                    className={`rounded-full px-4 py-2 text-[10px] font-[800] uppercase tracking-widest transition-all ${
+                      activeCategory === category
+                        ? 'bg-violet text-white shadow-lg shadow-violet/20'
+                        : 'border border-white/5 bg-white/[0.03] text-white/40 hover:bg-white/[0.08] hover:text-white'
+                    }`}
+                  >
+                    {category === 'all' ? t('news', 'all') : categoryLabel(t, category)}
+                  </button>
+                ))}
+              </div>
+            )}
 
-        {/* Grid */}
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-32 gap-4">
-            <Loader className="w-8 h-8 text-violet-light animate-spin" />
-            <p className="text-[10px] font-[800] uppercase tracking-widest text-white/20">{t('news', 'loadingDispatches')}</p>
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-32 border border-dashed border-white/5 rounded-3xl">
-            <p className="text-white/20 font-bold italic">{t('news', 'noArticles')}</p>
-          </div>
-        ) : (
-          <motion.div layout className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-            <AnimatePresence>
-              {filtered.map((article, i) => (
-                <NewsCard key={article.id} article={article} index={i} />
-              ))}
-            </AnimatePresence>
-          </motion.div>
-        )}
+            {loading ? (
+              <div className="flex flex-col items-center justify-center gap-4 py-24">
+                <Loader className="h-7 w-7 animate-spin text-violet-light" />
+                <p className="text-[10px] font-[800] uppercase tracking-widest text-white/20">
+                  {t('news', 'loadingDispatches')}
+                </p>
+              </div>
+            ) : failed ? (
+              <div className="flex items-start gap-3 rounded-2xl border border-amber-400/20 bg-amber-400/[0.06] p-5">
+                <AlertTriangle className="mt-[2px] h-4 w-4 shrink-0 text-amber-300" />
+                <p className="text-[13px] leading-relaxed text-white/55">{t('news', 'feedFailed')}</p>
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="rounded-3xl border border-dashed border-white/[0.08] py-20 text-center">
+                <Newspaper className="mx-auto mb-4 h-8 w-8 text-white/10" />
+                <p className="font-[700] text-white/40">
+                  {articles.length === 0 ? t('news', 'noArticlesYet') : t('news', 'noArticles')}
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                {filtered.map((article, i) => (
+                  <NewsCard key={article.id} article={article} index={i} />
+                ))}
+              </div>
+            )}
+          </section>
+
+          <aside className="lg:sticky lg:top-28 lg:self-start">
+            <TelegramFeed />
+          </aside>
+        </div>
       </div>
     </div>
   );
