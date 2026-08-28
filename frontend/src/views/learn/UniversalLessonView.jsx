@@ -79,7 +79,11 @@ export default function UniversalLessonView() {
     if (url.includes('youtube.com/watch?v=')) {
       url = url.replace('watch?v=', 'embed/');
     }
-    finalVideoUrl = `${url}${url.includes('?') ? '&' : '?'}autoplay=1&mute=0&rel=0`;
+    // No autoplay. A lesson that starts talking the moment it opens is wrong
+    // in a classroom of thirty, and browsers refuse an unmuted autoplay
+    // anyway — so `autoplay=1&mute=0` mostly bought a video that did not
+    // play, and occasionally one that did, loudly. The child presses play.
+    finalVideoUrl = `${url}${url.includes('?') ? '&' : '?'}rel=0`;
   }
 
   if (!lesson) {
