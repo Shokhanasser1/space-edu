@@ -35,10 +35,18 @@ describe('every module the Laboratory contains can be opened', () => {
   // lines of dead code. It was never added to `modules`, so there was no way
   // in, while `lab.rocketEngineering` sat translated in all three locale
   // files. Nothing failed; it simply was not there.
-  const MODULE_COMPONENT = /^const\s+(\w+(?:Lab|Simulator|Module))\s*=\s*\(/gm;
+  //
+  // A module is a top-level component whose name ends in Lab, Simulator or
+  // Module — declared as `const X = (` inside this file, as the first version
+  // did, or exported from `lab/` as `export const X = (` or `export function
+  // X(`, as they are since the split on 28 Aug 2026. The first regex counted
+  // only the inline form, so moving the last three modules out left it with
+  // one and failed for the wrong reason.
+  const MODULE_COMPONENT =
+    /^(?:export\s+)?(?:const\s+(\w+(?:Lab|Simulator|Module))\s*=\s*\(|function\s+(\w+(?:Lab|Simulator|Module))\s*\()/gm;
 
   const declared = Object.entries(LAB_SOURCES).flatMap(([path, source]) =>
-    [...source.matchAll(MODULE_COMPONENT)].map((m) => ({ name: m[1], path })),
+    [...source.matchAll(MODULE_COMPONENT)].map((m) => ({ name: m[1] || m[2], path })),
   );
 
   const allSource = Object.values(LAB_SOURCES).join('\n');
