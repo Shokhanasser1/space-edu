@@ -1,6 +1,6 @@
 {
   "nav": {
-    "brand": "Space edu",
+    "brand": "UZ COSMOS",
     "home": "Home",
     "learn": "Learn",
     "explore": "Explore",
@@ -523,6 +523,8 @@
     "confirmPassword": "Confirm Password",
     "rememberMe": "Remember Me",
     "orContinueWith": "Or continue with",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
     "noAccount": "Don't have an account?",
     "haveAccount": "Already have an account?",
     "resetPassword": "Reset Password",
@@ -1692,6 +1694,19 @@
       "diphda": "Diphda",
       "eltanin": "Eltanin"
     }
+  },
+  "serverErrors": {
+    "emailTaken": "This e-mail address is already registered. Sign in instead, or reset your password.",
+    "codeInvalid": "That code is wrong or has expired. Ask for a new one.",
+    "codeFormat": "The code is six digits.",
+    "emailAndCodeRequired": "Enter both the e-mail address and the code.",
+    "alreadyConfirmed": "This address is already confirmed.",
+    "noEmailToConfirm": "This account has no e-mail address to confirm.",
+    "noEmailChange": "No address change was asked for.",
+    "passwordCommon": "That password is too common — pick something harder to guess.",
+    "passwordSimilar": "That password is too similar to your name or e-mail address.",
+    "noPasswordSet": "This account has no password yet. Set one first, using a code sent to your e-mail.",
+    "unknown": "Something went wrong. Please try again."
   },
     "dates": {
       "monthsLong": [

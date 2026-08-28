@@ -87,3 +87,63 @@ describe('with a client id', () => {
     expect(screen.getByText(/continue with|davom|продолжить/i)).toBeInTheDocument();
   });
 });
+
+import { waitFor } from '@testing-library/react';
+
+describe('with a client id', () => {
+  beforeEach(async () => {
+    vi.stubEnv('VITE_GOOGLE_CLIENT_ID', 'test-client-id.apps.googleusercontent.com');
+    vi.doMock('@/lib/googleAuth', () => ({
+      isGoogleEnabled: () => true,
+      renderGoogleButton: vi.fn().mockResolvedValue(() => {}),
+    }));
+    await load();
+  });
+
+  afterEach(() => {
+    vi.doUnmock('@/lib/googleAuth');
+    vi.unstubAllEnvs();
+  });
+
+  // Found in a browser, 28 Aug 2026: `onDone` is an inline arrow in both
+  // callers and `t` is a new function every render, and both were in the
+  // effect's dependency list — so every keystroke in the form beside the
+  // button tore Google's iframe down and rendered it again, one request to
+  // accounts.google.com per character typed.
+  it('renders Google\'s button once, not once per keystroke in the form beside it', async () => {
+    const { renderGoogleButton } = await import('@/lib/googleAuth');
+    const view = (
+      <MemoryRouter>
+        <GoogleSignInButton onDone={() => {}} />
+      </MemoryRouter>
+    );
+    const { rerender } = render(view);
+    // What typing does: the parent re-renders with a fresh inline callback.
+    rerender(
+      <MemoryRouter>
+        <GoogleSignInButton onDone={() => {}} />
+      </MemoryRouter>,
+    );
+    rerender(
+      <MemoryRouter>
+        <GoogleSignInButton onDone={() => {}} />
+      </MemoryRouter>,
+    );
+    await waitFor(() => expect(renderGoogleButton).toHaveBeenCalled());
+    expect(renderGoogleButton).toHaveBeenCalledTimes(1);
+  });
+
+  it('asks Google for the button in the site\'s language', async () => {
+    const { renderGoogleButton } = await import('@/lib/googleAuth');
+    const { useUserStore } = await import('@/store/useUserStore');
+    useUserStore.setState({ language: 'RUS' });
+    render(
+      <MemoryRouter>
+        <GoogleSignInButton />
+      </MemoryRouter>,
+    );
+    await waitFor(() => expect(renderGoogleButton).toHaveBeenCalled());
+    expect(renderGoogleButton.mock.calls[0][1]).toMatchObject({ locale: 'ru' });
+    useUserStore.setState({ language: 'ENG' });
+  });
+});

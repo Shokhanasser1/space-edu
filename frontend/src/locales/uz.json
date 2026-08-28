@@ -1,6 +1,6 @@
 {
   "nav": {
-    "brand": "Space edu",
+    "brand": "UZ COSMOS",
     "home": "Bosh sahifa",
     "learn": "O'rganish",
     "explore": "Kashf etish",
@@ -523,6 +523,8 @@
     "confirmPassword": "Parolni tasdiqlang",
     "rememberMe": "Meni eslab qoling",
     "orContinueWith": "Yoki davom eting",
+    "showPassword": "Parolni ko'rsatish",
+    "hidePassword": "Parolni yashirish",
     "noAccount": "Hisobingiz yo'qmi?",
     "haveAccount": "Hisobingiz bormi?",
     "resetPassword": "Parolni tiklash",
@@ -1692,6 +1694,19 @@
       "diphda": "Diphda",
       "eltanin": "Eltanin"
     }
+  },
+  "serverErrors": {
+    "emailTaken": "Bu elektron pochta allaqachon ro'yxatdan o'tgan. Kiring yoki parolni tiklang.",
+    "codeInvalid": "Kod noto'g'ri yoki eskirgan. Yangisini so'rang.",
+    "codeFormat": "Kod olti raqamdan iborat.",
+    "emailAndCodeRequired": "Elektron pochtani ham, kodni ham kiriting.",
+    "alreadyConfirmed": "Bu manzil allaqachon tasdiqlangan.",
+    "noEmailToConfirm": "Bu hisobda tasdiqlash uchun elektron pochta yo'q.",
+    "noEmailChange": "Manzilni o'zgartirish so'ralmagan.",
+    "passwordCommon": "Bu parol juda oddiy — topish qiyinroq bo'lganini o'ylab toping.",
+    "passwordSimilar": "Parol ismingiz yoki elektron pochtangizga juda o'xshash.",
+    "noPasswordSet": "Bu hisobda hali parol yo'q. Avval xatdagi kod orqali parol qo'ying.",
+    "unknown": "Nimadir xato ketdi. Yana urinib ko'ring."
   },
     "dates": {
       "monthsLong": [

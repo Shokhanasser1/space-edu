@@ -74,7 +74,7 @@ export function loadGoogleIdentity() {
  * for it, and a look-alike that posts to the same endpoint is what a phishing
  * page looks like. Returns a cleanup function.
  */
-export async function renderGoogleButton(element, { onCredential, onError, text = 'signin_with' }) {
+export async function renderGoogleButton(element, { onCredential, onError, text = 'signin_with', locale }) {
   const google = await loadGoogleIdentity();
 
   google.accounts.id.initialize({
@@ -96,6 +96,9 @@ export async function renderGoogleButton(element, { onCredential, onError, text 
     size: 'large',
     shape: 'pill',
     text,
+    // Without this Google picks the wording's language by where the browser
+    // seems to be, so an English or Russian page carried an Uzbek button.
+    locale,
     logo_alignment: 'left',
     width: element.offsetWidth || 320,
   });

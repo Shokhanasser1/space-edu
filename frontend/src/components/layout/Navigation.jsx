@@ -233,7 +233,7 @@ export default function Navigation() {
               background: 'linear-gradient(135deg,#ddd6fe 0%,#a78bfa 55%,#8b5cf6 100%)',
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
             }}>
-            Space edu
+            {t('nav', 'brand')}
           </span>
         </Link>
 
@@ -329,7 +329,7 @@ export default function Navigation() {
               background: 'linear-gradient(135deg,#ddd6fe,#a78bfa)', WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent', backgroundClip: 'text',
             }}>
-            Space edu
+            {t('nav', 'brand')}
           </span>
         </Link>
 

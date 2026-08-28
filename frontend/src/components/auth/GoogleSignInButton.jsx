@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import api from '@/lib/api';
 import { isGoogleEnabled, renderGoogleButton } from '@/lib/googleAuth';
+import { serverDetail } from '@/lib/serverErrors';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useTranslation } from '@/hooks/useTranslation';
 
@@ -13,13 +14,30 @@ import { useTranslation } from '@/hooks/useTranslation';
  *
  * `text` is Google's own wording key: 'signin_with' on the sign-in screen,
  * 'signup_with' on registration.
+ *
+ * The button is rendered once per language, not once per render. `onDone`
+ * is an inline arrow in both callers and `t` is a new function every
+ * render, and with both in the effect's dependency list the effect re-ran
+ * on every keystroke in the form beside it — tearing down and re-rendering
+ * Google's iframe, one request to accounts.google.com per character typed,
+ * and a console full of "initialize() is called multiple times". Seen in a
+ * browser on 28 Aug 2026. Both now live in refs the effect reads through.
  */
+const GOOGLE_LOCALE = { ENG: 'en', RUS: 'ru', UZB: 'uz' };
+
 export default function GoogleSignInButton({ text = 'signin_with', onDone }) {
   const container = useRef(null);
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const login = useAuthStore((s) => s.login);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+
+  const onDoneRef = useRef(onDone);
+  const tRef = useRef(t);
+  useEffect(() => {
+    onDoneRef.current = onDone;
+    tRef.current = t;
+  });
 
   useEffect(() => {
     if (!isGoogleEnabled() || !container.current) return undefined;
@@ -33,12 +51,13 @@ export default function GoogleSignInButton({ text = 'signin_with', onDone }) {
       try {
         const { data } = await api.post('/auth/google/', { credential });
         login(data.user, data.access, data.refresh);
-        onDone?.(data);
+        onDoneRef.current?.(data);
       } catch (err) {
-        const code = err.response?.data?.code;
-        if (code === 'google_unconfigured') setError(t('loginPage', 'googleUnavailable'));
-        else if (code === 'google_email_unverified') setError(t('loginPage', 'googleEmailUnverified'));
-        else setError(err.response?.data?.detail || t('loginPage', 'googleFailed'));
+        // `google_unconfigured` and `google_email_unverified` are codes the
+        // server promises; lib/serverErrors.js maps them, and says any
+        // `detail` in the reader's language rather than in English.
+        const say = tRef.current;
+        setError(serverDetail(say, err, say('loginPage', 'googleFailed')));
       } finally {
         if (!cancelled) setBusy(false);
       }
@@ -46,8 +65,9 @@ export default function GoogleSignInButton({ text = 'signin_with', onDone }) {
 
     renderGoogleButton(container.current, {
       text,
+      locale: GOOGLE_LOCALE[language],
       onCredential: send,
-      onError: () => setError(t('loginPage', 'googleFailed')),
+      onError: () => setError(tRef.current('loginPage', 'googleFailed')),
     })
       .then((teardown) => {
         if (cancelled) teardown?.();
@@ -57,14 +77,14 @@ export default function GoogleSignInButton({ text = 'signin_with', onDone }) {
         // The script did not load — a blocked host, or no connection. The
         // password form is still there, so this says so quietly rather than
         // taking the screen down with it.
-        if (!cancelled) setError(t('loginPage', 'googleUnavailable'));
+        if (!cancelled) setError(tRef.current('loginPage', 'googleUnavailable'));
       });
 
     return () => {
       cancelled = true;
       cleanup?.();
     };
-  }, [text, login, onDone, t]);
+  }, [text, login, language]);
 
   if (!isGoogleEnabled()) return null;
 

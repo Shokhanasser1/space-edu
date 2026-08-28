@@ -176,3 +176,57 @@ describe('the request', () => {
     expect(api.post).not.toHaveBeenCalled();
   });
 });
+
+describe('what the server says, to a Russian reader', () => {
+  // Found in a browser, 28 Aug 2026: "This email is already registered." on a
+  // page where every other word was Russian. The sentence is now looked up in
+  // lib/serverErrors.js and said in the reader's language.
+  it('is said in Russian against the field it is about', async () => {
+    const { useUserStore } = await import('@/store/useUserStore');
+    useUserStore.setState({ language: 'RUS' });
+    api.post.mockRejectedValue({
+      response: {
+        status: 400,
+        headers: {},
+        data: { email: ['This email is already registered.'] },
+      },
+    });
+
+    await fillIn({ password: 'Str0ngPassw0rd!x', password2: 'Str0ngPassw0rd!x' });
+
+    await waitFor(() => {
+      expect(screen.getByText(/уже зарегистрирован/i)).toBeInTheDocument();
+    });
+    expect(screen.queryByText(/already registered/i)).not.toBeInTheDocument();
+    useUserStore.setState({ language: 'ENG' });
+  });
+
+  it('never puts an unknown English sentence in the general box', async () => {
+    const { useUserStore } = await import('@/store/useUserStore');
+    useUserStore.setState({ language: 'RUS' });
+    api.post.mockRejectedValue({
+      response: { status: 400, headers: {}, data: { detail: 'A sentence nobody translated.' } },
+    });
+
+    await fillIn({ password: 'Str0ngPassw0rd!x', password2: 'Str0ngPassw0rd!x' });
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+    });
+    expect(screen.queryByText(/nobody translated/)).not.toBeInTheDocument();
+    useUserStore.setState({ language: 'ENG' });
+  });
+});
+
+describe('the caret', () => {
+  // Found in a browser, 28 Aug 2026: after "Continue" the focus was on <body>.
+  // With `AnimatePresence mode="wait"` the second step is mounted only after
+  // the first has slid out, so the focus effect ran against nothing.
+  it('lands on the e-mail box when the second step opens', async () => {
+    renderView();
+    await fillStepOne();
+    await waitFor(() => {
+      expect(document.activeElement?.id).toBe('reg-email');
+    });
+  });
+});

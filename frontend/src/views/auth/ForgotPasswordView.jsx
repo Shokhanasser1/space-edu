@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import { Eye, EyeOff, KeyRound, ShieldCheck } from 'lucide-react';
 import api from '@/lib/api';
 import { retryAfterMinutes } from '@/lib/retryAfter';
+import { serverDetail, serverFieldErrors } from '@/lib/serverErrors';
 import { useTranslation } from '@/hooks/useTranslation';
 import GlassCard from '@/components/ui/GlassCard';
 
@@ -36,9 +37,11 @@ export default function ForgotPasswordView() {
     if (minutes !== null) {
       return t('forgotPassword', 'tooManyAttempts').replace('{{minutes}}', minutes);
     }
-    const data = err.response?.data;
-    if (data?.password) return [].concat(data.password)[0];
-    return data?.detail || fallback;
+    // In the reader's language, or the fallback — never the server's English
+    // (see lib/serverErrors.js). A complaint about the password comes first:
+    // it is the one thing on this screen they can fix by retyping.
+    const { password } = serverFieldErrors(t, err, ['password']);
+    return password || serverDetail(t, err, fallback);
   };
 
   const askForCode = async (e) => {
@@ -109,10 +112,11 @@ export default function ForgotPasswordView() {
           {step === 'ask' ? (
             <form onSubmit={askForCode} className="flex flex-col gap-6">
               <div className="flex flex-col gap-2.5">
-                <label className="text-[10px] font-[800] text-white/30 uppercase tracking-[0.2em] ml-1">
+                <label htmlFor="reset-email" className="text-[10px] font-[800] text-white/30 uppercase tracking-[0.2em] ml-1">
                   {t('forgotPassword', 'emailLabel')}
                 </label>
                 <input
+                  id="reset-email"
                   name="email"
                   type="email"
                   autoComplete="email"
@@ -132,10 +136,11 @@ export default function ForgotPasswordView() {
               {notice && <Banner tone="good">{notice}</Banner>}
 
               <div className="flex flex-col gap-2.5">
-                <label className="text-[10px] font-[800] text-white/30 uppercase tracking-[0.2em] ml-1">
+                <label htmlFor="reset-code" className="text-[10px] font-[800] text-white/30 uppercase tracking-[0.2em] ml-1">
                   {t('forgotPassword', 'codeLabel')}
                 </label>
                 <input
+                  id="reset-code"
                   name="code"
                   inputMode="numeric"
                   autoComplete="one-time-code"
@@ -148,11 +153,12 @@ export default function ForgotPasswordView() {
               </div>
 
               <div className="flex flex-col gap-2.5">
-                <label className="text-[10px] font-[800] text-white/30 uppercase tracking-[0.2em] ml-1">
+                <label htmlFor="reset-password" className="text-[10px] font-[800] text-white/30 uppercase tracking-[0.2em] ml-1">
                   {t('forgotPassword', 'newPasswordLabel')}
                 </label>
                 <div className="relative">
                   <input
+                    id="reset-password"
                     name="password"
                     type={showPass ? 'text' : 'password'}
                     autoComplete="new-password"
@@ -164,6 +170,8 @@ export default function ForgotPasswordView() {
                   <button
                     type="button"
                     onClick={() => setShowPass((v) => !v)}
+                    aria-label={t('auth', showPass ? 'hidePassword' : 'showPassword')}
+                    aria-pressed={showPass}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 hover:text-white/60 transition-colors"
                   >
                     {showPass ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
@@ -172,10 +180,11 @@ export default function ForgotPasswordView() {
               </div>
 
               <div className="flex flex-col gap-2.5">
-                <label className="text-[10px] font-[800] text-white/30 uppercase tracking-[0.2em] ml-1">
+                <label htmlFor="reset-password2" className="text-[10px] font-[800] text-white/30 uppercase tracking-[0.2em] ml-1">
                   {t('forgotPassword', 'confirmPasswordLabel')}
                 </label>
                 <input
+                  id="reset-password2"
                   name="password2"
                   type={showPass ? 'text' : 'password'}
                   autoComplete="new-password"

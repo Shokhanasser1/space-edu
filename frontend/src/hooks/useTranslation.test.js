@@ -46,3 +46,27 @@ describe('a genuinely missing translation', () => {
     expect(t('ENG')('noSuchSection', 'key')).toBe('noSuchSection.key');
   });
 });
+
+describe('a placeholder in the sentence', () => {
+  // Found in a browser, 28 Aug 2026: CreativityTopicView passed `{ name }` and
+  // a child read "Изучите инженерные и дизайнерские принципы {name}." — the
+  // third argument was accepted and ignored.
+  it('is filled from the third argument, in every language', () => {
+    for (const lang of ['ENG', 'RUS', 'UZB']) {
+      const said = t(lang)('learnViews', 'lessonDescription', { name: 'Sputnik' });
+      expect(said).toContain('Sputnik');
+      expect(said).not.toContain('{name}');
+    }
+  });
+
+  it('accepts the double-brace form some strings use', () => {
+    const said = t('RUS')('game', 'shopDesc', { skin: 'Comet' });
+    expect(said).toContain('Comet');
+    expect(said).not.toMatch(/\{\{/);
+  });
+
+  it('leaves a placeholder alone when nothing was given for it', () => {
+    expect(t('ENG')('learnViews', 'lessonDescription')).toContain('{name}');
+    expect(t('ENG')('learnViews', 'lessonDescription', {})).toContain('{name}');
+  });
+});

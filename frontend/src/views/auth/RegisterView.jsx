@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { ArrowLeft, ArrowRight, Eye, EyeOff, Rocket } from 'lucide-react';
 import api from '@/lib/api';
 import { retryAfterMinutes } from '@/lib/retryAfter';
+import { serverDetail, serverFieldErrors } from '@/lib/serverErrors';
 
 import { useAuthStore } from '@/store/useAuthStore';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -33,8 +34,6 @@ const EMPTY_FORM = {
   first_name: '', last_name: '', email: '',
   date_of_birth: '', password: '', password2: '',
 };
-
-const firstOf = (value) => (Array.isArray(value) ? value[0] : value);
 
 /**
  * Registration in two steps: who you are, then how you sign in.
@@ -71,12 +70,31 @@ export default function RegisterView() {
   // After a step change (or a server error that sends us back), put the caret
   // where the reader needs it: the first field with an error, else the first
   // field of the step.
-  useEffect(() => {
+  //
+  // Called twice on purpose. The effect covers the case where the step's
+  // boxes are already in the DOM; `onAnimationComplete` on each step covers
+  // the one where they are not — with `AnimatePresence mode="wait"` the new
+  // step is only mounted once the old one has slid out, so the effect alone
+  // found nothing to focus and the caret stayed on <body>. Seen in a
+  // browser on 28 Aug 2026; jsdom mounts at once, so no test had noticed.
+  const focusStep = useCallback(() => {
     const wanted = focusRequest.current || STEP_FIELDS[step][0];
-    focusRequest.current = null;
     const el = document.getElementById(`reg-${wanted}`);
-    if (el) el.focus({ preventScroll: true });
+    if (!el) return;
+    focusRequest.current = null;
+    const active = document.activeElement;
+    if (active === el) return;
+    // Never take the caret from a reader who has already placed it: by the
+    // time a 0.3 s slide reports it is done, a quick typist is mid-word in
+    // the password box, and moving them back to e-mail would send the rest
+    // of the word there.
+    if (active && active !== document.body && el.form?.contains(active)) return;
+    el.focus({ preventScroll: true });
   }, [step]);
+
+  useEffect(() => {
+    focusStep();
+  }, [focusStep]);
 
   const translated = (keyed) => Object.fromEntries(
     Object.entries(keyed).map(([field, key]) => [field, t('registerPage', key)]),
@@ -142,17 +160,17 @@ export default function RegisterView() {
         setErrors({ detail: t('registerPage', 'tooManyAttempts').replace('{{minutes}}', minutes) });
         return;
       }
-      const errorData = { ...(err.response?.data || {}) };
-      if (errorData.non_field_errors && !errorData.detail) {
-        errorData.detail = firstOf(errorData.non_field_errors);
-      }
-      const fieldErrors = Object.fromEntries(
-        Object.entries(errorData)
-          .filter(([field]) => field in STEP_OF_FIELD)
-          .map(([field, value]) => [field, firstOf(value)]),
-      );
-      const detail = errorData.detail
-        || (Object.keys(fieldErrors).length ? undefined : t('registerPage', 'regFailed'));
+      // The server's complaints, each in the reader's language where the
+      // sentence is known (lib/serverErrors.js): a field error against its
+      // field, a general one in the box below — translated or as the generic
+      // fallback, never as the server's English.
+      const data = err.response?.data;
+      const fieldErrors = serverFieldErrors(t, err, Object.keys(STEP_OF_FIELD));
+      const hasGeneral = Boolean(data) && typeof data === 'object'
+        && (data.detail !== undefined || data.non_field_errors !== undefined);
+      const detail = hasGeneral || !Object.keys(fieldErrors).length
+        ? serverDetail(t, err, t('registerPage', 'regFailed'))
+        : undefined;
       setErrors({ ...fieldErrors, detail });
 
       // A complaint about a step-one field has to be seen on step one.
@@ -190,7 +208,7 @@ export default function RegisterView() {
             <button
               type="button"
               onClick={() => setShowPass((v) => !v)}
-              aria-label={showPass ? 'hide password' : 'show password'}
+              aria-label={t('auth', showPass ? 'hidePassword' : 'showPassword')}
               aria-pressed={showPass}
               className="absolute right-1.5 top-1/2 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-xl transition-colors"
               style={{ color: 'var(--auth-text-faint)' }}
@@ -227,7 +245,7 @@ export default function RegisterView() {
         <div className="overflow-hidden -m-1 p-1">
           <AnimatePresence mode="wait" initial={false}>
             {step === 1 ? (
-              <motion.div key="step-1" {...slide} transition={{ duration: 0.3, ease: EASE }} className="flex flex-col gap-5">
+              <motion.div key="step-1" {...slide} transition={{ duration: 0.3, ease: EASE }} onAnimationComplete={focusStep} className="flex flex-col gap-5">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   {renderField('first_name')}
                   {renderField('last_name')}
@@ -246,7 +264,7 @@ export default function RegisterView() {
                 </div>
               </motion.div>
             ) : (
-              <motion.div key="step-2" {...slide} transition={{ duration: 0.3, ease: EASE }} className="flex flex-col gap-5">
+              <motion.div key="step-2" {...slide} transition={{ duration: 0.3, ease: EASE }} onAnimationComplete={focusStep} className="flex flex-col gap-5">
                 {renderField('email')}
                 {renderField('password')}
                 {renderField('password2')}

@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import { MailCheck, ShieldCheck } from 'lucide-react';
 import api from '@/lib/api';
 import { retryAfterMinutes } from '@/lib/retryAfter';
+import { serverDetail } from '@/lib/serverErrors';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useTranslation } from '@/hooks/useTranslation';
 import GlassCard from '@/components/ui/GlassCard';
@@ -36,7 +37,8 @@ export default function VerifyEmailView() {
     if (minutes !== null) {
       return t('verifyEmail', 'tooManyAttempts').replace('{{minutes}}', minutes);
     }
-    return err.response?.data?.detail || fallback;
+    // The reader's language or the fallback — never the server's English.
+    return serverDetail(t, err, fallback);
   };
 
   const resend = async () => {
@@ -96,10 +98,11 @@ export default function VerifyEmailView() {
         <GlassCard accent="#8b5cf6" className="!p-8 sm:!p-10 shadow-2xl">
           <form onSubmit={confirm} className="flex flex-col gap-6">
             <div className="flex flex-col gap-2.5">
-              <label className="text-[10px] font-[800] text-white/30 uppercase tracking-[0.2em] ml-1">
+              <label htmlFor="verify-code" className="text-[10px] font-[800] text-white/30 uppercase tracking-[0.2em] ml-1">
                 {t('verifyEmail', 'codeLabel')}
               </label>
               <input
+                id="verify-code"
                 inputMode="numeric"
                 autoComplete="one-time-code"
                 maxLength={6}
@@ -115,6 +118,7 @@ export default function VerifyEmailView() {
             )}
             {error && (
               <motion.div
+                role="alert"
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-400 text-xs font-[700] text-center"

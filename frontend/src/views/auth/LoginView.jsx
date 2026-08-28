@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import { Eye, EyeOff, Rocket } from 'lucide-react';
 import api from '@/lib/api';
 import { retryAfterMinutes } from '@/lib/retryAfter';
+import { serverDetail } from '@/lib/serverErrors';
 
 import { useAuthStore } from '@/store/useAuthStore';
 import { useGamificationStore } from '@/store/useGamificationStore';
@@ -56,7 +57,10 @@ export default function LoginView() {
       if (minutes !== null) {
         setError(t('loginPage', 'tooManyAttempts').replace('{{minutes}}', minutes));
       } else {
-        setError(err.response?.data?.detail || t('loginPage', 'invalidCreds'));
+        // The server's `detail` is English ("Invalid credentials.") and used to
+        // win over the translation whenever it was present — which is always.
+        // lib/serverErrors.js says it in the reader's language, or falls back.
+        setError(serverDetail(t, err, t('loginPage', 'invalidCreds')));
       }
     } finally {
       setLoading(false);
@@ -105,7 +109,7 @@ export default function LoginView() {
             <button
               type="button"
               onClick={() => setShowPass((v) => !v)}
-              aria-label={showPass ? 'hide password' : 'show password'}
+              aria-label={t('auth', showPass ? 'hidePassword' : 'showPassword')}
               aria-pressed={showPass}
               className="absolute right-1.5 top-1/2 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-xl transition-colors"
               style={{ color: 'var(--auth-text-faint)' }}

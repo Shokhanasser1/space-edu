@@ -32,7 +32,8 @@ function CreativityLessonCard({ lesson, index, color, onClick }) {
       onClick={onClick}
       style={{
         display: 'grid',
-        gridTemplateColumns: '1.2fr 1fr',
+        // No video, no black frame: the text takes the whole card.
+        gridTemplateColumns: lesson.videoUrl ? '1.2fr 1fr' : '1fr',
         gap: '32px',
         padding: '24px',
         borderRadius: '24px',
@@ -45,7 +46,10 @@ function CreativityLessonCard({ lesson, index, color, onClick }) {
         cursor: 'pointer',
       }}
     >
-      {/* Left: Video */}
+      {/* Left: Video — only when the lesson has one. Nine lessons had none,
+          and `<iframe src="">` drew nine empty black frames with a
+          full-screen button under each. Seen in a browser, 28 Aug 2026. */}
+      {lesson.videoUrl && (
       <div style={{
         position: 'relative',
         borderRadius: '16px',
@@ -66,6 +70,7 @@ function CreativityLessonCard({ lesson, index, color, onClick }) {
           style={{ position: 'absolute', top: 0, left: 0 }}
         ></iframe>
       </div>
+      )}
 
       {/* Right: Info */}
       <div style={{
@@ -127,6 +132,7 @@ function CreativityLessonCard({ lesson, index, color, onClick }) {
           {t('learnViews', 'lessonDescription', { name: lessonName(lesson, i18n.language) })}
         </p>
 
+        {lesson.videoUrl && (
         <button
           style={{
             alignSelf: 'flex-start',
@@ -155,6 +161,7 @@ function CreativityLessonCard({ lesson, index, color, onClick }) {
           <Play style={{ width: '18px', height: '18px', fill: 'currentColor' }} />
           {t('learnViews', 'fullScreenVideo')}
         </button>
+        )}
       </div>
     </motion.div>
   );

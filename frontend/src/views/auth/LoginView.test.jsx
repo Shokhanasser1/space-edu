@@ -71,8 +71,37 @@ describe('a rate-limited sign-in', () => {
     await signIn();
 
     await waitFor(() => {
-      expect(screen.getByText(/invalid credentials/i)).toBeInTheDocument();
+      // In the reader's words, not the server's: `loginPage.invalidCreds`.
+      expect(screen.getByRole('alert')).toHaveTextContent(/invalid email or password/i);
     });
     expect(screen.queryByText(/too many wrong passwords/i)).not.toBeInTheDocument();
+  });
+});
+
+describe('a wrong password, to a Russian reader', () => {
+  // Found in a browser, 28 Aug 2026: the server's English `detail` won over the
+  // translation whenever it was present — which is always — so a child on a
+  // Russian page read "Invalid credentials." under the form.
+  it('is reported in Russian, not in the server\'s English', async () => {
+    const { useUserStore } = await import('@/store/useUserStore');
+    useUserStore.setState({ language: 'RUS' });
+    api.post.mockRejectedValue({
+      response: { status: 401, headers: {}, data: { detail: 'Invalid credentials.' } },
+    });
+
+    render(
+      <MemoryRouter>
+        <LoginView />
+      </MemoryRouter>,
+    );
+    await userEvent.type(screen.getByRole('textbox'), 'pupil@school.uz');
+    await userEvent.type(document.querySelector('input[type="password"]'), 'whatever');
+    await userEvent.click(document.querySelector('form button[type="submit"]'));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(/пароль/i);
+    });
+    expect(screen.queryByText(/Invalid credentials/)).not.toBeInTheDocument();
+    useUserStore.setState({ language: 'ENG' });
   });
 });

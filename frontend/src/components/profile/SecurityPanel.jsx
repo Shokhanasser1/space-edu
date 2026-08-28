@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { KeyRound, Mail, MailCheck, MailWarning, X } from 'lucide-react';
 import api from '@/lib/api';
+import { serverDetail, translateServerMessage } from '@/lib/serverErrors';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useTranslation } from '@/hooks/useTranslation';
 
@@ -66,14 +67,22 @@ function Message({ tone, children }) {
   return <p className={`text-xs font-[700] ${colour}`}>{children}</p>;
 }
 
-/** Pull the first readable line out of a DRF error body. */
-function firstProblem(err, fallback) {
+/**
+ * The first readable line of a DRF error body, in the reader's language.
+ *
+ * The server writes English only; lib/serverErrors.js knows every sentence
+ * the accounts API sends and says it in the site's language. A general
+ * `detail` (or a `code`) that is not known becomes the fallback rather than
+ * an English sentence; a field's own sentence is shown as sent when unknown,
+ * because next to the box it is about it still points at the problem.
+ */
+function firstProblem(t, err, fallback) {
   const data = err.response?.data;
-  if (!data) return fallback;
-  if (data.detail) return data.detail;
+  if (!data || typeof data !== 'object') return fallback;
+  if (data.code || data.detail !== undefined) return serverDetail(t, err, fallback);
   for (const value of Object.values(data)) {
-    if (Array.isArray(value) && value.length) return value[0];
-    if (typeof value === 'string') return value;
+    const raw = Array.isArray(value) ? value[0] : value;
+    if (typeof raw === 'string') return translateServerMessage(t, raw) || raw;
   }
   return fallback;
 }
@@ -105,7 +114,7 @@ function PasswordCard({ t, setTokens }) {
       setForm({ current_password: '', password: '', password2: '' });
       setDone(t('profilePage', 'passwordChanged'));
     } catch (err) {
-      setError(firstProblem(err, t('profilePage', 'passwordChangeFailed')));
+      setError(firstProblem(t, err, t('profilePage', 'passwordChangeFailed')));
     } finally {
       setBusy(false);
     }
@@ -161,7 +170,7 @@ function EmailCard({ t, user, updateUser, setTokens }) {
       setForm({ new_email: '', current_password: '' });
       setDone(t('profilePage', 'emailChangeRequested'));
     } catch (err) {
-      setError(firstProblem(err, t('profilePage', 'emailChangeFailed')));
+      setError(firstProblem(t, err, t('profilePage', 'emailChangeFailed')));
     } finally {
       setBusy(false);
     }
@@ -177,7 +186,7 @@ function EmailCard({ t, user, updateUser, setTokens }) {
       setCode('');
       setDone(t('profilePage', 'emailChanged'));
     } catch (err) {
-      setError(firstProblem(err, t('profilePage', 'emailChangeFailed')));
+      setError(firstProblem(t, err, t('profilePage', 'emailChangeFailed')));
     } finally {
       setBusy(false);
     }
@@ -190,7 +199,7 @@ function EmailCard({ t, user, updateUser, setTokens }) {
       updateUser({ pending_email: '' });
       setDone('');
     } catch (err) {
-      setError(firstProblem(err, t('profilePage', 'emailChangeFailed')));
+      setError(firstProblem(t, err, t('profilePage', 'emailChangeFailed')));
     } finally {
       setBusy(false);
     }
