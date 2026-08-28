@@ -60,7 +60,18 @@ export default function UniversalLessonView() {
   // in play, which is why the award below has to cope with not having one.
   const lessonSlug = slugAtPath(topic, { subIdx, lessonIdx, partIdx });
 
-  // Determine video URL
+  // The lesson's own video, or nothing at all.
+  //
+  // This used to fall back to a pool of ten YouTube ids picked by
+  // `(lessonIdx + partIdx + subIdx) % 10`. Every one of the 144 physics lessons
+  // is a bare title with no video of its own, so every one of them opened a
+  // stranger's clip — autoplaying, unmuted — under the heading "Video Lesson"
+  // and the lesson's title. One clip was the lesson for "The Sun's Life Cycle",
+  // "The Goldilocks Zone" and "Understanding Black holes" at the same time.
+  //
+  // A borrowed video is worse than no video: it teaches the wrong thing and
+  // puts this platform's name on it. The animated videos are made by UzCosmos
+  // and OIS; until a lesson has one, the slot below says so.
   let finalVideoUrl = "";
   if (lesson && typeof lesson === 'object' && lesson.videoUrl) {
     // If lesson has a direct videoUrl, use it. Ensure it's embeddable.
@@ -69,14 +80,6 @@ export default function UniversalLessonView() {
       url = url.replace('watch?v=', 'embed/');
     }
     finalVideoUrl = `${url}${url.includes('?') ? '&' : '?'}autoplay=1&mute=0&rel=0`;
-  } else {
-    // Pool fallback
-    const videoPool = [
-      "libKVRa01L8", "2HoTK_Gqi2Q", "0KBjnN7kUKo", "HCDVN7DCzYE", "XycHvvnc2X4",
-      "epZdZaEQhS0", "m4NXbFOiOGk", "D85gxYG9qhM", "921VbEMAwwY", "XJSKezIdHJY"
-    ];
-    const vidId = videoPool[(parseInt(lessonIdx || 0) + parseInt(partIdx || 0) + parseInt(subIdx || 0)) % videoPool.length];
-    finalVideoUrl = `https://www.youtube.com/embed/${vidId}?autoplay=1&mute=0&rel=0`;
   }
 
   if (!lesson) {
@@ -94,7 +97,13 @@ export default function UniversalLessonView() {
   // line below stays as the fallback rather than leaving a blank page.
   const lessonText = typeof lesson === 'object' ? (lesson.content || '') : '';
   const color = topic.color || '#3b82f6';
-  const displayTitle = partIdx ? `${lessonName} - ${parseInt(partIdx) + 1}-qism` : lessonName;
+  // "-qism" was written straight into the template, so an English or Russian
+  // reader got "The Great Red Spot - 2-qism". The word order differs per
+  // language too, which is why the whole label is one key rather than a number
+  // glued to a translated noun.
+  const displayTitle = partIdx
+    ? `${lessonName} — ${t('lesson', 'partLabel').replace('{n}', String(parseInt(partIdx) + 1))}`
+    : lessonName;
 
   const handleComplete = async () => {
     if (completed) return;
@@ -174,52 +183,106 @@ export default function UniversalLessonView() {
           <div className="fui-hud-corners" />
           <div className="fui-hud-corners-2" />
           
-          {/* Diagnostic Info overlays */}
-          <div style={{
-            position: 'absolute',
-            top: '20px',
-            left: '20px',
-            fontFamily: "'Orbitron', sans-serif",
-            fontSize: '10px',
-            color: 'rgba(255, 255, 255, 0.35)',
-            letterSpacing: '0.1em',
-            zIndex: 10,
-            pointerEvents: 'none',
-            background: 'rgba(0,0,0,0.6)',
-            padding: '4px 8px',
-            borderRadius: '4px',
-            border: '1px solid rgba(255,255,255,0.1)',
-          }}>
-            [SYS.FEED: ONLINE // DECODING...]
-          </div>
-          <div style={{
-            position: 'absolute',
-            bottom: '20px',
-            right: '20px',
-            fontFamily: "'Orbitron', sans-serif",
-            fontSize: '10px',
-            color: `${color}cc`,
-            letterSpacing: '0.1em',
-            zIndex: 10,
-            pointerEvents: 'none',
-            background: 'rgba(0,0,0,0.6)',
-            padding: '4px 8px',
-            borderRadius: '4px',
-            border: `1px solid ${color}40`,
-          }}>
-            SECURE COGNITIVE LINK
-          </div>
+          {finalVideoUrl ? (
+            <>
+              {/* Diagnostic Info overlays */}
+              <div style={{
+                position: 'absolute',
+                top: '20px',
+                left: '20px',
+                fontFamily: "'Orbitron', sans-serif",
+                fontSize: '10px',
+                color: 'rgba(255, 255, 255, 0.35)',
+                letterSpacing: '0.1em',
+                zIndex: 10,
+                pointerEvents: 'none',
+                background: 'rgba(0,0,0,0.6)',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                border: '1px solid rgba(255,255,255,0.1)',
+              }}>
+                [SYS.FEED: ONLINE // DECODING...]
+              </div>
+              <div style={{
+                position: 'absolute',
+                bottom: '20px',
+                right: '20px',
+                fontFamily: "'Orbitron', sans-serif",
+                fontSize: '10px',
+                color: `${color}cc`,
+                letterSpacing: '0.1em',
+                zIndex: 10,
+                pointerEvents: 'none',
+                background: 'rgba(0,0,0,0.6)',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                border: `1px solid ${color}40`,
+              }}>
+                SECURE COGNITIVE LINK
+              </div>
 
-          <iframe
-            width="100%"
-            height="100%"
-            src={finalVideoUrl}
-            title={lessonName}
-            frameBorder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            style={{ position: 'relative', zIndex: 1 }}
-          ></iframe>
+              <iframe
+                width="100%"
+                height="100%"
+                src={finalVideoUrl}
+                title={lessonName}
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                style={{ position: 'relative', zIndex: 1 }}
+              ></iframe>
+            </>
+          ) : (
+            /* The slot the UzCosmos/OIS animation will fill. Empty and labelled
+               beats borrowed — see the comment above `finalVideoUrl`. */
+            <div
+              data-testid="video-pending"
+              style={{
+                position: 'absolute',
+                inset: 0,
+                zIndex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '14px',
+                padding: '24px',
+                textAlign: 'center',
+              }}
+            >
+              <div style={{
+                width: '64px',
+                height: '64px',
+                borderRadius: '50%',
+                background: `${color}12`,
+                border: `1.5px dashed ${color}55`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <Play size={26} color={`${color}aa`} />
+              </div>
+              <span style={{
+                fontFamily: "'Orbitron', sans-serif",
+                fontSize: '12px',
+                fontWeight: 900,
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                color: `${color}cc`,
+              }}>
+                {t('lesson', 'videoPendingTitle')}
+              </span>
+              <p style={{
+                margin: 0,
+                maxWidth: '420px',
+                fontSize: '14px',
+                lineHeight: 1.6,
+                color: 'rgba(255,255,255,0.45)',
+              }}>
+                {t('lesson', 'videoPendingBody')}
+              </p>
+            </div>
+          )}
         </motion.div>
 
         {/* INFO SECTION BELOW VIDEO
@@ -249,7 +312,7 @@ export default function UniversalLessonView() {
                   textTransform: 'uppercase', 
                   letterSpacing: '0.1em' 
                 }}>
-                  {t('lesson', 'videoLesson')}
+                  {finalVideoUrl ? t('lesson', 'videoLesson') : t('lesson', 'readingLesson')}
                 </span>
                 {completed && (
                   <span style={{ 
@@ -283,7 +346,9 @@ export default function UniversalLessonView() {
                 <LessonBody markdown={lessonText} />
               ) : (
                 <p style={{ fontSize: '18px', color: 'rgba(255,255,255,0.6)', lineHeight: 1.7, maxWidth: '800px' }}>
-                  {t('lesson', 'lessonDescription').replace('{lessonName}', lessonName)}
+                  {/* The video wording only holds when there is a video. */}
+                  {t('lesson', finalVideoUrl ? 'lessonDescription' : 'lessonDescriptionNoVideo')
+                    .replace('{lessonName}', lessonName)}
                 </p>
               )}
             </div>

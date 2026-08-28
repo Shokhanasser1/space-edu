@@ -12,9 +12,9 @@ export const interviewsTopicsData = {
         ].map(name => ({
           name,
           subLessons: [
-            { name: `${name}'s Early Career`, videoUrl: "https://www.youtube.com/embed/libKVRa01L8" },
-            { name: `${name}'s Greatest Discoveries`, videoUrl: "https://www.youtube.com/embed/2HoTK_Gqi2Q" },
-            { name: `${name} on Future of Space`, videoUrl: "https://www.youtube.com/embed/0KBjnN7kUKo" }
+            { name: `${name}'s Early Career` },
+            { name: `${name}'s Greatest Discoveries` },
+            { name: `${name} on Future of Space` }
           ]
         }))
       },
@@ -25,9 +25,9 @@ export const interviewsTopicsData = {
         ].map(name => ({
           name,
           subLessons: [
-            { name: `${name}'s Research Focus`, videoUrl: "https://www.youtube.com/embed/libKVRa01L8" },
-            { name: `${name}'s Theoretical Impact`, videoUrl: "https://www.youtube.com/embed/2HoTK_Gqi2Q" },
-            { name: `In Conversation with ${name}`, videoUrl: "https://www.youtube.com/embed/0KBjnN7kUKo" }
+            { name: `${name}'s Research Focus` },
+            { name: `${name}'s Theoretical Impact` },
+            { name: `In Conversation with ${name}` }
           ]
         }))
       }
@@ -43,9 +43,9 @@ export const interviewsTopicsData = {
     ].map(name => ({
       name,
       subLessons: [
-        { name: `${name}'s Training`, videoUrl: "https://www.youtube.com/embed/XJSKezIdHJY" },
-        { name: `${name}'s Historic Mission`, videoUrl: "https://www.youtube.com/embed/libKVRa01L8" },
-        { name: `Legacy of ${name}`, videoUrl: "https://www.youtube.com/embed/HCDVN7DCzYE" }
+        { name: `${name}'s Training` },
+        { name: `${name}'s Historic Mission` },
+        { name: `Legacy of ${name}` }
       ]
     }))
   },
@@ -60,9 +60,9 @@ export const interviewsTopicsData = {
     ].map(name => ({
       name,
       subLessons: [
-        { name: `Role of ${name}`, videoUrl: "https://www.youtube.com/embed/XJSKezIdHJY" },
-        { name: `A Day in the Life: ${name}`, videoUrl: "https://www.youtube.com/embed/libKVRa01L8" },
-        { name: `Challenges for ${name}`, videoUrl: "https://www.youtube.com/embed/HCDVN7DCzYE" }
+        { name: `Role of ${name}` },
+        { name: `A Day in the Life: ${name}` },
+        { name: `Challenges for ${name}` }
       ]
     }))
   }
