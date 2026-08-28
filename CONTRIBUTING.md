@@ -595,6 +595,8 @@ pip install -r requirements.txt
 copy .env.example .env        # set SECRET_KEY
 python manage.py migrate
 python manage.py seed         # 3 levels, 6 units, 12 lessons, 8 badges
+# and then the seven content seeds — see docs/TEAM.md, "Working without it".
+# `seed` alone leaves the Market, News and Live pages empty.
 python manage.py createsuperuser
 python manage.py runserver
 

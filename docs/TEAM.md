@@ -392,9 +392,14 @@ Only if you are working on your own SQLite instead, with `DB_URL` left blank:
 
 ```bash
 python manage.py migrate
-python manage.py seed_learn_content
 python manage.py createsuperuser
 ```
+
+Then fill it — **all seven**, not just the lessons. The full list, with what
+each one puts in and the counts to expect, is under "Working without it"
+above. Running only `seed_learn_content` is what leaves a clone with an empty
+Market, an empty News page and an empty Live page, which looks broken and is
+merely unseeded.
 
 Frontend, second terminal:
 
