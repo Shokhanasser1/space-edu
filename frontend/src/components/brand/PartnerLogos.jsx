@@ -3,14 +3,14 @@ import { Fragment } from 'react';
 /**
  * The two names above every sign-in screen.
  *
- * Neither logo file has been supplied yet (28 Aug 2026). UZ COSMOS uses the
- * site's own mark; Oxford International School gets a monogram until the real
- * one arrives. To swap either in: put the file under public/brand/ and set
- * `src` below. Nothing else on the screens changes.
+ * Oxford International School's crest arrived on 28 Aug 2026 and lives in
+ * public/brand/. UZ COSMOS still uses the site's own mark; when its own logo
+ * file comes, put it beside the crest and set `src` below. A partner with no
+ * `src` gets a monogram, so nothing else on the screens changes either way.
  */
 export const PARTNERS = [
   { id: 'uzcosmos', name: 'UZ COSMOS', src: '/astra-logo.png' },
-  { id: 'oxford', name: 'Oxford International School', src: null },
+  { id: 'oxford', name: 'Oxford International School', src: '/brand/oxford.svg' },
 ];
 
 const initials = (name) => name.split(/\s+/).map((w) => w[0]).join('').slice(0, 3).toUpperCase();
@@ -19,7 +19,7 @@ function Monogram({ name }) {
   return (
     <span
       aria-hidden="true"
-      className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-[11px] font-[900] tracking-wider"
+      className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-[11px] font-[900] tracking-wider"
       style={{
         color: 'var(--auth-warm-light, #e3b45c)',
         border: '1px solid var(--auth-warm, #c08a2e)',
@@ -49,7 +49,7 @@ export default function PartnerLogos({ className = '' }) {
           )}
           <span className="inline-flex items-center gap-2.5">
             {partner.src
-              ? <img src={partner.src} alt={partner.name} className="h-9 w-9 rounded-lg object-contain" />
+              ? <img src={partner.src} alt={partner.name} className="h-10 w-10 rounded-lg object-contain" />
               : <Monogram name={partner.name} />}
             <span
               className="text-[11px] font-[800] uppercase tracking-[0.18em] whitespace-nowrap"
