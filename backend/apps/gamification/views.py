@@ -259,7 +259,10 @@ def mission_progress(user, mission):
 
     if mission.mission_type == 'streak':
         profile, _ = UserGamificationProfile.objects.get_or_create(user=user)
-        return profile.streak
+        # The run as it stands today, not the stored column: "three days
+        # running" was claimable four days after the run ended, because nothing
+        # lowers that column on a day nobody plays.
+        return profile.live_streak
     if mission.mission_type == 'lesson':
         return UserLessonProgress.objects.filter(user=user).count()
     if mission.mission_type == 'mastery':

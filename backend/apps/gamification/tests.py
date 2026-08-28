@@ -414,3 +414,121 @@ class LeaderboardAccuracyTests(TestCase):
         what the cache lifetime is, and it is what 10 000 clients cost."""
         board = self._board()
         self.assertGreaterEqual(board['poll_after_seconds'], 1)
+
+
+class StaleStreakTests(TestCase):
+    """A streak that cannot be broken is not a streak.
+
+    `claim_daily_streak()` is correct and row-locked on the day a child plays,
+    but it is the only thing that ever writes the column — so nothing lowers it
+    on the days they do not. A child who held seven days and then stopped was
+    still told "7" on the fourth day of having played nothing, because the
+    stored number is only ever read back out.
+
+    `UserStreak.live_streak` in the challenges app already answers this for the
+    daily-challenge streak. The same read on the gamification profile was left
+    behind, and the profile page falls back to it — so the fixed half was being
+    overwritten on screen by the half that was not.
+    """
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='gulnora', email='g@e.com', password='x',
+        )
+        self.profile = UserGamificationProfile.objects.get(user=self.user)
+        self.client = APIClient()
+        self.client.force_authenticate(self.user)
+
+    def _played(self, days_ago, streak=7):
+        """Put the row where a child who stopped playing `days_ago` leaves it."""
+        UserGamificationProfile.objects.filter(pk=self.profile.pk).update(
+            streak=streak,
+            last_play_date=timezone.localdate() - timezone.timedelta(days=days_ago),
+        )
+        self.profile.refresh_from_db()
+
+    def _served_streak(self):
+        response = self.client.get('/api/v1/gamification/profile/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        return response.data['streak']
+
+    def test_a_streak_with_a_gap_reads_as_broken(self):
+        """The bug, exactly: last played four days ago, still told seven."""
+        self._played(days_ago=4)
+        self.assertEqual(self._served_streak(), 0)
+
+    def test_playing_today_keeps_the_streak(self):
+        self._played(days_ago=0)
+        self.assertEqual(self._served_streak(), 7)
+
+    def test_yesterday_still_counts_because_today_is_not_over(self):
+        """They can still keep it by playing before midnight."""
+        self._played(days_ago=1)
+        self.assertEqual(self._served_streak(), 7)
+
+    def test_the_day_after_that_is_a_missed_day(self):
+        self._played(days_ago=2)
+        self.assertEqual(self._served_streak(), 0)
+
+    def test_a_child_who_has_never_played_has_no_streak(self):
+        UserGamificationProfile.objects.filter(pk=self.profile.pk).update(
+            streak=3, last_play_date=None,
+        )
+        self.assertEqual(self._served_streak(), 0)
+
+    def test_the_full_profile_says_the_same_number(self):
+        """Two endpoints serving one column must not disagree about it."""
+        self._played(days_ago=4)
+        response = self.client.get('/api/v1/gamification/profile/full/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['gamification']['streak'], 0)
+        self.assertEqual(response.data['daily_challenges']['current_streak'], 0)
+
+    def test_the_column_still_holds_what_the_run_reached(self):
+        """The stored value is history — `claim_daily_streak` reads it to decide
+        whether today continues yesterday. Only the *answer* changes."""
+        self._played(days_ago=4)
+        self._served_streak()
+        self.profile.refresh_from_db()
+        self.assertEqual(self.profile.streak, 7)
+
+    def test_a_broken_run_starts_again_at_one_when_they_come_back(self):
+        self._played(days_ago=4)
+        streak, _ = self.profile.claim_daily_streak()
+        self.assertEqual(streak, 1)
+        self.assertEqual(self._served_streak(), 1)
+
+    def test_a_streak_badge_is_not_awarded_on_a_streak_that_is_over(self):
+        """A badge is permanent. Awarding one off a column nothing lowers means
+        a child keeps "7-day streak" for a run that ended five days ago."""
+        from .models import Badge
+        from .services import check_and_award_badges
+
+        Badge.objects.create(
+            slug='streak-7', title_en='Orbit Master', description_en='7-day streak',
+            icon='UZ', condition_type='streak', condition_value=7,
+        )
+        self._played(days_ago=5)
+        awarded = check_and_award_badges(self.user, self.profile, lesson_count=0)
+        self.assertEqual(awarded, [])
+
+        self._played(days_ago=0)
+        self.assertEqual(
+            check_and_award_badges(self.user, self.profile, lesson_count=0),
+            ['streak-7'],
+        )
+
+    def test_a_streak_mission_is_not_paid_out_on_a_streak_that_is_over(self):
+        """The same lie, but it costs XP: the reward for a three-day run was
+        claimable four days after the run ended."""
+        mission = Mission.objects.create(
+            slug='three-days', title_en='Three days running', description_en='x',
+            mission_type='streak', target_value=3, reward_xp=300, reward_fuel=50,
+        )
+        self._played(days_ago=4)
+        response = self.client.post(
+            '/api/v1/gamification/missions/claim/',
+            {'mission_id': mission.id}, format='json',
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['progress'], 0)
