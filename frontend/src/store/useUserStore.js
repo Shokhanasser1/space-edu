@@ -64,3 +64,24 @@ export const useUserStore = create()(
     { name: "uz-cosmos-storage" },
   ),
 );
+
+/**
+ * `<html lang>` follows the site language.
+ *
+ * index.html used to read `localStorage["i18nextLng"]` — a key nothing here
+ * ever wrote — so the attribute stayed "en" on a Russian or Uzbek page.
+ * Screen readers pick their voice by it, browsers offer translation by it,
+ * and CSS `:lang()` and hyphenation read it; on every page it named the
+ * wrong language. Found in a browser, 28 Aug 2026.
+ */
+const HTML_LANG = { ENG: "en", RUS: "ru", UZB: "uz" };
+
+export function mirrorLanguageToDocument(language) {
+  if (typeof document === "undefined") return;
+  document.documentElement.lang = HTML_LANG[language] || "en";
+}
+
+mirrorLanguageToDocument(useUserStore.getState().language);
+useUserStore.subscribe((state, previous) => {
+  if (state.language !== previous.language) mirrorLanguageToDocument(state.language);
+});

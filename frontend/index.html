@@ -5,12 +5,12 @@
     <script>
       (function() {
         try {
-          const lang = localStorage.getItem('i18nextLng');
-          if (lang) {
-            const shortLang = lang.split('-')[0].toLowerCase();
-            if (['en', 'uz', 'ru'].includes(shortLang)) {
-              document.documentElement.lang = shortLang;
-            }
+          // The store (src/store/useUserStore.js) sets this properly once it
+          // loads; this is the same guess it makes, made before first paint so
+          // the page never announces itself as English to a Russian reader.
+          const shortLang = (navigator.language || '').split('-')[0].toLowerCase();
+          if (['uz', 'ru'].includes(shortLang)) {
+            document.documentElement.lang = shortLang;
           }
         } catch (e) {}
       })();

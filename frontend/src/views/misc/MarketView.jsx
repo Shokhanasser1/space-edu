@@ -777,6 +777,7 @@ export default function MarketView() {
                 <div className="space-y-16">
                   
                   {/* Section 1: Best Sellers */}
+                  {bestSellers.length > 0 && (
                   <section>
                     <div className="flex items-center gap-3 mb-6">
                       <h2 className="text-2xl font-[900] text-white">{t('market', 'bestSellersSection')}</h2>
@@ -788,6 +789,7 @@ export default function MarketView() {
                       ))}
                     </div>
                   </section>
+                  )}
 
                   {/* Section 2: For You */}
                   <section>
@@ -803,6 +805,7 @@ export default function MarketView() {
                   </section>
 
                   {/* Section 3: WOW Prices */}
+                  {wowPrices.length > 0 && (
                   <section className="bg-gradient-to-r from-red-500/10 to-transparent p-6 -mx-6 rounded-3xl border border-red-500/10">
                     <div className="flex items-center gap-3 mb-6">
                       <h2 className="text-3xl font-[900] text-red-400 italic">{t('market', 'wowPrices')}</h2>
@@ -814,8 +817,10 @@ export default function MarketView() {
                       ))}
                     </div>
                   </section>
+                  )}
 
                   {/* Section 4: New Models */}
+                  {newModels.length > 0 && (
                   <section>
                     <div className="flex items-center gap-3 mb-6">
                       <h2 className="text-2xl font-[900] text-white">{t('market', 'newModels')}</h2>
@@ -827,6 +832,7 @@ export default function MarketView() {
                       ))}
                     </div>
                   </section>
+                  )}
 
                 </div>
               ) : (
