@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import SectionPageHeader from '@/components/layout/SectionPageHeader';
 import { useLearnTopics } from '@/hooks/useLearnTopics';
 import { lessonName, slugAtPath } from '@/lib/learnContent';
+import { videoCredit } from '@/data/videoCredits';
 import { Play, Info, CheckCircle2, Trophy, Coins, Heart, Rocket } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useGamificationStore } from '@/store/useGamificationStore';
@@ -85,6 +86,13 @@ export default function UniversalLessonView() {
     // play, and occasionally one that did, loudly. The child presses play.
     finalVideoUrl = `${url}${url.includes('?') ? '&' : '?'}rel=0`;
   }
+
+  // Who made it. The videos filling these slots today are Khan Academy's
+  // Uzbek lessons, and a page that plays somebody else's teaching under this
+  // platform's name is claiming it. There is no field on `TopicLesson` for a
+  // channel yet, so the credit comes from a checked-in map — and a video the
+  // map does not know prints nothing, rather than the wrong name.
+  const credit = videoCredit(finalVideoUrl);
 
   if (!lesson) {
     return (
@@ -175,7 +183,9 @@ export default function UniversalLessonView() {
             position: 'relative',
             width: '100%',
             aspectRatio: '16/9',
-            marginBottom: '48px',
+            // The gap to the text below belongs after the credit when there is
+            // one, so that the line reads as the player's and not the prose's.
+            marginBottom: credit ? '10px' : '48px',
             borderRadius: '20px',
             overflow: 'hidden',
             background: '#000',
@@ -288,6 +298,19 @@ export default function UniversalLessonView() {
             </div>
           )}
         </motion.div>
+
+        {credit && (
+          <p
+            data-testid="video-credit"
+            style={{
+              margin: '0 2px 48px',
+              fontSize: '13px',
+              color: 'rgba(255,255,255,0.45)',
+            }}
+          >
+            {t('lesson', 'videoCredit').replace('{channel}', credit.channel)}
+          </p>
+        )}
 
         {/* INFO SECTION BELOW VIDEO
             One column until there is room for two. This was an inline

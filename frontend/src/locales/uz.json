@@ -1452,6 +1452,7 @@
     "readingLesson": "Dars",
     "videoPendingTitle": "Video tayyorlanmoqda",
     "videoPendingBody": "Bu dars uchun animatsion videoni UzCosmos va OIS tayyorlamoqda. Quyidagi dars matnini hozir o'qishingiz mumkin.",
+    "videoCredit": "Video: {channel}",
     "completed": "Yakunlandi",
     "lessonDescription": "Ushbu darsda siz {lessonName} mavzusini chuqur o'rganasiz. Videoda keltirilgan vizualizatsiyalar va tushuntirishlar sizga murakkab tushunchalarni oson o'zlashtirishga yordam beradi. Dars yakunida siz koinot sirlariga bir qadam yaqinlashasiz.",
     "lessonDescriptionNoVideo": "Ushbu darsda siz {lessonName} mavzusini o'rganasiz. Animatsion video hali tayyorlanmoqda; matn va amaliy topshiriqlar esa hozir tayyor.",

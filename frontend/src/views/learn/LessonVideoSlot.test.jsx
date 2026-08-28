@@ -139,3 +139,45 @@ describe('a lesson video waits to be asked', () => {
     expect(src).not.toMatch(/watch\?v=/);
   });
 });
+
+/**
+ * A borrowed video has to say whose it is.
+ *
+ * 28 Aug 2026, the other half of the same problem: the slots are being filled
+ * with Khan Academy's Uzbek lessons. They are somebody else's work, and a page
+ * that plays them under this platform's heading and name is claiming them.
+ * `TopicLesson` has no field for a channel, so the credit comes from the
+ * checked-in map in `src/data/videoCredits.js` — and a video the map does not
+ * know prints nothing rather than a guess.
+ */
+describe('the credit under the player', () => {
+  it('names the channel that made the video', async () => {
+    api.get.mockResolvedValue({
+      data: treeWith('https://www.youtube.com/embed/l6k62nsjfFo'),
+    });
+    renderLesson();
+    await screen.findAllByText("Coulomb's law");
+
+    expect(screen.getByTestId('video-credit')).toHaveTextContent('Khan Academy Uzbek');
+  });
+
+  it('says nothing at all about a video it cannot identify', async () => {
+    api.get.mockResolvedValue({
+      data: treeWith('https://www.youtube.com/embed/abc123'),
+    });
+    renderLesson();
+    await screen.findAllByText("Coulomb's law");
+
+    expect(document.querySelector('iframe')).not.toBeNull();
+    expect(screen.queryByTestId('video-credit')).toBeNull();
+  });
+
+  it('leaves the empty slot alone when there is no video to credit', async () => {
+    api.get.mockResolvedValue({ data: treeWith('') });
+    renderLesson();
+    await screen.findAllByText("Coulomb's law");
+
+    expect(screen.getByTestId('video-pending')).toBeInTheDocument();
+    expect(screen.queryByTestId('video-credit')).toBeNull();
+  });
+});
