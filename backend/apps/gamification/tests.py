@@ -8,7 +8,9 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from apps.accounts.models import User
+from apps.challenges.models import QuizSession
 
+from .leaderboard import BOARD_SIZE, MIN_QUIZZES_RANKED
 from .models import Mission, RewardProduct, UserGamificationProfile, UserRewardPurchase
 
 
@@ -532,3 +534,104 @@ class StaleStreakTests(TestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['progress'], 0)
+
+
+class QuizLeaderboardTests(TestCase):
+    """One lucky quiz used to beat fifty near-perfect ones.
+
+    The board ranked on `Avg('percentage')` with nothing under it, so a child
+    who took one quiz and happened to score 100% sat above a child who had
+    taken fifty and averaged 96. It also printed no place at all, ordered ties
+    arbitrarily and cut at a size of its own — all three of which the XP board
+    settled in `leaderboard.py`. Two boards on one platform answering the same
+    question by different rules is the finding that file was written for.
+    """
+
+    def setUp(self):
+        self.client = APIClient()
+
+    def _player(self, name, *, attempts, pct, category='physics'):
+        user = User.objects.create_user(
+            username=name, email=f'{name}@e.com', password='x', astronaut_name=name,
+        )
+        for _ in range(attempts):
+            QuizSession.objects.create(
+                user=user, category=category, score=1, total=1,
+                percentage=pct, is_completed=True,
+            )
+        return user
+
+    def _board(self, user=None, **params):
+        client = APIClient()
+        if user is not None:
+            client.force_authenticate(user)
+        response = client.get('/api/v1/gamification/leaderboard/quiz/', params)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        return response.data
+
+    def test_one_lucky_attempt_does_not_outrank_fifty_near_perfect_ones(self):
+        self._player('omadli', attempts=1, pct=100.0)
+        self._player('mehnatkash', attempts=50, pct=96.0)
+
+        names = [row['display_name'] for row in self._board()['leaderboard']]
+        self.assertEqual(names[0], 'mehnatkash')
+        self.assertNotIn('omadli', names)
+
+    def test_a_child_below_the_floor_is_not_on_the_board_at_all(self):
+        self._player('boshlovchi', attempts=MIN_QUIZZES_RANKED - 1, pct=100.0)
+        board = self._board()
+        self.assertEqual(board['leaderboard'], [])
+        self.assertEqual(board['total_players'], 0)
+
+    def test_the_floor_is_published_so_the_page_can_say_what_it_is(self):
+        """A child who is not on the board is owed the reason, in a number."""
+        board = self._board()
+        self.assertEqual(board['min_quizzes'], MIN_QUIZZES_RANKED)
+
+    def test_reaching_the_floor_puts_you_on_the_board(self):
+        self._player('yetdi', attempts=MIN_QUIZZES_RANKED, pct=80.0)
+        board = self._board()
+        self.assertEqual([r['display_name'] for r in board['leaderboard']], ['yetdi'])
+        self.assertEqual(board['total_players'], 1)
+
+    def test_tied_players_share_one_place(self):
+        """1-1-1-4, the same rule `rank_for_xp` uses — see leaderboard.py."""
+        for name in ('ayaz', 'bek', 'dilnoza'):
+            self._player(name, attempts=MIN_QUIZZES_RANKED, pct=90.0)
+        self._player('quyi', attempts=MIN_QUIZZES_RANKED, pct=50.0)
+
+        rows = self._board()['leaderboard']
+        self.assertEqual([row['rank'] for row in rows], [1, 1, 1, 4])
+
+    def test_the_board_marks_your_own_row(self):
+        me = self._player('men', attempts=MIN_QUIZZES_RANKED, pct=70.0)
+        self._player('boshqa', attempts=MIN_QUIZZES_RANKED, pct=90.0)
+        rows = self._board(me)['leaderboard']
+        self.assertEqual([row['is_you'] for row in rows], [False, True])
+
+    def test_the_board_is_no_longer_than_the_xp_board(self):
+        self.assertEqual(len(self._board()['leaderboard']), 0)
+        self.assertEqual(self._board()['board_size'], BOARD_SIZE)
+
+    def test_the_floor_is_counted_within_the_category_being_asked_about(self):
+        """Filtering by category and then ranking on an average built from
+        every category would rank a physics board on astronomy attempts."""
+        user = self._player('aralash', attempts=MIN_QUIZZES_RANKED, pct=100.0,
+                            category='astronomy')
+        QuizSession.objects.create(
+            user=user, category='physics', score=1, total=1,
+            percentage=100.0, is_completed=True,
+        )
+        self.assertEqual(self._board(category='physics')['leaderboard'], [])
+        self.assertEqual(
+            [r['display_name'] for r in self._board(category='astronomy')['leaderboard']],
+            ['aralash'],
+        )
+
+    def test_an_unfinished_quiz_does_not_count_towards_the_floor(self):
+        user = self._player('tugatmagan', attempts=MIN_QUIZZES_RANKED - 1, pct=100.0)
+        QuizSession.objects.create(
+            user=user, category='physics', score=0, total=1,
+            percentage=0.0, is_completed=False,
+        )
+        self.assertEqual(self._board()['leaderboard'], [])

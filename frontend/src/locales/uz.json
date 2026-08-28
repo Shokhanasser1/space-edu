@@ -720,6 +720,13 @@
     "yourPlace": "Sizning o'rningiz",
     "ofPlayers": "{count} ishtirokchidan",
     "notRankedYet": "Reytingga kirish uchun XP to'plang",
+    "boardXp": "XP bo'yicha",
+    "boardQuiz": "Aniqlik bo'yicha",
+    "quizSubtitle": "Reyting testlar soniga emas, o'rtacha natijangizga qarab tuziladi.",
+    "accuracy": "Aniqlik",
+    "quizzesTaken": "Testlar",
+    "minQuizzes": "Bu yerda reytingga kirish uchun {count} ta testni yakunlang — bitta omadli natija hali rekord emas.",
+    "noQuizPioneers": "Hali hech kim yetarlicha test yakunlamagan. Birinchi bo'ling!",
     "loadFailed": "Reytinglarni yuklab bo'lmadi. Tez orada qayta urinamiz."
   },
   "live": {

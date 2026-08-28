@@ -14,7 +14,7 @@
  * These tests pin the contract, not the markup: what the server sends is what
  * the board must read, and the withheld fields must stay withheld.
  */
-import { act, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -307,5 +307,117 @@ describe('the leaderboard shows your real place, and keeps itself current', () =
       expect(container.textContent).not.toMatch(/Syncing|Sinxron|Синхрон/i),
     );
     expect(container.textContent).toMatch(/rankings/i);
+  });
+});
+
+
+/**
+ * The second board: accuracy, not XP.
+ *
+ * `GET /gamification/leaderboard/quiz/` ranked on the mean of a child's quiz
+ * scores with no minimum number of attempts, so one lucky quiz at 100% stood
+ * above fifty at 96 — and nothing in this front end called it at all, so the
+ * board nobody could see was also the board nobody was fixing. The server now
+ * applies the floor and sends `min_quizzes`, and this page shows the board and
+ * says what the floor is.
+ */
+describe('the accuracy board', () => {
+  const quizRow = (display_name, avg_percentage, total_quizzes, extra = {}) => ({
+    display_name, avg_percentage, total_quizzes,
+    best_percentage: avg_percentage, total_xp: 0, is_you: false, rank: 1, ...extra,
+  });
+
+  const serveBoth = (quiz) => {
+    api.get.mockImplementation((url) => {
+      if (url === '/gamification/leaderboard/quiz/') {
+        return Promise.resolve({
+          data: { category: 'all', board_size: 100, min_quizzes: 5, ...quiz },
+        });
+      }
+      return Promise.resolve({
+        data: {
+          leaderboard: [{ ...entry('Ayaz', 900), rank: 1 }],
+          total_players: 1, board_size: 100, poll_after_seconds: 30,
+        },
+      });
+    });
+  };
+
+  const openIt = async () => {
+    await act(async () => {
+      fireEvent.click(screen.getByRole('tab', { name: /accuracy/i }));
+    });
+  };
+
+  it('is not fetched until the reader opens it', async () => {
+    // Most readers never open this tab, and it is an aggregate over every quiz
+    // session on the platform.
+    serveBoth({ leaderboard: [], total_players: 0 });
+    await renderBoard();
+    expect(api.get).not.toHaveBeenCalledWith('/gamification/leaderboard/quiz/');
+
+    await openIt();
+    expect(api.get).toHaveBeenCalledWith('/gamification/leaderboard/quiz/');
+  });
+
+  it('shows the child who did the work, and the place the server gave them', async () => {
+    serveBoth({
+      leaderboard: [
+        quizRow('Mehnatkash', 96.0, 50, { rank: 1 }),
+        quizRow('Dilnoza', 96.0, 12, { rank: 1 }),
+        quizRow('Bek', 80.0, 7, { rank: 3 }),
+      ],
+      total_players: 3,
+    });
+    await renderBoard();
+    await openIt();
+
+    expect(await screen.findByText('Mehnatkash')).toBeInTheDocument();
+    // Tied children share a place, exactly as they do on the XP board — the
+    // rank printed is the server's, not the row's position in the array.
+    const places = [...document.querySelectorAll('.col-span-1')]
+      .map((el) => el.textContent).filter((text) => /^\d+$/.test(text));
+    expect(places).toEqual(['1', '1', '3']);
+  });
+
+  it('tells a child who is not on it why, in the number the server applies', async () => {
+    serveBoth({ leaderboard: [], total_players: 0, min_quizzes: 5 });
+    await renderBoard();
+    await openIt();
+
+    expect(await screen.findByText(/5/)).toBeInTheDocument();
+    expect(screen.getByText(/5 quizzes/i)).toBeInTheDocument();
+  });
+
+  it('does not go blank and silent when the request fails', async () => {
+    // C-10: an empty board reads as "nobody has taken a quiz", which is a
+    // different claim from "we could not ask".
+    api.get.mockImplementation((url) => (
+      url === '/gamification/leaderboard/quiz/'
+        ? Promise.reject(new Error('502'))
+        : Promise.resolve({
+          data: {
+            leaderboard: [{ ...entry('Ayaz', 900), rank: 1 }],
+            total_players: 1, board_size: 100, poll_after_seconds: 30,
+          },
+        })
+    ));
+    await renderBoard();
+    await openIt();
+
+    expect(await screen.findByText(/could not be loaded/i)).toBeInTheDocument();
+  });
+
+  it('stops polling the XP board while the reader is on this one', async () => {
+    serveBoth({ leaderboard: [], total_players: 0 });
+    const started = vi.spyOn(globalThis, 'setInterval');
+    await renderBoard();
+    await openIt();
+
+    const tick = started.mock.calls.filter(([, delay]) => delay >= 30000).at(-1)[0];
+    api.get.mockClear();
+    await act(async () => { tick(); });
+    expect(api.get).not.toHaveBeenCalledWith('/gamification/leaderboard/');
+    started.mockRestore();
   });
 });
