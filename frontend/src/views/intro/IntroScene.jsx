@@ -2,8 +2,10 @@ import { useMemo, useRef } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Stars } from '@react-three/drei';
 import * as THREE from 'three';
-import { ATMOSPHERE_FRAGMENT, ATMOSPHERE_VERTEX } from '@/solar/scene/shaders';
-import { useSolarTextures } from '@/solar/textures';
+import {
+  ATMOSPHERE_FRAGMENT, ATMOSPHERE_VERTEX, EARTH_FRAGMENT, EARTH_VERTEX,
+} from '@/solar/scene/shaders';
+import { gpuCaps, useSolarTextures } from '@/solar/textures';
 
 /**
  * The intro's sky: the Sun at the origin, the Earth and Moon sixty units
@@ -11,10 +13,12 @@ import { useSolarTextures } from '@/solar/textures';
  * off the Earth's limb — to a three-quarter view of the lit face, after
  * which the camera sways gently for as long as the page is open.
  *
- * Deliberately small: a 4k Earth over a 2k first frame, 2k Moon and Sun
- * (1.6 MB together), no clouds, no post-processing, DPR capped at 2. The full solar system is a page of
- * its own; this is a doorstep. The atmosphere shader is borrowed from it and
- * assumes the Sun at the origin, which is why the Sun is at the origin.
+ * The Earth is the solar system's Earth: its shader (day map on the lit
+ * side, city lights only past the terminator, a glint on water), its cloud
+ * layer, and its texture tiers — 2k on screen within a second, 4k when it
+ * arrives, 8k on a GPU that accepts 8192-pixel maps and a deploy that ships
+ * them. The shaders light from the Sun at the origin, which is why the Sun
+ * is at the origin. No post-processing; DPR up to 2.
  */
 
 const EARTH_POS = new THREE.Vector3(0, 0, 60);
@@ -26,17 +30,22 @@ const END_OFFSET = new THREE.Vector3(-14, 5, -18);
 const SWAY_R = Math.hypot(END_OFFSET.x, END_OFFSET.z);
 const SWAY_CENTRE = Math.atan2(END_OFFSET.z, END_OFFSET.x);
 
-// Best first, as the solar system's catalogue does: the 2k map is on screen
-// within a second, the 4k one replaces it when it arrives. The 2k Earth is
-// 167 KB and looks it; the 4k one (558 KB) is what the visitor keeps. No 8k
-// here — a decoded 8k map is 134 MB of GPU memory, for a doorstep.
+const T = '/textures/';
+// The 8k maps live outside the repository (see frontend/.env.example); with
+// no VITE_ASSET_BASE they are looked for beside the others and the 4k file
+// is the fallback when they are not there.
+const H = `${(typeof import.meta !== 'undefined' && import.meta.env?.VITE_ASSET_BASE) || ''}/textures/`;
+
+// Candidate lists best-first, as the catalogue has them.
 const TEXTURES = {
   earth: {
-    map: ['/textures/4k_earth_daymap.webp', '/textures/2k_earth_daymap.webp'],
-    night: ['/textures/4k_earth_nightmap.webp', '/textures/2k_earth_nightmap.webp'],
+    map: [`${H}8k_earth_daymap.webp`, `${T}4k_earth_daymap.webp`, `${T}2k_earth_daymap.webp`],
+    night: [`${H}8k_earth_nightmap.webp`, `${T}4k_earth_nightmap.webp`, `${T}2k_earth_nightmap.webp`],
+    specular: [`${T}2k_earth_specular.webp`],
+    clouds: [`${T}2k_earth_clouds.webp`],
   },
-  moon: { map: ['/textures/2k_moon.webp'] },
-  sun: { map: ['/textures/2k_sun.webp'] },
+  moon: { map: [`${T}4k_moon.webp`, `${T}2k_moon.webp`] },
+  sun: { map: [`${T}2k_sun.webp`] },
 };
 
 const easeInOut = (x) => (x < 0.5 ? 4 * x * x * x : 1 - ((-2 * x + 2) ** 3) / 2);
@@ -79,7 +88,7 @@ function Sun() {
 }
 
 function Moon() {
-  const textures = useSolarTextures(TEXTURES.moon);
+  const textures = useSolarTextures(TEXTURES.moon, { hiRes: true });
   const ref = useRef();
   const angle = useRef(2.3);
   useFrame((_, dt) => {
@@ -90,40 +99,79 @@ function Moon() {
   });
   return (
     <mesh ref={ref}>
-      <sphereGeometry args={[MOON_R, 32, 32]} />
-      <meshStandardMaterial key={textures.map ? 'map' : 'flat'} map={textures.map || null} color={textures.map ? '#ffffff' : '#b8b8b8'} roughness={1} metalness={0} />
+      <sphereGeometry args={[MOON_R, 48, 48]} />
+      <meshStandardMaterial
+        key={textures['map:url'] || 'flat'}
+        map={textures.map || null}
+        color={textures.map ? '#ffffff' : '#b8b8b8'}
+        roughness={1}
+        metalness={0}
+      />
+    </mesh>
+  );
+}
+
+/** The solar system's Earth surface: the same shader, the same uniforms. */
+function EarthSurface({ textures }) {
+  const uniforms = useMemo(
+    () => ({
+      dayMap: { value: null },
+      nightMap: { value: null },
+      specMap: { value: null },
+      hasNight: { value: 0 },
+      hasSpec: { value: 0 },
+      sunStrength: { value: 1.15 },
+    }),
+    [],
+  );
+  uniforms.dayMap.value = textures.map || null;
+  uniforms.nightMap.value = textures.night || null;
+  uniforms.specMap.value = textures.specular || null;
+  uniforms.hasNight.value = textures.night ? 1 : 0;
+  uniforms.hasSpec.value = textures.specular ? 1 : 0;
+
+  if (!textures.map) {
+    return (
+      <mesh>
+        <sphereGeometry args={[EARTH_R, 96, 96]} />
+        <meshStandardMaterial color="#3b8ad9" roughness={0.9} />
+      </mesh>
+    );
+  }
+  return (
+    <mesh>
+      <sphereGeometry args={[EARTH_R, 96, 96]} />
+      <shaderMaterial vertexShader={EARTH_VERTEX} fragmentShader={EARTH_FRAGMENT} uniforms={uniforms} />
     </mesh>
   );
 }
 
 function Earth() {
   const textures = useSolarTextures(TEXTURES.earth, { hiRes: true });
-  const spin = useRef();
+  const surface = useRef();
+  const clouds = useRef();
   const atmosphere = useMemo(
     () => ({ color: { value: new THREE.Color('#6fb3ff') }, strength: { value: 1.15 } }),
     [],
   );
   useFrame((_, dt) => {
-    if (spin.current) spin.current.rotation.y += dt * 0.04;
+    if (surface.current) surface.current.rotation.y += dt * 0.04;
+    // Weather moves a little faster than the ground under it.
+    if (clouds.current) clouds.current.rotation.y += dt * 0.052;
   });
-  const hasMaps = Boolean(textures.map);
   return (
     <group position={EARTH_POS} rotation={[0, 0, THREE.MathUtils.degToRad(23.4)]}>
-      <mesh ref={spin}>
-        <sphereGeometry args={[EARTH_R, 64, 64]} />
-        <meshStandardMaterial
-          key={`${hasMaps}-${Boolean(textures.night)}`}
-          map={textures.map || null}
-          color={hasMaps ? '#ffffff' : '#3b8ad9'}
-          emissiveMap={textures.night || null}
-          emissive={textures.night ? '#ffffff' : '#000000'}
-          emissiveIntensity={0.6}
-          roughness={1}
-          metalness={0}
-        />
-      </mesh>
+      <group ref={surface}>
+        <EarthSurface textures={textures} />
+      </group>
+      {textures.clouds && (
+        <mesh ref={clouds}>
+          <sphereGeometry args={[EARTH_R * 1.012, 96, 96]} />
+          <meshStandardMaterial map={textures.clouds} transparent opacity={0.6} depthWrite={false} roughness={1} metalness={0} />
+        </mesh>
+      )}
       <mesh>
-        <sphereGeometry args={[EARTH_R * 1.04, 48, 48]} />
+        <sphereGeometry args={[EARTH_R * 1.04, 64, 64]} />
         <shaderMaterial
           vertexShader={ATMOSPHERE_VERTEX}
           fragmentShader={ATMOSPHERE_FRAGMENT}
@@ -139,7 +187,7 @@ function Earth() {
   );
 }
 
-/** The scripted flight, then the orbit. Nothing here is React state. */
+/** The scripted flight, then the sway. Nothing here is React state. */
 function Rig() {
   const { camera } = useThree();
   const elapsed = useRef(0);
@@ -185,6 +233,8 @@ export default function IntroScene({ onReady }) {
       onCreated={({ gl }) => {
         gl.toneMapping = THREE.ACESFilmicToneMapping;
         gl.toneMappingExposure = 1.05;
+        // Lets the texture tiers offer the 8k maps where the GPU takes them.
+        gpuCaps.maxTextureSize = gl.capabilities?.maxTextureSize || 4096;
         onReady?.();
       }}
       style={{ position: 'absolute', inset: 0 }}
