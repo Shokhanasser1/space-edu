@@ -140,6 +140,15 @@ class RoomMessagesView(APIView):
             if hidden:
                 messages = messages.exclude(user_id__in=hidden)
 
+        # What arrived since the newest message the tab already has. Every open
+        # tab fetched the last fifty every five seconds, changed or not.
+        after = request.query_params.get('after')
+        if after is not None:
+            if not after.isdigit():
+                return Response({'after': ['Expected a message id.']},
+                                status=status.HTTP_400_BAD_REQUEST)
+            messages = messages.filter(id__gt=int(after))
+
         data = ChatMessageSerializer(
             reversed(list(messages[:50])), many=True, context={'request': request}
         ).data

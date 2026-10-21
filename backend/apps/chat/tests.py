@@ -168,6 +168,19 @@ class RoomMessageTests(TestCase):
         codes = [self._post(f'message number {i}').status_code for i in range(25)]
         self.assertIn(status.HTTP_429_TOO_MANY_REQUESTS, codes)
 
+    def test_after_returns_only_what_is_newer(self):
+        """Audit, 21 October 2026: every open chat tab fetched the last fifty
+        messages every five seconds, changed or not. `after` asks for what
+        arrived since the last one the tab has."""
+        first = ChatMessage.objects.create(room=self.room, user=self.other, content='birinchi')
+        second = ChatMessage.objects.create(room=self.room, user=self.other, content='ikkinchi')
+        r = self.client.get(f'/api/v1/chat/rooms/{self.room.slug}/messages/', {'after': first.id})
+        self.assertEqual([m['id'] for m in r.data], [second.id])
+
+    def test_an_after_that_is_not_a_number_is_a_400(self):
+        r = self.client.get(f'/api/v1/chat/rooms/{self.room.slug}/messages/', {'after': 'abc'})
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_a_stranger_cannot_read_the_room(self):
         """Audit, 21 October 2026. Reading was IsAuthenticatedOrReadOnly, so one
         anonymous request returned the last fifty messages with each author's

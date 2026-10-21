@@ -8,6 +8,11 @@ import { useTranslation } from '@/hooks/useTranslation';
 import EmailVerificationBanner from '@/components/auth/EmailVerificationBanner';
 import { useFormat } from '@/hooks/useFormat';
 
+/** Whether two message lists hold the same messages, in the same order. */
+function sameIds(a, b) {
+  return a.length === b.length && a.every((m, i) => m.id === b[i].id);
+}
+
 function Avatar({ url, username }) {
   return url
     ? <img src={url} alt={username} className="w-10 h-10 rounded-xl object-cover border border-white/10 shrink-0" />
@@ -86,15 +91,56 @@ export default function ChatView() {
     }).finally(() => setLoading(false));
   }, []);
 
+  // The newest message this tab has, so a poll asks only for what came after.
+  const lastIdRef = useRef(null);
   useEffect(() => {
-    if (!activeRoom) return;
-    const load = () =>
-      api.get(`/chat/rooms/${activeRoom}/messages/`)
-        .then(({ data }) => setMessages(data))
-        .catch(() => {});
-    load();
-    pollRef.current = setInterval(load, 5000);
-    return () => clearInterval(pollRef.current);
+    lastIdRef.current = messages.length ? messages[messages.length - 1].id : null;
+  }, [messages]);
+
+  // Every tab used to fetch the room's last fifty messages every five seconds,
+  // hidden or not — a class of thirty was six requests a second for nothing —
+  // and each answer replaced the list, scrolling the reader back down. Now: only
+  // what is newer, nothing while hidden, and a full reload once a minute so a
+  // message a moderator hid, or somebody just blocked, leaves the screen too.
+  useEffect(() => {
+    if (!activeRoom) return undefined;
+    let cancelled = false;
+    let tick = 0;
+    lastIdRef.current = null;
+
+    const load = async (full) => {
+      if (document.hidden) return;
+      const after = full ? null : lastIdRef.current;
+      try {
+        const { data } = await api.get(
+          `/chat/rooms/${activeRoom}/messages/`,
+          ...(after ? [{ params: { after } }] : []),
+        );
+        if (cancelled) return;
+        if (after) {
+          if (data.length) {
+            setMessages((prev) => [...prev, ...data.filter((m) => !prev.some((p) => p.id === m.id))]);
+          }
+        } else {
+          setMessages((prev) => (sameIds(prev, data) ? prev : data));
+        }
+      } catch {
+        // A missed poll is retried by the next one; nothing to tell the reader.
+      }
+    };
+
+    load(true);
+    pollRef.current = setInterval(() => {
+      tick += 1;
+      load(tick % 12 === 0);
+    }, 5000);
+    const onVisible = () => { if (!document.hidden) load(false); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      cancelled = true;
+      clearInterval(pollRef.current);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, [activeRoom]);
 
   useEffect(() => {
