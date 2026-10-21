@@ -26,6 +26,20 @@ def check_new_password(password, password2, user=None):
         raise serializers.ValidationError({'password': list(e.messages)})
 
 
+def check_date_of_birth(value):
+    """Registration's rule for a date of birth, and the profile's when it is added later."""
+    # localdate, not date.today(): the server runs on UTC and the site on
+    # Asia/Tashkent, so for five hours a day they disagree about the date.
+    from django.utils import timezone
+    today = timezone.localdate()
+    if value >= today:
+        raise serializers.ValidationError('Date of birth must be in the past.')
+    # The form's own bound (lib/authValidation.js), which the server lacked.
+    if today.year - value.year > 120:
+        raise serializers.ValidationError('Enter a real date of birth.')
+    return value
+
+
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
         write_only=True, min_length=8, style={'input_type': 'password'}
@@ -55,16 +69,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         return value.lower()
 
     def validate_date_of_birth(self, value):
-        # localdate, not date.today(): the server runs on UTC and the site on
-        # Asia/Tashkent, so for five hours a day they disagree about the date.
-        from django.utils import timezone
-        today = timezone.localdate()
-        if value >= today:
-            raise serializers.ValidationError('Date of birth must be in the past.')
-        # The form's own bound (lib/authValidation.js), which the server lacked.
-        if today.year - value.year > 120:
-            raise serializers.ValidationError('Enter a real date of birth.')
-        return value
+        return check_date_of_birth(value)
 
     def validate(self, attrs):
         check_new_password(attrs['password'], attrs['password2'])
@@ -115,13 +120,16 @@ class UserSerializer(serializers.ModelSerializer):
     # The boolean, never the timestamp behind it: when a particular child was at
     # a computer is not something a response needs to carry.
     email_verified = serializers.BooleanField(source='is_email_verified', read_only=True)
+    # Whether there is one, never anything about it: an account that came
+    # through Google has none, and the page must offer "set" rather than "change".
+    has_password = serializers.BooleanField(source='has_usable_password', read_only=True)
 
     class Meta:
         model = User
         fields = (
             'id', 'username', 'first_name', 'last_name', 'email',
             'date_of_birth', 'avatar_url', 'astronaut_name', 'bio', 'language', 'date_joined',
-            'is_staff', 'role', 'email_verified', 'pending_email',
+            'is_staff', 'role', 'email_verified', 'pending_email', 'has_password',
         )
         read_only_fields = fields
 
@@ -153,9 +161,17 @@ class ProfileSerializer(serializers.ModelSerializer):
         validate_image_upload(value)
         return value
 
+    def validate_date_of_birth(self, value):
+        # Settable here because an account that came through Google has none,
+        # and its sign-in tells the page to ask. It was silently dropped.
+        return check_date_of_birth(value)
+
     class Meta:
         model = User
-        fields = ('first_name', 'last_name', 'avatar', 'astronaut_name', 'bio', 'selected_spaceship', 'language')
+        fields = (
+            'first_name', 'last_name', 'avatar', 'astronaut_name', 'bio', 'selected_spaceship',
+            'language', 'date_of_birth',
+        )
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

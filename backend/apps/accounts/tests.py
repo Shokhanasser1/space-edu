@@ -575,3 +575,44 @@ class DeleteAccountThrottleTests(TestCase):
             for i in range(25)
         ]
         self.assertIn(status.HTTP_429_TOO_MANY_REQUESTS, codes)
+
+
+class ProfileCompletionTests(TestCase):
+    """Audit, 21 October 2026: an account that arrived through Google could not
+    finish itself.
+
+    Google gives no date of birth, so the sign-in answers `profile_complete:
+    false` -- and `PATCH /auth/me/` silently dropped `date_of_birth`, because
+    ProfileSerializer did not list it. And nothing told the page whether the
+    account had a password, so it offered "change password" to an account
+    with none.
+    """
+
+    def setUp(self):
+        cache.clear()
+        self.user = User.objects.create_user(username='pilot', email='pilot@example.com')
+        self.user.set_unusable_password()
+        self.user.save(update_fields=['password'])
+        self.client = APIClient()
+        self.client.force_authenticate(self.user)
+
+    def _patch(self, **body):
+        return self.client.patch('/api/v1/auth/me/', body, format='json')
+
+    def test_the_date_of_birth_can_be_added(self):
+        r = self._patch(date_of_birth='2012-05-01')
+        self.assertEqual(r.status_code, status.HTTP_200_OK)
+        self.assertEqual(r.data['date_of_birth'], '2012-05-01')
+        self.user.refresh_from_db()
+        self.assertEqual(str(self.user.date_of_birth), '2012-05-01')
+
+    def test_it_goes_through_registration_s_rules(self):
+        for bad in ('2999-01-01', '1900-01-01'):
+            with self.subTest(dob=bad):
+                self.assertEqual(self._patch(date_of_birth=bad).status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_the_account_says_whether_it_has_a_password(self):
+        self.assertFalse(self.client.get('/api/v1/auth/me/').data['has_password'])
+        self.user.set_password(VALID_PW)
+        self.user.save(update_fields=['password'])
+        self.assertTrue(self.client.get('/api/v1/auth/me/').data['has_password'])
