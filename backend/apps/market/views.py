@@ -1,4 +1,4 @@
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.db.models import F, Q
 from rest_framework import generics, status, viewsets
 from rest_framework.decorators import action
@@ -195,30 +195,44 @@ class PurchaseView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        if not item.in_stock:
-            return Response({'detail': 'Item is out of stock.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        if UserInventory.objects.filter(user=request.user, item=item).exists():
-            return Response({'detail': 'You already own this item.'}, status=status.HTTP_400_BAD_REQUEST)
-
         from apps.gamification.models import UserGamificationProfile
 
         # get_or_create: for a user created before the post_save signal existed,
         # request.user.gamification was a RelatedObjectDoesNotExist -> 500.
         profile, _ = UserGamificationProfile.objects.get_or_create(user=request.user)
 
-        with transaction.atomic():
-            # spend_fuel() re-reads the balance under a row lock and returns False
-            # if it is short. Checking first and debiting afterwards let two
-            # concurrent purchases both pass on the same balance.
-            if not profile.spend_fuel(item.cost_fuel):
-                return Response(
-                    {'detail': f'Not enough fuel. Need {item.cost_fuel}, have {profile.fuel}.'},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            inventory = UserInventory.objects.create(user=request.user, item=item)
-            # F() so concurrent buyers cannot overwrite each other's increment.
-            MarketItem.objects.filter(pk=item.pk).update(sold_count=F('sold_count') + 1)
+        already_owned = Response(
+            {'detail': 'You already own this item.'}, status=status.HTTP_400_BAD_REQUEST,
+        )
+        try:
+            with transaction.atomic():
+                # Stock is judged on the row as it stands under a lock, not as it
+                # was first read: two buyers of the last one both passed the old
+                # check, and the item sold past its stock.
+                locked = MarketItem.objects.select_for_update().get(pk=item.pk)
+                if not locked.in_stock:
+                    return Response(
+                        {'detail': 'Item is out of stock.'}, status=status.HTTP_400_BAD_REQUEST,
+                    )
+                if UserInventory.objects.filter(user=request.user, item=item).exists():
+                    return already_owned
+
+                # spend_fuel() re-reads the balance under a row lock and returns
+                # False if it is short. Checking first and debiting afterwards let
+                # two concurrent purchases both pass on the same balance.
+                if not profile.spend_fuel(item.cost_fuel):
+                    return Response(
+                        {'detail': f'Not enough fuel. Need {item.cost_fuel}, have {profile.fuel}.'},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                inventory = UserInventory.objects.create(user=request.user, item=item)
+                # F() so concurrent buyers cannot overwrite each other's increment.
+                MarketItem.objects.filter(pk=item.pk).update(sold_count=F('sold_count') + 1)
+        except IntegrityError:
+            # A double click: both passed the ownership check and the constraint
+            # refused the second. The block rolled back, fuel included -- this is
+            # a 400 the child understands, not a 500.
+            return already_owned
 
         return Response(UserInventorySerializer(inventory).data, status=status.HTTP_201_CREATED)
 
@@ -276,6 +290,15 @@ class ReviewView(APIView):
         # Must own the item
         if not UserInventory.objects.filter(user=request.user, item=item).exists():
             return Response({'detail': 'You must own this item to review it.'}, status=status.HTTP_403_FORBIDDEN)
+
+        # A review is written to other children, exactly as a chat message is,
+        # and had none of the chat's floor: a confirmed address, and a moderator's
+        # pause applying here too. The profanity screen is in the serializer.
+        from apps.chat.views import suspension_refusal, verification_refusal
+
+        refusal = verification_refusal(request.user) or suspension_refusal(request.user)
+        if refusal is not None:
+            return refusal
 
         serializer = ItemReviewWriteSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)

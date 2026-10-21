@@ -1,6 +1,7 @@
 """Regression tests for findings from the 2026-08-22 audit."""
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.test import TestCase
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
 
@@ -57,7 +58,11 @@ class ReviewRatingTests(TestCase):
 
     def setUp(self):
         self.item = _item()
-        self.user = User.objects.create_user(username='alice', email='a@e.com', password='x')
+        # Confirmed: a review is written to other people, and that needs a
+        # confirmed address now (ReviewModerationTests).
+        self.user = User.objects.create_user(
+            username='alice', email='a@e.com', password='x', email_verified_at=timezone.now(),
+        )
         UserInventory.objects.create(user=self.user, item=self.item)
         self.client = APIClient()
         self.client.force_authenticate(self.user)
@@ -123,6 +128,113 @@ class PurchaseTests(TestCase):
         self.client.post('/api/v1/market/purchase/', {'item_slug': 'ship'}, format='json')
         self.item.refresh_from_db()
         self.assertEqual(self.item.sold_count, 1)
+
+
+class PurchaseRaceTests(TestCase):
+    """Audit, 21 October 2026: two buyers at once.
+
+    The stock check ran on the item as first read, outside any lock, so two
+    buyers of the last one both passed it. And a double click passed the
+    "already own it" check twice, reached the unique constraint, and answered
+    500 -- the transaction rolled back, but the child saw an error.
+    """
+
+    def setUp(self):
+        self.item = _item(cost_fuel=10, stock=1)
+        self.user = User.objects.create_user(username='alice', email='a@e.com', password='x')
+        self.user.gamification.fuel = 100
+        self.user.gamification.save(update_fields=['fuel'])
+        self.client = APIClient()
+        self.client.force_authenticate(self.user)
+
+    def _buy(self):
+        return self.client.post('/api/v1/market/purchase/', {'item_slug': 'ship'}, format='json')
+
+    def _fuel(self):
+        self.user.gamification.refresh_from_db()
+        return self.user.gamification.fuel
+
+    def test_the_last_one_is_not_sold_twice(self):
+        from unittest.mock import patch
+
+        stale = MarketItem.objects.get(pk=self.item.pk)  # read before the other buyer
+        MarketItem.objects.filter(pk=self.item.pk).update(sold_count=1)  # the other buyer
+        with patch.object(MarketItem.objects, 'get', return_value=stale):
+            r = self._buy()
+
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
+        self.item.refresh_from_db()
+        self.assertEqual(self.item.sold_count, 1)
+        self.assertEqual(self._fuel(), 100)
+
+    def test_a_double_click_is_a_400_and_charges_once(self):
+        from unittest.mock import patch
+
+        self.item.stock = 0  # unlimited
+        self.item.save(update_fields=['stock'])
+        self.assertEqual(self._buy().status_code, status.HTTP_201_CREATED)
+        # The second click's ownership check ran before the first committed.
+        with patch.object(UserInventory.objects, 'filter', return_value=UserInventory.objects.none()):
+            r = self._buy()
+
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(self._fuel(), 90)
+
+
+class ReviewModerationTests(TestCase):
+    """Audit, 21 October 2026: reviews were a public write channel with none of
+    chat's floor. No confirmed address, no profanity screen, a chat suspension
+    did not apply, and anybody could read them with the author's username --
+    the local part of their e-mail."""
+
+    def setUp(self):
+        self.item = _item()
+        self.user = User.objects.create_user(
+            username='aziza.karimova2013', email='aziza.karimova2013@e.com', password='x',
+            email_verified_at=timezone.now(),
+        )
+        UserInventory.objects.create(user=self.user, item=self.item)
+        self.client = APIClient()
+        self.client.force_authenticate(self.user)
+
+    def _review(self, comment='Juda yaxshi kema!', rating=5):
+        return self.client.post(
+            f'/api/v1/market/items/{self.item.slug}/review/',
+            {'rating': rating, 'comment': comment}, format='json',
+        )
+
+    def test_an_unconfirmed_address_cannot_review(self):
+        self.user.email_verified_at = None
+        self.user.save(update_fields=['email_verified_at'])
+        r = self._review()
+        self.assertEqual(r.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(r.data.get('code'), 'email_unverified')
+
+    def test_profanity_is_refused(self):
+        from .models import ItemReview
+
+        r = self._review(comment='fuck you')
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertFalse(ItemReview.objects.exists())
+
+    def test_a_chat_suspension_applies(self):
+        from apps.chat.models import ChatSuspension
+
+        staff = User.objects.create_user(username='mod', email='m@e.com', password='x', is_staff=True)
+        ChatSuspension.objects.create(
+            user=self.user, until=timezone.now() + timezone.timedelta(days=3),
+            reason='bullying', created_by=staff,
+        )
+        r = self._review()
+        self.assertEqual(r.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(r.data.get('code'), 'suspended')
+
+    def test_the_public_list_does_not_print_the_username(self):
+        self._review()
+        r = APIClient().get(f'/api/v1/market/items/{self.item.slug}/reviews/')
+        self.assertEqual(r.status_code, status.HTTP_200_OK)
+        self.assertNotIn('aziza.karimova2013', str(r.data))
+        self.assertEqual(r.data[0]['display_name'], None)
 
 
 class ExternalProductTests(TestCase):

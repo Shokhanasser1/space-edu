@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .full_profile import FullProfileView
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from rest_framework.permissions import IsAuthenticated
 
 from .leaderboard import (
@@ -279,13 +279,19 @@ class RewardPurchaseView(APIView):
         # spend_fuel() re-reads the balance under a row lock and returns False if
         # it is short. Checking first and debiting afterwards let two concurrent
         # purchases of different products both pass on the same balance.
-        with transaction.atomic():
-            if not profile.spend_fuel(product.cost):
-                return Response(
-                    {'detail': f'Not enough coins. Need {product.cost}, have {profile.fuel}.'},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            purchase = UserRewardPurchase.objects.create(user=request.user, product=product)
+        try:
+            with transaction.atomic():
+                if not profile.spend_fuel(product.cost):
+                    return Response(
+                        {'detail': f'Not enough coins. Need {product.cost}, have {profile.fuel}.'},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                purchase = UserRewardPurchase.objects.create(user=request.user, product=product)
+        except IntegrityError:
+            # A double click: both passed the ownership check above and the
+            # constraint refused the second. The block rolled back, the coins
+            # with it, so this is the same answer as the check gives.
+            return Response({'detail': 'You already own this reward.'}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({
             'purchase': UserRewardPurchaseSerializer(purchase).data,

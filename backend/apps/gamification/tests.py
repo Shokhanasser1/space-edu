@@ -200,6 +200,24 @@ class RewardPurchaseTests(TestCase):
         again = self.client.post('/api/v1/gamification/rewards/buy/', {'slug': 'a'}, format='json')
         self.assertEqual(again.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_a_double_click_is_a_400_and_charges_once(self):
+        """Audit, 21 October 2026: both clicks passed the "already own it" check
+        before either wrote, and the unique constraint turned the second into a
+        500. It rolled back, but the child saw an error."""
+        from unittest.mock import patch
+
+        # Enough for two, so the balance is not what stops the second click.
+        UserGamificationProfile.objects.filter(user=self.user).update(fuel=200)
+        self.client.post('/api/v1/gamification/rewards/buy/', {'slug': 'a'}, format='json')
+        with patch.object(
+            UserRewardPurchase.objects, 'filter', return_value=UserRewardPurchase.objects.none(),
+        ):
+            again = self.client.post('/api/v1/gamification/rewards/buy/', {'slug': 'a'}, format='json')
+
+        self.assertEqual(again.status_code, status.HTTP_400_BAD_REQUEST)
+        profile = UserGamificationProfile.objects.get(user=self.user)
+        self.assertEqual(profile.fuel, 120)
+
 
 class LeaderboardPrivacyTests(TestCase):
     """Finding: the public leaderboard exposed first_name, last_name and the

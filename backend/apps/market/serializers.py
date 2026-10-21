@@ -114,11 +114,18 @@ class WishlistWriteSerializer(serializers.Serializer):
 
 # ── Review ──
 class ItemReviewSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(source='user.username', read_only=True)
+    # Read by anybody. `username` was the local part of the author's e-mail;
+    # this is the astronaut name they chose, or null, as on the leaderboards.
+    display_name = serializers.SerializerMethodField()
 
     class Meta:
         model = ItemReview
-        fields = ('id', 'username', 'rating', 'comment', 'created_at')
+        fields = ('id', 'display_name', 'rating', 'comment', 'created_at')
+
+    def get_display_name(self, obj):
+        from apps.gamification.serializers import public_name
+
+        return public_name(obj.user.astronaut_name)
 
 
 class ItemReviewWriteSerializer(serializers.ModelSerializer):
@@ -127,3 +134,16 @@ class ItemReviewWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = ItemReview
         fields = ('rating', 'comment')
+
+    def validate_comment(self, value):
+        # The chat's screen, word for word: a review is read by other children
+        # just the same, and had none.
+        from apps.chat.moderation import find_profanity
+
+        if find_profanity(value):
+            raise serializers.ValidationError(
+                'This message looks like it contains language that is not allowed here. '
+                'Please rewrite it.',
+                code='profanity',
+            )
+        return value
