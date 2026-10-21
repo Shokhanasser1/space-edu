@@ -20,7 +20,7 @@ from django.db import IntegrityError, transaction
 from django.db.models import Count, Max, Q
 from django.utils import timezone
 from rest_framework import generics, status
-from rest_framework.permissions import IsAdminUser, IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -117,7 +117,10 @@ class RoomListView(generics.ListAPIView):
 
 
 class RoomMessagesView(APIView):
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    # Reading too. It was IsAuthenticatedOrReadOnly, which handed anybody the
+    # last fifty messages with every author's first name, avatar and username
+    # (their e-mail's local part), unthrottled. The chat page needs a login anyway.
+    permission_classes = [IsAuthenticated]
     throttle_classes = [RoomMessageThrottle]
 
     def get(self, request, slug):
@@ -211,7 +214,8 @@ class BlockListCreateView(APIView):
         return Response(BlockSerializer(blocks, many=True).data)
 
     def post(self, request):
-        user_id = request.data.get('user_id')
+        data = request.data if isinstance(request.data, dict) else {}
+        user_id = data.get('user_id')
         try:
             target = User.objects.get(id=int(user_id))
         except (TypeError, ValueError, User.DoesNotExist):

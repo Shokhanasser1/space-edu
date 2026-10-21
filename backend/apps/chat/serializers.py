@@ -220,12 +220,13 @@ class ReportSerializer(serializers.ModelSerializer):
 
 
 class BlockSerializer(serializers.ModelSerializer):
-    blocked_username = serializers.CharField(source='blocked.username', read_only=True)
-    blocked_first_name = serializers.CharField(source='blocked.first_name', read_only=True)
+    # The id and nothing about whose it is. Any id can be blocked, so a name here
+    # made block-then-unblock a directory of every account, chat or not. The
+    # screens that block somebody already have the name they clicked on.
 
     class Meta:
         model = UserBlock
-        fields = ('blocked', 'blocked_username', 'blocked_first_name', 'created_at')
+        fields = ('blocked', 'created_at')
         read_only_fields = ('created_at',)
 
 

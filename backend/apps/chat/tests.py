@@ -168,6 +168,16 @@ class RoomMessageTests(TestCase):
         codes = [self._post(f'message number {i}').status_code for i in range(25)]
         self.assertIn(status.HTTP_429_TOO_MANY_REQUESTS, codes)
 
+    def test_a_stranger_cannot_read_the_room(self):
+        """Audit, 21 October 2026. Reading was IsAuthenticatedOrReadOnly, so one
+        anonymous request returned the last fifty messages with each author's
+        first name, avatar and `username` -- the local part of their e-mail --
+        unthrottled. The leaderboard was locked down for exactly this. The chat
+        page itself has always been behind a login."""
+        self._post('Salom!')
+        r = APIClient().get(f'/api/v1/chat/rooms/{self.room.slug}/messages/')
+        self.assertEqual(r.status_code, status.HTTP_401_UNAUTHORIZED)
+
     def test_reading_is_not_rate_limited_by_the_write_throttle(self):
         for _ in range(25):
             r = self.client.get(f'/api/v1/chat/rooms/{self.room.slug}/messages/')
@@ -219,6 +229,19 @@ class BlockingTests(TestCase):
         self.assertEqual(
             len(self.client.get(f'/api/v1/chat/rooms/{self.room.slug}/messages/').data), 1,
         )
+
+    def test_blocking_does_not_say_who_an_id_belongs_to(self):
+        """Audit, 21 October 2026. The answer carried the target's username and
+        first name, so blocking ids 1, 2, 3... and unblocking again listed every
+        account here -- including children who never wrote a word in chat."""
+        self._block()
+        listed = self.client.get('/api/v1/chat/blocks/')
+        for body in (str(self._block().data), str(listed.data)):
+            self.assertNotIn('pest', body)
+
+    def test_a_body_that_is_not_an_object_is_404_not_500(self):
+        r = self.client.post('/api/v1/chat/blocks/', [self.pest.id], format='json')
+        self.assertEqual(r.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_you_cannot_block_yourself(self):
         r = self.client.post('/api/v1/chat/blocks/', {'user_id': self.me.id}, format='json')
