@@ -406,6 +406,34 @@ class LessonQuizTests(TestCase):
         progress = self._take_lesson_test(selected=0)
         self.assertFalse(progress.is_mastered)
 
+    def _retake(self, selected):
+        from apps.progress.models import UserLessonProgress
+
+        r = self.client.post(
+            '/api/v1/challenges/quiz/start/', {'lesson': 'kin-one', 'count': 10}, format='json',
+        )
+        answers = [{'question_id': q['id'], 'selected': selected} for q in r.data['questions']]
+        self.client.post(
+            f'/api/v1/challenges/quiz/{r.data["session_id"]}/submit/',
+            {'answers': answers}, format='json',
+        )
+        return UserLessonProgress.objects.get(lesson=self.lesson)
+
+    def test_a_retake_straight_after_seeing_the_answers_does_not_master(self):
+        """Security review, 22 October 2026. The submit answers with every
+        correct index, so a retake a minute later is a copy of the answer key,
+        not a test. A retake counts once a day has passed since the answers were
+        shown; the first attempt always counts."""
+        self._take_lesson_test(selected=0)
+        progress = self._retake(selected=1)
+        self.assertFalse(progress.is_mastered)
+
+    def test_a_retake_the_next_day_counts(self):
+        self._take_lesson_test(selected=0)
+        QuizSession.objects.update(completed_at=timezone.now() - timezone.timedelta(hours=25))
+        progress = self._retake(selected=1)
+        self.assertTrue(progress.is_mastered)
+
     def test_a_lesson_quiz_only_draws_that_lesson_s_questions(self):
         r = self.client.post(
             '/api/v1/challenges/quiz/start/', {'lesson': 'kin-one', 'count': 10}, format='json',

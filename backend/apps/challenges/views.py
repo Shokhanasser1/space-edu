@@ -284,6 +284,11 @@ class QuizStartView(APIView):
         }, status=status.HTTP_201_CREATED)
 
 
+# How long after a lesson test's answers were shown a retake of it can count
+# towards mastery. See QuizSubmitView.
+LESSON_RETAKE_COOLDOWN = timezone.timedelta(hours=24)
+
+
 def _owned_session_or_none(request, session_id):
     """Fetch a quiz session the caller is allowed to touch.
 
@@ -405,7 +410,15 @@ class QuizSubmitView(APIView):
             if profile is not None and len(lesson_ids) == 1 and None not in lesson_ids:
                 lesson_id = next(iter(lesson_ids))
                 pool = ChallengeQuestion.objects.filter(lesson_id=lesson_id, is_active=True)
-                if session.total >= pool.count():
+                # Every submit answers with the correct indices, so a retake a
+                # minute later is a copy of the answer key. It counts once a day
+                # has passed since the answers were last shown.
+                answers_just_shown = QuizSession.objects.filter(
+                    user=request.user, is_completed=True,
+                    completed_at__gte=timezone.now() - LESSON_RETAKE_COOLDOWN,
+                    questions__lesson_id=lesson_id,
+                ).exclude(pk=session.pk).exists()
+                if session.total >= pool.count() and not answers_just_shown:
                     from apps.progress.views import record_lesson_test
 
                     record_lesson_test(request.user, lesson_id, round(percentage))
