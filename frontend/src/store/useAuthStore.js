@@ -7,6 +7,8 @@ import { useUserStore } from './useUserStore';
 import useStarStore from './useStarStore';
 import { useProblemsStore } from './useProblemsStore';
 
+const STORAGE_KEY = 'uz-cosmos-auth';
+
 export const useAuthStore = create()(
   persist(
     (set, get) => ({
@@ -104,7 +106,7 @@ export const useAuthStore = create()(
         }
       },
     }),
-    { name: 'uz-cosmos-auth' }
+    { name: STORAGE_KEY }
   )
 );
 
@@ -129,6 +131,25 @@ function _setupAuth() {
     }
   );
 }
+
+// Every tab writes the persisted copy, and until now none read it after loading.
+// A tab that refreshed rotated the pair; the other kept the old, blacklisted
+// refresh token, was refused at its next refresh and signed out — writing nulls
+// over the storage the first tab still needed. A sign-out in one tab left the
+// other showing the account. The storage event fires in every tab but the one
+// that wrote, which is exactly the set that needs to catch up.
+window.addEventListener('storage', (event) => {
+  if (event.key !== STORAGE_KEY) return;
+  const before = useAuthStore.getState().user?.id;
+  useAuthStore.persist.rehydrate();
+  const { user, isAuthenticated } = useAuthStore.getState();
+  // Somebody else on this computer now: their tab must not show the last
+  // pupil's XP and lessons.
+  if (user?.id !== before) _resetAllStores();
+  // logout() pointed the interceptors at nothing; a sign-in elsewhere has to
+  // point them back.
+  if (isAuthenticated) _setupAuth();
+});
 
 // Wire up the interceptors on module load, so a page reload with persisted
 // tokens gets the same wiring as a fresh login. The old version passed only

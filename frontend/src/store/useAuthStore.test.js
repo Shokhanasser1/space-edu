@@ -253,3 +253,53 @@ describe('updateUser', () => {
     expect(useAuthStore.getState().user).toEqual({ ...USER, first_name: 'Azizbek' });
   });
 });
+
+/*
+ * Audit, 21 Oct 2026. The persisted copy was written by every tab and read by
+ * none after load. A tab that refreshed rotated the pair; the other kept the old,
+ * blacklisted refresh token in memory, was refused at its next refresh and
+ * signed out — and its logout wrote nulls over the storage the first tab still
+ * needed. A sign-out in one tab left the other showing the account.
+ */
+describe('another tab', () => {
+  function writtenByAnotherTab(state) {
+    localStorage.setItem('uz-cosmos-auth', JSON.stringify({ state, version: 0 }));
+    window.dispatchEvent(new StorageEvent('storage', { key: 'uz-cosmos-auth' }));
+  }
+
+  it('picks up the pair another tab rotated', async () => {
+    useAuthStore.getState().login(USER, 'access-1', 'refresh-1');
+
+    writtenByAnotherTab({
+      user: USER, accessToken: 'access-2', refreshToken: 'refresh-2', isAuthenticated: true,
+    });
+    await Promise.resolve();
+
+    expect(useAuthStore.getState().refreshToken).toBe('refresh-2');
+    expect(useAuthStore.getState().accessToken).toBe('access-2');
+  });
+
+  it('signs out when another tab signs out', async () => {
+    useAuthStore.getState().login(USER, 'access-1', 'refresh-1');
+
+    writtenByAnotherTab({
+      user: null, accessToken: null, refreshToken: null, isAuthenticated: false,
+    });
+    await Promise.resolve();
+
+    expect(useAuthStore.getState().isAuthenticated).toBe(false);
+  });
+
+  it('does not keep the last pupil\'s progress when another tab signs somebody else in', async () => {
+    useAuthStore.getState().login(USER, 'access-1', 'refresh-1');
+    useGamificationStore.setState({ xp: 5000, level: 8 });
+
+    writtenByAnotherTab({
+      user: { id: 2, username: 'malika' }, accessToken: 'a', refreshToken: 'r', isAuthenticated: true,
+    });
+    await Promise.resolve();
+
+    expect(useAuthStore.getState().user.id).toBe(2);
+    expect(useGamificationStore.getState().xp).toBe(0);
+  });
+});
