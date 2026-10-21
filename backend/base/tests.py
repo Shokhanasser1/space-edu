@@ -214,6 +214,17 @@ class JwtConfigTests(SimpleTestCase):
     """The frontend interceptor must persist the rotated refresh token; if
     rotation is on and blacklisting is on, dropping it logs every user out."""
 
+    def test_an_access_token_is_short_lived(self):
+        """Audit, 21 October 2026. An access token cannot be revoked, so its
+        lifetime is how long a stolen one -- or a session somebody else's reset
+        should have ended -- keeps working. It was eight hours, kept that long
+        because the browser could not refresh reliably; it can now."""
+        from datetime import timedelta
+
+        from django.conf import settings
+
+        self.assertLessEqual(settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'], timedelta(minutes=30))
+
     def test_rotation_and_blacklisting_are_configured_together(self):
         from django.conf import settings
 

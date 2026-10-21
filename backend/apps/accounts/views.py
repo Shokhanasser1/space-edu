@@ -457,9 +457,9 @@ class PasswordChangeView(APIView):
         # Letting either set a new password on the strength of a bearer token
         # alone reopens the second. That command blacklists every refresh token
         # and clears every session, but an access token cannot be revoked and
-        # lives eight hours (apps/accounts/tokens.py) -- so for those eight
-        # hours whoever held the leaked account could have set a password of
-        # their own and kept it for good.
+        # outlives that by up to its lifetime (apps/accounts/tokens.py) -- so in
+        # that window whoever held the leaked account could have set a password
+        # of their own and kept it for good.
         #
         # So there is no password-free path through here. Setting a first
         # password goes through the reset flow, which sends a code to the

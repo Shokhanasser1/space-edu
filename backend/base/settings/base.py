@@ -361,7 +361,11 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(hours=8),
+    # An access token cannot be revoked (apps/accounts/tokens.py), so this is how
+    # long a stolen one keeps working. It was 8 hours while the browser could not
+    # refresh reliably -- parallel 401s each refreshed and signed the pupil out.
+    # Refreshes are shared now (frontend/src/lib/api.js), so it can be short.
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,

@@ -1,10 +1,11 @@
 """Ending sessions that are already open.
 
-**Read the limitation before relying on this.** Access tokens live eight hours
-(`SIMPLE_JWT.ACCESS_TOKEN_LIFETIME`) and cannot be revoked at all -- they are
-verified by signature, and nothing is looked up. Blacklisting the refresh tokens
-means no new access token can be minted, which caps whoever is holding one at
-eight more hours. It does not throw them out now.
+**Read the limitation before relying on this.** Access tokens live thirty
+minutes (`SIMPLE_JWT.ACCESS_TOKEN_LIFETIME`; eight hours until October 2026) and
+cannot be revoked at all -- they are verified by signature, and nothing is
+looked up. Blacklisting the refresh tokens means no new access token can be
+minted, which caps whoever is holding one at the rest of its thirty minutes. It
+does not throw them out now.
 
 That is a real gap and it is deliberate to leave it here rather than paper over
 it: closing it needs a claim on the token that is checked against the account on
