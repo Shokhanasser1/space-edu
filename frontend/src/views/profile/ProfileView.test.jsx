@@ -110,3 +110,35 @@ describe('the place shown on a profile', () => {
     expect(link).toHaveAttribute('href', '/leaderboard');
   });
 });
+
+/*
+ * Audit, 21 Oct 2026: a lesson's score was whatever the lesson page reported
+ * about itself (always 100). The server now scores a lesson only from its test,
+ * so a lesson read but not tested comes back with score 0 — and printing
+ * "Score 0%" beside it would read as a failed lesson.
+ */
+describe('a finished lesson', () => {
+  const lessons = (rows) => {
+    api.get.mockImplementation((url) => {
+      if (url === '/gamification/profile/full/') {
+        return Promise.resolve(fullProfile({ rank: null, total_players: 0 }));
+      }
+      if (url === '/progress/') return Promise.resolve({ data: { lessons: rows, enrollments: [] } });
+      return Promise.resolve({ data: [] });
+    });
+  };
+
+  it('shows no score until its test has been taken', async () => {
+    lessons([{ lesson_slug: 'kin-one', score: 0, is_mastered: false }]);
+    show();
+    const title = await screen.findByText('kin-one');
+    expect(title.parentElement.textContent).not.toMatch(/%/);
+  });
+
+  it('shows the test result once there is one', async () => {
+    lessons([{ lesson_slug: 'kin-one', score: 80, is_mastered: true }]);
+    show();
+    const title = await screen.findByText('kin-one');
+    expect(title.parentElement.textContent).toMatch(/80%/);
+  });
+});

@@ -363,8 +363,10 @@ export default function ProfileView() {
       if (!combined.some(l => l.lesson_slug === slug)) {
         combined.push({
           lesson_slug: slug,
-          score: 100,
-          is_mastered: true,
+          // Not yet saved, and certainly not tested: the server scores a lesson
+          // only from its test now, so a local guess of 100 would lie.
+          score: 0,
+          is_mastered: false,
           local_only: true
         });
       }
@@ -792,7 +794,9 @@ export default function ProfileView() {
                       <div>
                         <p className="font-medium text-white">{displayTitle}</p>
                         <p className="text-xs text-white/50 mt-1">
-                          {displaySubject} · {t('profilePage', 'score')} {row.score}% {row.is_mastered ? `· ${t('profilePage', 'mastered')}` : ''}
+                          {displaySubject}
+                          {/* A score is the lesson test's result; a lesson only read has none. */}
+                          {row.score > 0 && ` · ${t('profilePage', 'score')} ${row.score}%`}
                         </p>
                       </div>
                       <span className={`text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider ${row.is_mastered ? 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20' : 'text-white/70 bg-white/10 border border-white/10'}`}>
@@ -998,10 +1002,13 @@ export default function ProfileView() {
                   <div key={row.lesson_slug} className="rounded-2xl border border-white/10 bg-white/5 p-5 flex items-center justify-between gap-4">
                     <div>
                       <p className="font-semibold text-lg text-white">{displayTitle}</p>
-                      <p className="text-sm text-white/50 mt-1">{displaySubject} · Score {row.score}%</p>
+                      <p className="text-sm text-white/50 mt-1">
+                        {displaySubject}
+                        {row.score > 0 && ` · ${t('profilePage', 'score')} ${row.score}%`}
+                      </p>
                     </div>
                     <span className={`text-xs px-4 py-1.5 rounded-full font-bold uppercase tracking-widest ${row.is_mastered ? 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20' : 'text-white/70 bg-white/10 border border-white/10'}`}>
-                      {row.is_mastered ? 'Mastered' : 'Completed'}
+                      {row.is_mastered ? t('profilePage', 'mastered') : t('profilePage', 'done')}
                     </span>
                   </div>
                 );

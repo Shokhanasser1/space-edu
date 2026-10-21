@@ -63,14 +63,22 @@ class ProgressTests(TestCase):
         self.user.gamification.refresh_from_db()
         self.assertEqual(self.user.gamification.xp, 25)
 
-    def test_a_repeat_still_records_the_attempt_and_keeps_the_best_score(self):
-        self._complete('kin-one', score=40)
-        self._complete('kin-one', score=90)
-        self._complete('kin-one', score=60)
+    def test_a_repeat_still_records_the_attempt(self):
+        for _ in range(3):
+            self._complete('kin-one')
         progress = UserLessonProgress.objects.get(user=self.user, lesson=self.one)
         self.assertEqual(progress.attempts, 3)
-        self.assertEqual(progress.score, 90)
-        self.assertTrue(progress.is_mastered)
+
+    def test_finishing_a_lesson_does_not_take_the_browser_s_word_for_mastery(self):
+        """Audit, 21 October 2026. `score` came from the browser and `score >= 70`
+        set `is_mastered`, so `{"score": 100}` mastered any lesson with no
+        question answered -- and the only caller always sent 100. Mastery now
+        comes from the lesson's own test, graded on the server; see
+        LessonQuizTests in apps/challenges/tests.py."""
+        self._complete('kin-one', score=100)
+        progress = UserLessonProgress.objects.get(user=self.user, lesson=self.one)
+        self.assertFalse(progress.is_mastered)
+        self.assertEqual(progress.score, 0)
 
     def test_an_out_of_range_score_is_rejected_rather_than_stored(self):
         r = self._complete('kin-one', score=1000)

@@ -14,6 +14,24 @@ from .serializers import (
 )
 
 
+MASTERY_PERCENT = 70
+
+
+def record_lesson_test(user, lesson_id, percentage):
+    """A graded lesson test, written onto the pupil's progress for that lesson.
+
+    Keeps the best result. Only a lesson the pupil has finished has a row to
+    write to: creating one here would count as finishing it, and the lesson's
+    own XP is paid by LessonCompleteView when it creates the row.
+    """
+    progress = UserLessonProgress.objects.filter(user=user, lesson_id=lesson_id).first()
+    if progress is None or percentage <= progress.score:
+        return
+    progress.score = percentage
+    progress.is_mastered = percentage >= MASTERY_PERCENT
+    progress.save(update_fields=['score', 'is_mastered'])
+
+
 def leaf_lessons(topic):
     """Group nodes are headings, not lessons — they must not count towards a
     topic being finished, or a topic with sub-lessons could never complete."""
@@ -39,12 +57,16 @@ class UserProgressView(APIView):
 
 
 class LessonCompleteView(APIView):
-    """POST /progress/lessons/<slug>/complete/  {"score": 0..100}
+    """POST /progress/lessons/<slug>/complete/
 
     The server decides the reward — the removed `gamification/grant/` let the
     client decide, and one request produced level 101. XP is paid on the first
-    completion only; a re-run raises the attempt count and the best score and
-    pays nothing.
+    completion only; a re-run raises the attempt count and pays nothing.
+
+    `score` is still accepted, and validated, so old clients keep working, but
+    nothing reads it. It decided `is_mastered`, so `{"score": 100}` mastered any
+    lesson with no question answered. Score and mastery come from the lesson's
+    test, graded in apps/challenges (`record_lesson_test`).
     """
 
     permission_classes = [IsAuthenticated]
@@ -52,7 +74,6 @@ class LessonCompleteView(APIView):
     def post(self, request, lesson_slug):
         serializer = LessonCompleteSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        score = serializer.validated_data['score']
 
         try:
             lesson = TopicLesson.objects.select_related('topic').get(slug=lesson_slug)
@@ -67,16 +88,11 @@ class LessonCompleteView(APIView):
 
         with transaction.atomic():
             progress, created = UserLessonProgress.objects.get_or_create(
-                user=request.user,
-                lesson=lesson,
-                defaults={'score': score, 'attempts': 1, 'is_mastered': score >= 70},
+                user=request.user, lesson=lesson, defaults={'attempts': 1},
             )
             if not created:
                 progress.attempts += 1
-                if score > progress.score:
-                    progress.score = score
-                    progress.is_mastered = progress.score >= 70
-                progress.save(update_fields=['attempts', 'score', 'is_mastered'])
+                progress.save(update_fields=['attempts'])
 
         profile = request.user.gamification
         old_level = profile.level

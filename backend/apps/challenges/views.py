@@ -397,6 +397,19 @@ class QuizSubmitView(APIView):
             if profile is not None:
                 profile.add_xp(xp_earned)
 
+            # A lesson's whole test, graded here, is what masters the lesson --
+            # not the score the lesson page used to report about itself. Whole:
+            # `count` is the caller's, and one question right out of five is not
+            # mastery.
+            lesson_ids = {q.lesson_id for q in questions_map.values()}
+            if profile is not None and len(lesson_ids) == 1 and None not in lesson_ids:
+                lesson_id = next(iter(lesson_ids))
+                pool = ChallengeQuestion.objects.filter(lesson_id=lesson_id, is_active=True)
+                if session.total >= pool.count():
+                    from apps.progress.views import record_lesson_test
+
+                    record_lesson_test(request.user, lesson_id, round(percentage))
+
         session.refresh_from_db()
         return Response(QuizSessionSerializer(session).data, status=status.HTTP_200_OK)
 

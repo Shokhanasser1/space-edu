@@ -379,6 +379,33 @@ class LessonQuizTests(TestCase):
             question='Loose question', options=['a', 'b', 'c', 'd'], correct_answer=0,
         )
 
+    def _take_lesson_test(self, selected):
+        from apps.progress.models import UserLessonProgress
+
+        user = User.objects.create_user(username='pupil', email='p@e.com', password='x')
+        self.client.force_authenticate(user)
+        UserLessonProgress.objects.create(user=user, lesson=self.lesson)
+        r = self.client.post(
+            '/api/v1/challenges/quiz/start/', {'lesson': 'kin-one', 'count': 10}, format='json',
+        )
+        answers = [{'question_id': q['id'], 'selected': selected} for q in r.data['questions']]
+        self.client.post(
+            f'/api/v1/challenges/quiz/{r.data["session_id"]}/submit/',
+            {'answers': answers}, format='json',
+        )
+        return UserLessonProgress.objects.get(user=user, lesson=self.lesson)
+
+    def test_passing_the_lesson_test_masters_the_lesson(self):
+        """Audit, 21 October 2026: mastery was the browser's own `score`. It is
+        the lesson's test now, graded here."""
+        progress = self._take_lesson_test(selected=1)
+        self.assertTrue(progress.is_mastered)
+        self.assertEqual(progress.score, 100)
+
+    def test_failing_the_lesson_test_does_not(self):
+        progress = self._take_lesson_test(selected=0)
+        self.assertFalse(progress.is_mastered)
+
     def test_a_lesson_quiz_only_draws_that_lesson_s_questions(self):
         r = self.client.post(
             '/api/v1/challenges/quiz/start/', {'lesson': 'kin-one', 'count': 10}, format='json',
