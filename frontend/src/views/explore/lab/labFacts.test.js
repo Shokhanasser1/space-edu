@@ -13,18 +13,26 @@
  */
 import { describe, expect, it } from 'vitest';
 
+import { EARTH_RADIUS_KM, MU_EARTH } from '@/lib/orbits';
 import {
   APOLLO_11_ASCENT,
+  APOLLO_FACTS,
+  LAUNCH_FACTS,
+  ORBIT_INSERTION_S,
   SATURN_V,
   SATURN_V_STACK,
+  SIZE_COMPARISONS,
   SOURCES,
   altitudeKmAt,
   burnRemaining,
+  eventsReached,
   explodeOffsetM,
   missionClock,
+  nextEvent,
   readFact,
   sections,
   stageAt,
+  velocityMsAt,
 } from './labFacts';
 
 describe('every figure names where it came from', () => {
@@ -149,50 +157,86 @@ describe('the exploded view', () => {
   });
 });
 
-describe('the ascent, read off the profile rather than off a slider', () => {
-  it('every event sits at or after the one before it, and higher', () => {
-    const { events } = APOLLO_11_ASCENT;
-    for (let i = 1; i < events.length; i += 1) {
-      expect(events[i].atS).toBeGreaterThan(events[i - 1].atS);
-      expect(events[i].altitudeKm).toBeGreaterThan(events[i - 1].altitudeKm);
+describe('the ascent, read off the flight records rather than off a slider', () => {
+  const { events } = APOLLO_11_ASCENT;
+
+  it('every event follows the one before it, and names a recorded source', () => {
+    const known = Object.values(SOURCES);
+    for (let i = 0; i < events.length; i += 1) {
+      if (i > 0) expect(events[i].atS, events[i].id).toBeGreaterThan(events[i - 1].atS);
+      expect(known, events[i].id).toContain(events[i].source);
+      expect(events[i].labelKey, events[i].id).toBeTruthy();
+    }
+  });
+
+  it('the recorded altitudes and speeds never go backwards', () => {
+    for (const field of ['altitudeKm', 'velocityMs']) {
+      const points = events.filter((e) => e[field] !== undefined);
+      for (let i = 1; i < points.length; i += 1) {
+        expect(points[i][field], `${field} at ${points[i].id}`).toBeGreaterThanOrEqual(points[i - 1][field]);
+      }
     }
   });
 
   it('the drawn column is tall enough to hold the whole profile', () => {
-    const highest = Math.max(...APOLLO_11_ASCENT.events.map((e) => e.altitudeKm));
+    const highest = Math.max(...events.filter((e) => e.altitudeKm !== undefined).map((e) => e.altitudeKm));
     expect(APOLLO_11_ASCENT.ceilingKm).toBeGreaterThanOrEqual(highest);
   });
 
-  it('altitude passes exactly through the sourced points', () => {
-    for (const event of APOLLO_11_ASCENT.events) {
-      expect(altitudeKmAt(event.atS), event.id).toBeCloseTo(event.altitudeKm, 6);
+  it('altitude and speed pass exactly through the recorded points', () => {
+    for (const event of events) {
+      if (event.altitudeKm !== undefined) expect(altitudeKmAt(event.atS), event.id).toBeCloseTo(event.altitudeKm, 6);
+      if (event.velocityMs !== undefined) expect(velocityMsAt(event.atS), event.id).toBeCloseTo(event.velocityMs, 6);
     }
   });
 
   it('altitude never goes backwards and never leaves the ground early', () => {
     let previous = -1;
-    for (let s = 0; s <= 600; s += 5) {
+    for (let s = 0; s <= 800; s += 5) {
       const altitude = altitudeKmAt(s);
       expect(altitude).toBeGreaterThanOrEqual(previous);
       previous = altitude;
     }
     expect(altitudeKmAt(0)).toBe(0);
     expect(altitudeKmAt(-10)).toBe(0);
+    expect(velocityMsAt(-10)).toBe(0);
   });
 
-  it('holds at the last sourced altitude rather than extrapolating past it', () => {
-    // The third stage's burn is not in the profile because we have no source
-    // for its length; the trace must stop, not invent a continuation.
-    const last = APOLLO_11_ASCENT.events[APOLLO_11_ASCENT.events.length - 1];
-    expect(altitudeKmAt(last.atS + 500)).toBe(last.altitudeKm);
+  it('holds at orbit rather than extrapolating past the last record', () => {
+    const orbit = events.find((e) => e.id === 'orbit');
+    expect(ORBIT_INSERTION_S).toBe(orbit.atS);
+    expect(altitudeKmAt(orbit.atS + 500)).toBe(orbit.altitudeKm);
+    expect(velocityMsAt(orbit.atS + 500)).toBe(orbit.velocityMs);
   });
 
-  it('names the stage that is actually burning', () => {
+  it('reaches orbit at the speed physics says a 188 km circular orbit needs', () => {
+    // A cross-check between the two kinds of truth on the page: the speed
+    // NASA recorded at insertion, and sqrt(GM / r) for that height.
+    const orbit = events.find((e) => e.id === 'orbit');
+    const needed = Math.sqrt(MU_EARTH / (EARTH_RADIUS_KM + orbit.altitudeKm)) * 1000;
+    expect(Math.abs(orbit.velocityMs - needed) / needed).toBeLessThan(0.01);
+  });
+
+  it('names the stage that is actually burning, with the real gaps between them', () => {
     expect(stageAt(0).partId).toBe('s-ic');
-    expect(stageAt(149).partId).toBe('s-ic');
-    expect(stageAt(150).partId).toBe('s-ii');
-    expect(stageAt(509).partId).toBe('s-ii');
-    expect(stageAt(510)).toBeNull();
+    expect(stageAt(161).partId).toBe('s-ic');
+    expect(stageAt(162)).toBeNull();
+    expect(stageAt(163).partId).toBe('s-ii');
+    expect(stageAt(548).partId).toBe('s-ii');
+    expect(stageAt(548.5)).toBeNull();
+    expect(stageAt(549.2).partId).toBe('s-ivb');
+    expect(stageAt(699.3)).toBeNull();
+    expect(stageAt(ORBIT_INSERTION_S + 10)).toBeNull();
+  });
+
+  it('every stage burns inside the profile and lights after the one before it is out', () => {
+    const { stages } = APOLLO_11_ASCENT;
+    for (let i = 0; i < stages.length; i += 1) {
+      expect(stages[i].untilS).toBeGreaterThan(stages[i].startS);
+      expect(stages[i].untilS).toBeLessThanOrEqual(ORBIT_INSERTION_S);
+      if (i > 0) expect(stages[i].startS).toBeGreaterThanOrEqual(stages[i - 1].untilS);
+      expect(['kerosene', 'hydrogen']).toContain(stages[i].flame);
+    }
   });
 
   it('quotes each stage the thrust the stack data quotes', () => {
@@ -208,11 +252,21 @@ describe('the ascent, read off the profile rather than off a slider', () => {
 
   it('counts a stage burn down from full to empty', () => {
     expect(burnRemaining(0)).toBeCloseTo(1, 6);
-    expect(burnRemaining(75)).toBeCloseTo(0.5, 6);
-    expect(burnRemaining(150)).toBeCloseTo(1, 6);
-    expect(burnRemaining(330)).toBeCloseTo(0.5, 6);
-    expect(burnRemaining(510)).toBe(0);
+    expect(burnRemaining(80.8)).toBeCloseTo(0.5, 6);
+    expect(burnRemaining(163)).toBeCloseTo(1, 6);
+    expect(burnRemaining(549.2)).toBeCloseTo(1, 6);
+    expect(burnRemaining(624.25)).toBeCloseTo(0.5, 6);
+    expect(burnRemaining(162)).toBe(0);
     expect(burnRemaining(9999)).toBe(0);
+  });
+
+  it('keeps a log of what has happened and knows what comes next', () => {
+    expect(eventsReached(-1)).toEqual([]);
+    expect(eventsReached(0).map((e) => e.id)).toEqual(['liftoff']);
+    expect(eventsReached(90).map((e) => e.id)).toEqual(['liftoff', 'roll', 'maxq']);
+    expect(nextEvent(0).id).toBe('roll');
+    expect(nextEvent(83).id).toBe('ceco');
+    expect(nextEvent(ORBIT_INSERTION_S)).toBeNull();
   });
 
   it('the mission clock reads the way a launch commentary does', () => {
@@ -221,5 +275,35 @@ describe('the ascent, read off the profile rather than off a slider', () => {
     expect(missionClock(150)).toBe('T+02:30');
     expect(missionClock(510)).toBe('T+08:30');
     expect(missionClock(-5)).toBe('T+00:00');
+  });
+});
+
+describe('things to stand beside the rocket', () => {
+  it('starts with the rocket on its own', () => {
+    expect(SIZE_COMPARISONS[0].id).toBe('none');
+  });
+
+  it('uses the heights NASA compares the Saturn V with', () => {
+    // "about the height of a 36-story-tall building" and "18 meters (60 feet)
+    // taller than the Statue of Liberty".
+    const building = SIZE_COMPARISONS.find((c) => c.id === 'building');
+    const liberty = SIZE_COMPARISONS.find((c) => c.id === 'liberty');
+    expect(building.floors).toBe(36);
+    expect(Math.abs(building.heightM - SATURN_V.heightM)).toBeLessThan(1);
+    expect(SATURN_V.heightM - liberty.heightM).toBeCloseTo(18, 0);
+  });
+
+  it('every comparison with a height says where the height came from, or is a person', () => {
+    for (const thing of SIZE_COMPARISONS.filter((c) => c.heightM)) {
+      expect(thing.id === 'person' || Object.values(SOURCES).includes(thing.source), thing.id).toBe(true);
+      expect(thing.labelKey && thing.noteKey, thing.id).toBeTruthy();
+      expect(thing.widthM, thing.id).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe('the facts shown in the "did you know" cards', () => {
+  it.each([...APOLLO_FACTS, ...LAUNCH_FACTS].map((f) => [f.key, f]))('%s names a source', (_key, fact) => {
+    expect(fact.source).toMatch(/NASA/);
   });
 });

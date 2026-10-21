@@ -308,7 +308,7 @@ export default function ChatSystem() {
             </div>
           </motion.div>
         )}
-      </AnimatePresence>~
+      </AnimatePresence>
 
       {/* ── Direct Chat Window ── */}
       <AnimatePresence>

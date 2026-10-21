@@ -26,6 +26,14 @@ export const SOURCES = {
   stage3: 'NASA, "Rocketdyne J-2, Saturn V 2nd and 3rd Stage Engine" (NTRS 20100027318)',
   vehicle: 'NASA, "What Was the Saturn V?"',
   apollo11: 'NASA, Apollo 11 mission overview',
+  /** The comparisons a child can picture: a building, elephants, school buses. */
+  nasaKids: 'NASA, "What Was the Saturn V? (Grades 5-8)"',
+  /** Event times as called on the air-to-ground loop, and the parking orbit. */
+  afj: 'NASA, Apollo Flight Journal - Apollo 11, "Launch and Reaching Earth Orbit"',
+  /** Altitude and velocity at each event of the real Apollo 11 ascent. */
+  as506:
+    'NASA MSFC, "Saturn V Launch Vehicle Flight Evaluation Report - AS-506 Apollo 11 Mission" (MPR-SAT-FE-69-9, 1969)',
+  tower: 'CTBUH, The Skyscraper Center - Tashkent Tower, 375 m',
 };
 
 /** Figures for the vehicle as a whole. Shown above the stage list. */
@@ -160,74 +168,193 @@ export function explodeOffsetM(partIndex, amount) {
 }
 
 /**
- * The Apollo 11 ascent, as far as it can be stated from a source.
+ * The Apollo 11 ascent, all the way to Earth orbit, as the flight records give it.
  *
- * Three points, and the two in the middle are the ones NASA publishes: the
- * first stage burns about two and a half minutes and reaches roughly 61 km
- * (38 miles), and the second stage burns about six minutes more and reaches
- * roughly 185 km (115 miles). Between those points the trace is a straight
- * interpolation and the page says so - it is a reading aid, not a claim about
- * how the altitude actually built up.
+ * Two NASA records, and each is used for what it is good at:
  *
- * The run stops at second-stage cutoff. The third stage's burn to parking
- * orbit is described in the Apollo module, where it does not need a duration
- * we cannot source.
+ * - The Apollo Flight Journal gives the moments the crew and Houston called
+ *   out: the roll program at 13 s and Max-Q at 1:23, which the engineering
+ *   report does not tabulate.
+ * - The launch vehicle's flight evaluation report (AS-506) gives, for each
+ *   engine and staging event, the time to a tenth of a second and the altitude
+ *   and velocity the vehicle had at that moment. Its insertion velocity,
+ *   25,567.9 ft/s, is the 25,568 ft/s Armstrong read out on the loop.
+ *
+ * Values are converted from the report's feet and feet per second and rounded
+ * (0.1 km, 1 m/s). Between two events the page joins the points with straight
+ * lines and says so: the line is a reading aid, not a measurement.
+ *
+ * The previous version stopped at second-stage cutoff with three points from
+ * NASA's general Saturn V pages, because no source for the third stage's burn
+ * had been found. The report is that source: the S-IVB burned 150 s, from
+ * 9:09.2 to 11:39.3, and Apollo 11 was in parking orbit at 11:49.3.
  */
 export const APOLLO_11_ASCENT = {
   events: [
-    { id: 'liftoff', atS: 0, altitudeKm: 0, labelKey: 'apolloEventLiftoff' },
-    { id: 'meco', atS: 150, altitudeKm: 61, labelKey: 'apolloEventMeco' },
-    { id: 'seco', atS: 510, altitudeKm: 185, labelKey: 'apolloEventSeco' },
+    { id: 'liftoff', atS: 0, altitudeKm: 0, velocityMs: 0, labelKey: 'apolloEventLiftoff', source: SOURCES.afj },
+    { id: 'roll', atS: 13, labelKey: 'launchEventRoll', source: SOURCES.afj },
+    { id: 'maxq', atS: 83, labelKey: 'launchEventMaxQ', source: SOURCES.afj },
+    { id: 'ceco', atS: 135.2, altitudeKm: 44.4, velocityMs: 1983, labelKey: 'launchEventCeco', source: SOURCES.as506 },
+    { id: 'meco', atS: 161.6, altitudeKm: 66.3, velocityMs: 2753, labelKey: 'apolloEventMeco', source: SOURCES.as506 },
+    { id: 'staging1', atS: 162.3, altitudeKm: 67.1, velocityMs: 2763, labelKey: 'launchEventStaging1', source: SOURCES.as506 },
+    { id: 'tower', atS: 197.9, altitudeKm: 96, velocityMs: 2980, labelKey: 'launchEventTower', source: SOURCES.as506 },
+    { id: 's2ceco', atS: 460.6, altitudeKm: 179.3, velocityMs: 5719, labelKey: 'launchEventS2Ceco', source: SOURCES.as506 },
+    { id: 'seco', atS: 548.2, altitudeKm: 185.9, velocityMs: 6933, labelKey: 'apolloEventSeco', source: SOURCES.as506 },
+    { id: 'staging2', atS: 549.2, altitudeKm: 185.9, velocityMs: 6936, labelKey: 'launchEventStaging2', source: SOURCES.as506 },
+    { id: 's4cutoff', atS: 699.3, velocityMs: 7791, labelKey: 'launchEventS4Cutoff', source: SOURCES.as506 },
+    { id: 'orbit', atS: 709.3, altitudeKm: 188.3, velocityMs: 7793, labelKey: 'launchEventOrbit', source: SOURCES.as506 },
   ],
-  /** Which stage is pushing, and what it pushes with. Constants, not sliders. */
+  /**
+   * Which stage is pushing, from ignition to cutoff, and what it pushes with.
+   * The gaps between them are real: the first stage cuts off at 161.6 s and
+   * the second lights at 163.0 s. `flame` is what the exhaust looks like:
+   * kerosene burns bright orange, hydrogen almost invisibly.
+   */
   stages: [
     {
-      untilS: 150,
+      startS: 0,
+      untilS: 161.6,
       partId: 's-ic',
       nameKey: 'apolloSicName',
       thrust: '33,900 kN (7,610,000 lbf)',
       source: SOURCES.stage1,
+      flame: 'kerosene',
     },
     {
-      untilS: 510,
+      startS: 163,
+      untilS: 548.2,
       partId: 's-ii',
       nameKey: 'apolloSiiName',
       thrust: '4,450 kN (1,000,000 lbf)',
       source: SOURCES.stage2,
+      flame: 'hydrogen',
+    },
+    {
+      startS: 549.2,
+      untilS: 699.3,
+      partId: 's-ivb',
+      nameKey: 'apolloSivbName',
+      thrust: '890 kN (200,000 lbf)',
+      source: SOURCES.stage3,
+      flame: 'hydrogen',
     },
   ],
   /** Top of the drawn altitude column, in km. */
   ceilingKm: 200,
+  /** The parking orbit Collins read out at cutoff, in nautical miles. */
+  parkingOrbitNmi: [101.4, 103.6],
 };
+
+/** When the run ends: Earth parking orbit insertion. */
+export const ORBIT_INSERTION_S = APOLLO_11_ASCENT.events.find((e) => e.id === 'orbit').atS;
+
+/** Straight-line reading between the events that carry `field`, held at both ends. */
+function profileAt(seconds, field) {
+  const points = APOLLO_11_ASCENT.events.filter((event) => event[field] !== undefined);
+  if (seconds <= points[0].atS) return points[0][field];
+  for (let i = 1; i < points.length; i += 1) {
+    const previous = points[i - 1];
+    const next = points[i];
+    if (seconds <= next.atS) {
+      const across = (seconds - previous.atS) / (next.atS - previous.atS);
+      return previous[field] + (next[field] - previous[field]) * across;
+    }
+  }
+  return points[points.length - 1][field];
+}
 
 /** Altitude in km at a simulated time, interpolated between the sourced points. */
 export function altitudeKmAt(seconds) {
-  const { events } = APOLLO_11_ASCENT;
-  if (seconds <= events[0].atS) return events[0].altitudeKm;
-  for (let i = 1; i < events.length; i += 1) {
-    const previous = events[i - 1];
-    const next = events[i];
-    if (seconds <= next.atS) {
-      const across = (seconds - previous.atS) / (next.atS - previous.atS);
-      return previous.altitudeKm + (next.altitudeKm - previous.altitudeKm) * across;
-    }
-  }
-  return events[events.length - 1].altitudeKm;
+  return profileAt(seconds, 'altitudeKm');
 }
 
-/** The stage burning at a simulated time, or null once the run is over. */
+/** Velocity in m/s at a simulated time, interpolated between the sourced points. */
+export function velocityMsAt(seconds) {
+  return profileAt(seconds, 'velocityMs');
+}
+
+/** The stage burning at a simulated time, or null between stages and after the last. */
 export function stageAt(seconds) {
-  return APOLLO_11_ASCENT.stages.find((stage) => seconds < stage.untilS) ?? null;
+  return APOLLO_11_ASCENT.stages.find((stage) => seconds >= stage.startS && seconds < stage.untilS) ?? null;
 }
 
 /** How much of the current stage's burn is left, 1 at ignition and 0 at cutoff. */
 export function burnRemaining(seconds) {
   const stage = stageAt(seconds);
   if (!stage) return 0;
-  const index = APOLLO_11_ASCENT.stages.indexOf(stage);
-  const startedAt = index === 0 ? 0 : APOLLO_11_ASCENT.stages[index - 1].untilS;
-  return 1 - (seconds - startedAt) / (stage.untilS - startedAt);
+  return 1 - (seconds - stage.startS) / (stage.untilS - stage.startS);
 }
+
+/** Every event that has happened by `seconds`, in order. */
+export function eventsReached(seconds) {
+  return APOLLO_11_ASCENT.events.filter((event) => event.atS <= seconds);
+}
+
+/** The next event after `seconds`, or null once the vehicle is in orbit. */
+export function nextEvent(seconds) {
+  return APOLLO_11_ASCENT.events.find((event) => event.atS > seconds) ?? null;
+}
+
+/**
+ * Things of known height to stand beside the rocket, for a reader who cannot
+ * picture 110.6 m. The building and the statue are NASA's own comparisons
+ * ("about the height of a 36-story-tall building", "18 meters (60 feet) taller
+ * than the Statue of Liberty"); the TV tower is Tashkent's, because a reader
+ * here has seen it. The shapes drawn for them are sketches - only the heights
+ * are to scale, and the page says so.
+ */
+export const SIZE_COMPARISONS = [
+  { id: 'none', labelKey: 'apolloCompareNone' },
+  { id: 'person', labelKey: 'apolloComparePerson', noteKey: 'apolloCompareNotePerson', heightM: 1.8, widthM: 0.5 },
+  {
+    id: 'building',
+    labelKey: 'apolloCompareBuilding',
+    noteKey: 'apolloCompareNoteBuilding',
+    heightM: 111,
+    widthM: 32,
+    floors: 36,
+    source: SOURCES.nasaKids,
+  },
+  {
+    id: 'liberty',
+    labelKey: 'apolloCompareLiberty',
+    noteKey: 'apolloCompareNoteLiberty',
+    heightM: 93,
+    widthM: 30,
+    source: SOURCES.nasaKids,
+  },
+  {
+    id: 'tower',
+    labelKey: 'apolloCompareTower',
+    noteKey: 'apolloCompareNoteTower',
+    heightM: 375,
+    widthM: 40,
+    source: SOURCES.tower,
+  },
+];
+
+/**
+ * "Did you know?" for the Saturn V hologram. Each fact is a locale key, and
+ * the figures in it are read from the named source.
+ */
+export const APOLLO_FACTS = [
+  { key: 'apolloFactKids1', source: SOURCES.nasaKids },
+  { key: 'apolloFactKids2', source: SOURCES.nasaKids },
+  { key: 'apolloFactKids3', source: SOURCES.nasaKids },
+  { key: 'apolloFactKids4', source: SOURCES.nasaKids },
+  { key: 'apolloFactKids5', source: SOURCES.nasaKids },
+  { key: 'apolloFactKids6', source: SOURCES.apollo11 },
+];
+
+/** "Did you know?" for the launch: what happened on the way up. */
+export const LAUNCH_FACTS = [
+  { key: 'launchFact1', source: SOURCES.afj },
+  { key: 'launchFact2', source: SOURCES.afj },
+  { key: 'launchFact3', source: SOURCES.as506 },
+  { key: 'launchFact4', source: `${SOURCES.afj}; ${SOURCES.as506}` },
+  { key: 'launchFact5', source: SOURCES.afj },
+  { key: 'launchFact6', source: SOURCES.as506 },
+];
 
 /** `T+MM:SS` for a simulated flight time in seconds. */
 export function missionClock(seconds) {
