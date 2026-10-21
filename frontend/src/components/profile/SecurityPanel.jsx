@@ -1,7 +1,8 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { KeyRound, Mail, MailCheck, MailWarning, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { CalendarDays, KeyRound, Mail, MailCheck, MailWarning, X } from 'lucide-react';
 import api from '@/lib/api';
+import { validateDob } from '@/lib/authValidation';
 import { serverDetail, translateServerMessage } from '@/lib/serverErrors';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -18,10 +19,28 @@ export default function SecurityPanel() {
   const updateUser = useAuthStore((s) => s.updateUser);
   const setTokens = useAuthStore((s) => s.setTokens);
 
+  // An account that came through Google has no password and no date of birth.
+  // `has_password` missing means a copy of the user saved before the server
+  // sent it — treat that as the ordinary case rather than hide the form.
+  const hasPassword = user?.has_password !== false;
+
+  // A Google sign-in that left the account unfinished sends the pupil to
+  // /profile#account. The router does not scroll to a hash, and this panel is
+  // at the foot of a long page.
+  const { hash } = useLocation();
+  useEffect(() => {
+    if (hash === '#account') {
+      document.getElementById('account')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [hash]);
+
   return (
-    <section className="mt-8 grid gap-6 lg:grid-cols-2">
-      <PasswordCard t={t} setTokens={setTokens} />
-      <EmailCard t={t} user={user} updateUser={updateUser} setTokens={setTokens} />
+    <section id="account" className="mt-8 grid gap-6 lg:grid-cols-2">
+      {user && !user.date_of_birth && <BirthDateCard t={t} updateUser={updateUser} />}
+      {hasPassword
+        ? <PasswordCard t={t} setTokens={setTokens} />
+        : <SetPasswordCard t={t} user={user} updateUser={updateUser} setTokens={setTokens} />}
+      <EmailCard t={t} user={user} updateUser={updateUser} setTokens={setTokens} hasPassword={hasPassword} />
     </section>
   );
 }
@@ -146,7 +165,142 @@ function PasswordCard({ t, setTokens }) {
   );
 }
 
-function EmailCard({ t, user, updateUser, setTokens }) {
+/**
+ * A first password, by a code mailed to the account's own address.
+ *
+ * The forgot-password screen does this too, but refuses anybody signed in —
+ * which an account from Google always is, so it had no way to get a password.
+ * The same two endpoints, then a sign-in with the new password: the reset
+ * revokes every refresh token, this tab's included, and without a fresh pair
+ * the tab would be signed out at its next refresh.
+ */
+function SetPasswordCard({ t, user, updateUser, setTokens }) {
+  const [step, setStep] = useState('ask');
+  const [form, setForm] = useState({ code: '', password: '', password2: '' });
+  const [error, setError] = useState('');
+  const [done, setDone] = useState('');
+  const [busy, setBusy] = useState(false);
+  const email = user?.email || '';
+
+  const change = (e) => {
+    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+    setError('');
+  };
+
+  const ask = async () => {
+    setBusy(true);
+    setError('');
+    try {
+      await api.post('/auth/password/reset/request/', { email });
+      setStep('confirm');
+      setDone(t('profilePage', 'codeSent'));
+    } catch (err) {
+      setError(firstProblem(t, err, t('profilePage', 'passwordSetFailed')));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const confirm = async (e) => {
+    e.preventDefault();
+    if (form.password !== form.password2) {
+      setError(t('profilePage', 'passwordsDoNotMatch'));
+      return;
+    }
+    setBusy(true);
+    try {
+      await api.post('/auth/password/reset/confirm/', { email, ...form });
+      const { data } = await api.post('/auth/login/', { email, password: form.password });
+      setTokens(data.access, data.refresh);
+      updateUser(data.user);
+      setDone(t('profilePage', 'passwordSet'));
+    } catch (err) {
+      setError(firstProblem(t, err, t('profilePage', 'passwordSetFailed')));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Card icon={<KeyRound className="w-3.5 h-3.5 text-violet-light" />} title={t('profilePage', 'setPasswordTitle')}>
+      <p className="text-white/40 text-xs font-[600] mb-4">{t('profilePage', 'setPasswordHint')}</p>
+      {step === 'ask' ? (
+        <div className="flex flex-col gap-4">
+          <Message tone="bad">{error}</Message>
+          <Submit type="button" onClick={ask} disabled={busy || !email}>
+            {t('profilePage', 'sendCode', { email })}
+          </Submit>
+        </div>
+      ) : (
+        <form onSubmit={confirm} className="flex flex-col gap-4">
+          <Field
+            label={t('verifyEmail', 'codeLabel')}
+            name="code" inputMode="numeric" autoComplete="one-time-code" maxLength={6}
+            value={form.code} onChange={change}
+          />
+          <Field
+            label={t('profilePage', 'newPassword')}
+            name="password" type="password" autoComplete="new-password"
+            value={form.password} onChange={change}
+          />
+          <Field
+            label={t('profilePage', 'confirmNewPassword')}
+            name="password2" type="password" autoComplete="new-password"
+            value={form.password2} onChange={change}
+          />
+          <Message tone="bad">{error}</Message>
+          <Message tone="good">{done}</Message>
+          <Submit type="submit" disabled={busy || form.code.length !== 6}>
+            {t('profilePage', 'setPasswordTitle')}
+          </Submit>
+        </form>
+      )}
+    </Card>
+  );
+}
+
+/** The date of birth an account from Google arrives without. */
+function BirthDateCard({ t, updateUser }) {
+  const [value, setValue] = useState('');
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const save = async (e) => {
+    e.preventDefault();
+    // The registration form's own check, so the answer is the same here.
+    const key = validateDob(value);
+    if (key) {
+      setError(t('registerPage', key));
+      return;
+    }
+    setBusy(true);
+    try {
+      const { data } = await api.patch('/auth/me/', { date_of_birth: value });
+      updateUser(data);
+    } catch (err) {
+      setError(firstProblem(t, err, t('profilePage', 'failedUpdate')));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Card icon={<CalendarDays className="w-3.5 h-3.5 text-violet-light" />} title={t('profilePage', 'birthDateTitle')}>
+      <p className="text-white/40 text-xs font-[600] mb-4">{t('profilePage', 'birthDateHint')}</p>
+      <form onSubmit={save} className="flex flex-col gap-4">
+        <Field
+          label={t('registerPage', 'dob')}
+          type="date" autoComplete="bday" max={new Date().toISOString().slice(0, 10)}
+          value={value} onChange={(e) => { setValue(e.target.value); setError(''); }}
+        />
+        <Message tone="bad">{error}</Message>
+        <Submit type="submit" disabled={busy || !value}>{t('profilePage', 'saveChanges')}</Submit>
+      </form>
+    </Card>
+  );
+}
+
+function EmailCard({ t, user, updateUser, setTokens, hasPassword }) {
   const [form, setForm] = useState({ new_email: '', current_password: '' });
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
@@ -220,7 +374,11 @@ function EmailCard({ t, user, updateUser, setTokens }) {
         )}
       </div>
 
-      {pending ? (
+      {!hasPassword ? (
+        // Moving the address asks for the current password, which this account
+        // does not have yet; the server would refuse with no_password_set.
+        <p className="text-white/40 text-xs font-[600]">{t('profilePage', 'setPasswordFirst')}</p>
+      ) : pending ? (
         <form onSubmit={confirm} className="flex flex-col gap-4">
           <p className="text-white/40 text-xs font-[600]">
             {t('profilePage', 'emailPendingNotice')} <span className="text-violet-light">{pending}</span>

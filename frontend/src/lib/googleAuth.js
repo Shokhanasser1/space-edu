@@ -32,6 +32,19 @@ export function isGoogleEnabled() {
   return Boolean(googleClientId());
 }
 
+/**
+ * Whether a Google sign-in left the account unfinished.
+ *
+ * The server says so in two flags: no date of birth yet (Google gives none), or
+ * the password cleared because Google linked an account nobody had proved.
+ * Either way the pupil belongs on the profile's account panel, not the home page.
+ */
+export const ACCOUNT_PANEL = '/profile#account';
+
+export function needsAccountSetup(data) {
+  return Boolean(data?.password_reset_required) || data?.profile_complete === false;
+}
+
 /** Inject the script once, and hand back the same promise to everybody after. */
 export function loadGoogleIdentity() {
   if (!isGoogleEnabled()) {

@@ -1399,7 +1399,16 @@
     "levelExplorer": "Level {level}: Galactic Explorer",
     "dailyChallenges": "Daily challenges",
     "bestScore": "Best score",
-    "activeMissions": "Active missions"
+    "activeMissions": "Active missions",
+    "setPasswordTitle": "Set a password",
+    "setPasswordHint": "You signed in with Google, so this account has no password yet. Set one to sign in with your e-mail too, and to change your address.",
+    "sendCode": "Send a code to {email}",
+    "codeSent": "We sent a code. It is good for 15 minutes.",
+    "passwordSet": "Your password is set.",
+    "passwordSetFailed": "The password was not set.",
+    "setPasswordFirst": "Set a password first — moving your address asks for it.",
+    "birthDateTitle": "Date of birth",
+    "birthDateHint": "Google did not tell us when you were born. Add it to finish your profile."
   },
   "chat": {
     "verifyToWrite": "Confirm your e-mail address before writing here.",

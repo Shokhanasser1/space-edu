@@ -11,6 +11,7 @@ import { useGamificationStore } from '@/store/useGamificationStore';
 import { useTranslation } from '@/hooks/useTranslation';
 import AuthShell from '@/components/auth/AuthShell';
 import GoogleSignInButton from '@/components/auth/GoogleSignInButton';
+import { ACCOUNT_PANEL, needsAccountSetup } from '@/lib/googleAuth';
 
 export default function LoginView() {
   const navigate = useNavigate();
@@ -160,7 +161,7 @@ export default function LoginView() {
 
         <GoogleSignInButton
           text="signin_with"
-          onDone={() => navigate(from, { replace: true })}
+          onDone={(data) => navigate(needsAccountSetup(data) ? ACCOUNT_PANEL : from, { replace: true })}
         />
 
         <div className="mt-2 pt-6 text-center" style={{ borderTop: '1px solid var(--auth-border)' }}>

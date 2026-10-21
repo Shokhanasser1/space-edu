@@ -1399,7 +1399,16 @@
     "levelExplorer": "{level}-daraja: Galaktik tadqiqotchi",
     "dailyChallenges": "Kunlik topshiriqlar",
     "bestScore": "Eng yaxshi natija",
-    "activeMissions": "Faol missiyalar"
+    "activeMissions": "Faol missiyalar",
+    "setPasswordTitle": "Parol o'rnatish",
+    "setPasswordHint": "Siz Google orqali kirdingiz, shuning uchun hisobda hali parol yo'q. Pochta orqali ham kirish va manzilni o'zgartirish uchun parol o'rnating.",
+    "sendCode": "{email} manziliga kod yuborish",
+    "codeSent": "Kod yuborildi. U 15 daqiqa amal qiladi.",
+    "passwordSet": "Parol o'rnatildi.",
+    "passwordSetFailed": "Parol o'rnatilmadi.",
+    "setPasswordFirst": "Avval parol o'rnating — manzilni o'zgartirish uchun u kerak.",
+    "birthDateTitle": "Tug'ilgan sana",
+    "birthDateHint": "Google tug'ilgan sanangizni bermadi. Profilni yakunlash uchun uni qo'shing."
   },
   "chat": {
     "verifyToWrite": "Bu yerga yozishdan oldin pochta manzilingizni tasdiqlang.",

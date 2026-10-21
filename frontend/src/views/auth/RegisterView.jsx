@@ -11,6 +11,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { STEP_FIELDS, STEP_OF_FIELD, validateFields, validateField } from '@/lib/authValidation';
 import AuthShell from '@/components/auth/AuthShell';
 import GoogleSignInButton from '@/components/auth/GoogleSignInButton';
+import { ACCOUNT_PANEL, needsAccountSetup } from '@/lib/googleAuth';
 import PasswordStrength from '@/components/auth/PasswordStrength';
 import StepIndicator from '@/components/auth/StepIndicator';
 
@@ -260,7 +261,10 @@ export default function RegisterView() {
                 </button>
 
                 <div className="pt-2">
-                  <GoogleSignInButton text="signup_with" onDone={() => navigate('/')} />
+                  <GoogleSignInButton
+                    text="signup_with"
+                    onDone={(data) => navigate(needsAccountSetup(data) ? ACCOUNT_PANEL : '/')}
+                  />
                 </div>
               </motion.div>
             ) : (
