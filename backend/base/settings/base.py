@@ -244,6 +244,12 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
+    # DRF's defaults, with JSON narrowed to objects: see apps/parsers.py.
+    'DEFAULT_PARSER_CLASSES': [
+        'apps.parsers.ObjectJSONParser',
+        'rest_framework.parsers.FormParser',
+        'rest_framework.parsers.MultiPartParser',
+    ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
     # How many reverse proxies sit in front of us. One is right for a single

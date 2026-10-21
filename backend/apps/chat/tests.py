@@ -239,9 +239,9 @@ class BlockingTests(TestCase):
         for body in (str(self._block().data), str(listed.data)):
             self.assertNotIn('pest', body)
 
-    def test_a_body_that_is_not_an_object_is_404_not_500(self):
+    def test_a_body_that_is_not_an_object_is_400_not_500(self):
         r = self.client.post('/api/v1/chat/blocks/', [self.pest.id], format='json')
-        self.assertEqual(r.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_you_cannot_block_yourself(self):
         r = self.client.post('/api/v1/chat/blocks/', {'user_id': self.me.id}, format='json')

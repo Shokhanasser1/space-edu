@@ -214,8 +214,7 @@ class BlockListCreateView(APIView):
         return Response(BlockSerializer(blocks, many=True).data)
 
     def post(self, request):
-        data = request.data if isinstance(request.data, dict) else {}
-        user_id = data.get('user_id')
+        user_id = request.data.get('user_id')
         try:
             target = User.objects.get(id=int(user_id))
         except (TypeError, ValueError, User.DoesNotExist):
