@@ -8,6 +8,7 @@ from rest_framework.views import APIView
 
 from apps.courses.models import TopicLesson
 from apps.gamification.models import UserGamificationProfile
+from apps.gamification.serializers import public_name
 from apps.permissions import AdminWriteOrReadOnly
 
 from .models import ChallengeQuestion, DailyChallenge, UserChallengeResult, UserStreak, QuizSession, QuizAnswer
@@ -202,7 +203,8 @@ class DailyLeaderboardView(APIView):
         )
 
         entries = [
-            {'username': r.user.username, 'score': r.score, 'time_taken': r.time_taken}
+            {'display_name': public_name(r.user.astronaut_name), 'score': r.score,
+             'time_taken': r.time_taken}
             for r in results
         ]
 
@@ -348,11 +350,26 @@ class QuizSubmitView(APIView):
                 time_spent=ans['time_spent'],
             ))
 
+        # A question pays once per pupil, the first time it is answered right, and
+        # finishing pays only alongside something new. It paid every time: a
+        # one-question quiz answered wrongly was worth 50, and the answers come
+        # back after each submit, so replaying them paid again -- XP for requests.
+        already_paid = set()
+        if request.user.is_authenticated:
+            already_paid = set(
+                QuizAnswer.objects.filter(
+                    session__user=request.user, is_correct=True, question_id__in=seen,
+                ).values_list('question_id', flat=True)
+            )
+        new_correct = sum(
+            1 for a in quiz_answers if a.is_correct and a.question_id not in already_paid
+        )
+
         QuizAnswer.objects.bulk_create(quiz_answers)
 
         # Update session
         percentage = round((score / session.total) * 100, 1) if session.total > 0 else 0
-        xp_earned = score * 20 + 50  # 20 XP per correct + 50 completion bonus
+        xp_earned = new_correct * 20 + (50 if new_correct else 0)
 
         session.score = score
         session.percentage = percentage

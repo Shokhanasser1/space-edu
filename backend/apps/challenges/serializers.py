@@ -107,7 +107,9 @@ class UserStreakSerializer(serializers.ModelSerializer):
 
 
 class LeaderboardEntrySerializer(serializers.Serializer):
-    username = serializers.CharField()
+    # The chosen astronaut name or None -- never `username`, which is the
+    # e-mail's local part. See apps.gamification.serializers.public_name.
+    display_name = serializers.CharField(allow_null=True)
     score = serializers.IntegerField()
     time_taken = serializers.IntegerField()
 

@@ -177,6 +177,16 @@ class LeaderboardPrivacyTests(TestCase):
         self.assertNotIn('Aziz', body)
         self.assertNotIn('Karimov', body)
 
+    def test_a_child_with_no_astronaut_name_is_not_shown_by_their_username(self):
+        """Audit, 21 October 2026. The fallback was `username`, which is the
+        e-mail's local part -- `aziza.karimova2013` is a name and a year of
+        birth. Without a chosen name the row carries none; the page says
+        "astronaut" in the reader's language."""
+        cache.clear()
+        r = APIClient().get('/api/v1/gamification/leaderboard/')
+        self.assertNotIn('aziz.karimov', str(r.data))
+        self.assertEqual([row['display_name'] for row in r.data['leaderboard']], [None])
+
     def test_a_row_carries_these_fields_and_no_others(self):
         """Pinned as an exact set, not a subset. The board and the browser have
         already drifted apart once (commit cbc4c6e), and the way a real name
@@ -587,6 +597,14 @@ class QuizLeaderboardTests(TestCase):
         """A child who is not on the board is owed the reason, in a number."""
         board = self._board()
         self.assertEqual(board['min_quizzes'], MIN_QUIZZES_RANKED)
+
+    def test_a_child_with_no_astronaut_name_is_not_shown_by_their_username(self):
+        """Audit, 21 October 2026: the same e-mail-derived fallback as the XP board."""
+        user = self._player('aziza.karimova2013', attempts=MIN_QUIZZES_RANKED, pct=90.0)
+        User.objects.filter(pk=user.pk).update(astronaut_name='')
+        board = self._board()
+        self.assertNotIn('aziza.karimova2013', str(board))
+        self.assertEqual([r['display_name'] for r in board['leaderboard']], [None])
 
     def test_reaching_the_floor_puts_you_on_the_board(self):
         self._player('yetdi', attempts=MIN_QUIZZES_RANKED, pct=80.0)

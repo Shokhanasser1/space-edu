@@ -21,6 +21,7 @@ from .serializers import (
     RewardProductSerializer,
     UserBadgeSerializer,
     UserRewardPurchaseSerializer,
+    public_name,
 )
 
 
@@ -183,7 +184,7 @@ class QuizLeaderboardView(APIView):
         # count taken across every category would put a child on the physics
         # board for astronomy practice.
         leaders = (
-            qs.values('user__id', 'user__username', 'user__astronaut_name')
+            qs.values('user__id', 'user__astronaut_name')
             .annotate(
                 avg_pct=Avg('percentage'),
                 best_pct=Max('percentage'),
@@ -200,8 +201,7 @@ class QuizLeaderboardView(APIView):
         my_id = request.user.id if request.user.is_authenticated else None
         rows = [
             {
-                'display_name': (entry['user__astronaut_name'] or '').strip()
-                or entry['user__username'],
+                'display_name': public_name(entry['user__astronaut_name']),
                 'avg_percentage': round(entry['avg_pct'] or 0, 1),
                 'best_percentage': round(entry['best_pct'] or 0, 1),
                 'total_quizzes': entry['total_quizzes'],

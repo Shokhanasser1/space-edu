@@ -42,9 +42,8 @@ class LeaderboardEntrySerializer(serializers.ModelSerializer):
     the child's photo in a public R2 bucket — the full legal name and face of the
     top 100 users, scrapable with one unauthenticated request.
 
-    Only a display handle is exposed. `astronaut_name` is the nickname the user
-    chose; `username` is derived from their e-mail local part, so it is the
-    fallback rather than the first choice.
+    Only a display handle is exposed: the astronaut name the user chose, or
+    nothing -- see `public_name`.
     """
 
     display_name = serializers.SerializerMethodField()
@@ -54,7 +53,17 @@ class LeaderboardEntrySerializer(serializers.ModelSerializer):
         fields = ('display_name', 'xp', 'level')
 
     def get_display_name(self, obj):
-        return (obj.user.astronaut_name or '').strip() or obj.user.username
+        return public_name(obj.user.astronaut_name)
+
+
+def public_name(astronaut_name):
+    """What a public board may call a child: the name they chose, or None.
+
+    The fallback used to be `username`, which is the local part of their e-mail
+    -- `aziza.karimova2013` is a full name and a year of birth, on boards anybody
+    can read. None makes the page say "astronaut" in the reader's language.
+    """
+    return (astronaut_name or '').strip() or None
 
 
 class RewardProductSerializer(serializers.ModelSerializer):

@@ -129,6 +129,102 @@ class QuizScoringTests(TestCase):
         self.assertEqual(profile.level, expected)
 
 
+class QuizXpFarmingTests(TestCase):
+    """Audit, 21 October 2026: quiz XP could be bought with requests.
+
+    Every submit paid 20 per correct answer plus a flat 50 for finishing, with no
+    limit of any kind. A one-question quiz answered wrongly was still worth 50,
+    so ten requests bought 500 XP -- and the answers come back after each submit,
+    so replaying the same questions paid their 20 again every time. The XP board
+    is public; levels and badges hang off the same number.
+
+    Now a question pays once per pupil, the first time it is answered right, and
+    the finishing bonus comes only with a quiz that paid for something new. The
+    same rule as the rewards (the server decides, idempotently): what a pupil has
+    already been paid for is not paid again.
+    """
+
+    def setUp(self):
+        cache.clear()
+        [_question(i) for i in range(5)]
+        self.user = User.objects.create_user(username='alice', email='a@e.com', password='x')
+        self.client = APIClient()
+        self.client.force_authenticate(self.user)
+
+    def _quiz(self, count=5, correct=None):
+        r = self.client.post(
+            '/api/v1/challenges/quiz/start/', {'category': 'physics', 'count': count}, format='json'
+        )
+        qids = sorted(q['id'] for q in r.data['questions'])
+        right = len(qids) if correct is None else correct
+        answers = [
+            {'question_id': q, 'selected': 1 if i < right else 0} for i, q in enumerate(qids)
+        ]
+        return self.client.post(
+            f'/api/v1/challenges/quiz/{r.data["session_id"]}/submit/',
+            {'answers': answers}, format='json',
+        )
+
+    def _xp(self):
+        profile = self.user.gamification
+        profile.refresh_from_db()
+        return profile.xp
+
+    def test_a_quiz_answered_wrongly_pays_nothing(self):
+        for _ in range(10):
+            self._quiz(count=1, correct=0)
+        self.assertEqual(self._xp(), 0)
+
+    def test_replaying_questions_already_answered_right_pays_nothing(self):
+        first = self._quiz()
+        self.assertEqual(first.data['xp_earned'], 5 * 20 + 50)
+
+        again = self._quiz()
+
+        self.assertEqual(again.data['xp_earned'], 0)
+        self.assertEqual(self._xp(), 5 * 20 + 50)
+
+    def test_questions_answered_right_for_the_first_time_still_pay(self):
+        self._quiz(correct=2)
+        self.assertEqual(self._xp(), 2 * 20 + 50)
+
+        later = self._quiz()
+
+        self.assertEqual(later.data['xp_earned'], 3 * 20 + 50)
+        self.assertEqual(self._xp(), 5 * 20 + 2 * 50)
+
+
+class DailyLeaderboardPrivacyTests(TestCase):
+    """Audit, 21 October 2026: the daily board, open to anybody, printed every
+    child's `username` -- the local part of their e-mail -- even when they had
+    chosen an astronaut name. It shows the chosen name, or none."""
+
+    def setUp(self):
+        cache.clear()
+        from .models import UserChallengeResult
+
+        challenge = DailyChallenge.get_or_create_today()
+        named = User.objects.create_user(
+            username='aziza.karimova2013', email='aziza.karimova2013@e.com', password='x',
+            astronaut_name='StarFox',
+        )
+        unnamed = User.objects.create_user(
+            username='bek.toshev2012', email='bek.toshev2012@e.com', password='x',
+        )
+        UserChallengeResult.objects.create(user=named, challenge=challenge, score=5, time_taken=30)
+        UserChallengeResult.objects.create(user=unnamed, challenge=challenge, score=4, time_taken=30)
+
+    def test_it_shows_chosen_names_and_no_usernames(self):
+        r = APIClient().get('/api/v1/challenges/leaderboard/')
+        self.assertEqual(r.status_code, status.HTTP_200_OK)
+        body = str(r.data)
+        self.assertNotIn('aziza.karimova2013', body)
+        self.assertNotIn('bek.toshev2012', body)
+        self.assertEqual(
+            [row['display_name'] for row in r.data['leaderboard']], ['StarFox', None],
+        )
+
+
 class QuizOwnershipTests(TestCase):
     """Finding: QuizResultView and QuizSubmitView were AllowAny and took
     session_id straight from the URL, so sequential IDs exposed and let anyone

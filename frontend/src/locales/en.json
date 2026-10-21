@@ -737,7 +737,8 @@
     "quizzesTaken": "Quizzes",
     "minQuizzes": "Finish {count} quizzes to be ranked here — one lucky score is not a record.",
     "noQuizPioneers": "Nobody has finished enough quizzes yet. Be the first!",
-    "loadFailed": "Rankings could not be loaded. Trying again shortly."
+    "loadFailed": "Rankings could not be loaded. Trying again shortly.",
+    "unnamedPilot": "Astronaut"
   },
   "live": {
     "title": "Live",

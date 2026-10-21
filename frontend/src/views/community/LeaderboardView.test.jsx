@@ -76,6 +76,17 @@ describe('the leaderboard reads what the server actually sends', () => {
     expect(screen.getByText('Quasar')).toBeInTheDocument();
   });
 
+  it('calls a player who chose no name an astronaut, not "null"', async () => {
+    // Audit, 21 Oct 2026: the server used to fall back to `username`, the
+    // e-mail's local part. It now sends null, and the page names the row.
+    serve([entry('Nebula', 300), entry(null, 200), entry(null, 100), entry(null, 50)]);
+    const { container } = await renderBoard();
+    await screen.findByText('Nebula');
+
+    expect(container.textContent).not.toMatch(/null/i);
+    expect(screen.getAllByText(/^(Astronaut|Космонавт|Kosmonavt)$/).length).toBe(3);
+  });
+
   it('never prints "undefined" where a name belongs', async () => {
     serve([entry('Nebula', 300), entry('Quasar', 200)]);
     const { container } = await renderBoard();
@@ -99,18 +110,18 @@ describe('the leaderboard reads what the server actually sends', () => {
     expect(screen.getAllByText('Nebula')).toHaveLength(1);
   });
 
-  it('falls back to username when the player set no astronaut name', async () => {
-    // The server's own fallback is `astronaut_name or username`; the client
-    // has to mirror it or the highlight misses.
+  it('lists a signed-in player with no astronaut name once, and not by username', async () => {
+    // The server no longer falls back to `username` (the e-mail's local part):
+    // the row comes with a null name and `is_you`, and is shown once.
     useAuthStore.setState({
       user: { username: 'quasar', astronaut_name: '' },
       isAuthenticated: true,
     });
-    serve([entry('quasar', 200)]);
-    await renderBoard();
+    serve([entry(null, 200, 1, { is_you: true })]);
+    const { container } = await renderBoard();
 
-    expect(await screen.findByText('quasar')).toBeInTheDocument();
-    expect(screen.getAllByText('quasar')).toHaveLength(1);
+    expect(await screen.findAllByText(/^(Astronaut|Космонавт|Kosmonavt)$/)).toHaveLength(1);
+    expect(container.textContent).not.toMatch(/quasar/);
   });
 
   it('shows a board of two rather than claiming nobody is here', async () => {

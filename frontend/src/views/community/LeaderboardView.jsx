@@ -20,6 +20,10 @@ export default function LeaderboardView() {
   const fmt = useFormat();
   const { user } = useAuthStore();
   const { t } = useTranslation();
+  // The server sends no name for a child who has not chosen one: its old
+  // fallback, `username`, was the local part of their e-mail.
+  const nameOf = (u) => u.display_name || t('leaderboard', 'unnamedPilot');
+  const seedOf = (u) => encodeURIComponent(u.display_name || `pilot-${u.rank}`);
   const [board, setBoard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
@@ -190,9 +194,9 @@ export default function LeaderboardView() {
                             the XP board. */}
                         <div className="col-span-1 text-center text-xs font-[800] text-white/20">{u.rank}</div>
                         <div className="col-span-5 flex items-center gap-4">
-                          <img src={`https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(u.display_name || '')}`}
-                            className="w-10 h-10 rounded-xl border border-white/5 shadow-lg shrink-0" alt={u.display_name} />
-                          <p className={`text-sm font-[800] ${u.is_you ? 'text-violet-light' : 'text-white'}`}>{u.display_name}</p>
+                          <img src={`https://api.dicebear.com/7.x/bottts/svg?seed=${seedOf(u)}`}
+                            className="w-10 h-10 rounded-xl border border-white/5 shadow-lg shrink-0" alt={nameOf(u)} />
+                          <p className={`text-sm font-[800] ${u.is_you ? 'text-violet-light' : 'text-white'}`}>{nameOf(u)}</p>
                         </div>
                         <div className="col-span-3 text-center text-[11px] font-[800] text-white/40">{fmt.number(u.total_quizzes)}</div>
                         <div className="col-span-3 text-right text-sm font-[900] text-white tracking-tight">{fmt.number(u.avg_percentage)}%</div>
@@ -239,11 +243,11 @@ export default function LeaderboardView() {
                   <div key={`${u.display_name}-${podiumIdx}`} aria-current={u.is_you ? 'true' : undefined}
                     className="flex flex-col items-center gap-4 group">
                     <div className="relative">
-                      <img src={`https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(u.display_name || '')}`}
-                        className="w-14 h-14 rounded-2xl border-2 border-white/10 shadow-2xl relative z-10 object-cover" alt={u.display_name} />
+                      <img src={`https://api.dicebear.com/7.x/bottts/svg?seed=${seedOf(u)}`}
+                        className="w-14 h-14 rounded-2xl border-2 border-white/10 shadow-2xl relative z-10 object-cover" alt={nameOf(u)} />
                       <div className="absolute inset-0 rounded-2xl bg-violet/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
-                    <span className={`text-[11px] font-[800] truncate max-w-full text-center uppercase tracking-wider ${style.text}`}>{u.display_name}</span>
+                    <span className={`text-[11px] font-[800] truncate max-w-full text-center uppercase tracking-wider ${style.text}`}>{nameOf(u)}</span>
                     <div className={`w-full rounded-2xl bg-gradient-to-b ${style.bg} border border-white/5 flex flex-col items-center justify-end pb-4 transition-all hover:scale-[1.02] ${heights[podiumIdx]} ${style.glow}`}>
                       <div className="mb-auto pt-4">{style.icon}</div>
                       {/* The server's place, not the plinth's. Players level on
@@ -274,10 +278,10 @@ export default function LeaderboardView() {
                     className={`grid grid-cols-12 gap-2 px-8 py-5 items-center transition-all ${u.is_you ? 'bg-violet/10 border-l-4 border-violet shadow-inner' : 'hover:bg-white/[0.02]'}`}>
                     <div className="col-span-1 text-center text-xs font-[800] text-white/20">{u.rank}</div>
                     <div className="col-span-6 flex items-center gap-4">
-                      <img src={`https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(u.display_name || '')}`}
-                        className="w-10 h-10 rounded-xl border border-white/5 shadow-lg shrink-0" alt={u.display_name} />
+                      <img src={`https://api.dicebear.com/7.x/bottts/svg?seed=${seedOf(u)}`}
+                        className="w-10 h-10 rounded-xl border border-white/5 shadow-lg shrink-0" alt={nameOf(u)} />
                       <div>
-                        <p className={`text-sm font-[800] ${u.is_you ? 'text-violet-light' : 'text-white'}`}>{u.display_name}</p>
+                        <p className={`text-sm font-[800] ${u.is_you ? 'text-violet-light' : 'text-white'}`}>{nameOf(u)}</p>
                       </div>
                     </div>
                     <div className="col-span-2 text-center">
