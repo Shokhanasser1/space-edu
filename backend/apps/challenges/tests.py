@@ -184,6 +184,31 @@ class QuizXpFarmingTests(TestCase):
         self.assertEqual(again.data['xp_earned'], 0)
         self.assertEqual(self._xp(), 5 * 20 + 50)
 
+    def test_a_session_closed_behind_the_view_s_back_pays_nothing(self):
+        """Security review, 22 October 2026: the check and the payment were not
+        one step, so two submits arriving together both read "not yet paid" and
+        both paid. The session is now closed by a conditional update, and only
+        the request that closed it pays."""
+        from unittest.mock import patch
+
+        from . import views
+
+        r = self.client.post(
+            '/api/v1/challenges/quiz/start/', {'category': 'physics', 'count': 5}, format='json'
+        )
+        sid = r.data['session_id']
+        stale = QuizSession.objects.get(pk=sid)  # what the losing request read
+        QuizSession.objects.filter(pk=sid).update(is_completed=True)  # the winner, meanwhile
+        answers = [{'question_id': q['id'], 'selected': 1} for q in r.data['questions']]
+
+        with patch.object(views, '_owned_session_or_none', return_value=stale):
+            lost = self.client.post(
+                f'/api/v1/challenges/quiz/{sid}/submit/', {'answers': answers}, format='json'
+            )
+
+        self.assertEqual(lost.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(self._xp(), 0)
+
     def test_questions_answered_right_for_the_first_time_still_pay(self):
         self._quiz(correct=2)
         self.assertEqual(self._xp(), 2 * 20 + 50)

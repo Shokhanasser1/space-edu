@@ -350,43 +350,54 @@ class QuizSubmitView(APIView):
                 time_spent=ans['time_spent'],
             ))
 
-        # A question pays once per pupil, the first time it is answered right, and
-        # finishing pays only alongside something new. It paid every time: a
-        # one-question quiz answered wrongly was worth 50, and the answers come
-        # back after each submit, so replaying them paid again -- XP for requests.
-        already_paid = set()
-        if request.user.is_authenticated:
-            already_paid = set(
-                QuizAnswer.objects.filter(
-                    session__user=request.user, is_correct=True, question_id__in=seen,
-                ).values_list('question_id', flat=True)
-            )
-        new_correct = sum(
-            1 for a in quiz_answers if a.is_correct and a.question_id not in already_paid
-        )
-
-        QuizAnswer.objects.bulk_create(quiz_answers)
-
-        # Update session
         percentage = round((score / session.total) * 100, 1) if session.total > 0 else 0
-        xp_earned = new_correct * 20 + (50 if new_correct else 0)
 
-        session.score = score
-        session.percentage = percentage
-        session.time_taken = time_taken
-        session.xp_earned = xp_earned
-        session.is_completed = True
-        session.completed_at = timezone.now()
-        session.save()
+        with transaction.atomic():
+            profile = None
+            if request.user.is_authenticated:
+                from apps.gamification.models import UserGamificationProfile
 
-        # add_xp recomputes the level; writing profile.xp directly did not, which
-        # is why three perfect quizzes left a student on level 1 with 450 XP.
-        if request.user.is_authenticated:
-            from apps.gamification.models import UserGamificationProfile
+                # Held until this commits, so a second submit by the same pupil
+                # waits here and then reads what this one paid for. Without it
+                # both read "not yet paid" and both paid.
+                profile, _ = UserGamificationProfile.objects.get_or_create(user=request.user)
+                profile = UserGamificationProfile.objects.select_for_update().get(pk=profile.pk)
 
-            profile, _ = UserGamificationProfile.objects.get_or_create(user=request.user)
-            profile.add_xp(xp_earned)
+            # A question pays once per pupil, the first time it is answered right,
+            # and finishing pays only alongside something new. It paid every
+            # time: a one-question quiz answered wrongly was worth 50, and the
+            # answers come back after each submit, so replaying them paid again.
+            already_paid = set()
+            if profile is not None:
+                already_paid = set(
+                    QuizAnswer.objects.filter(
+                        session__user=request.user, is_correct=True, question_id__in=seen,
+                    ).values_list('question_id', flat=True)
+                )
+            new_correct = sum(
+                1 for a in quiz_answers if a.is_correct and a.question_id not in already_paid
+            )
+            xp_earned = new_correct * 20 + (50 if new_correct else 0)
 
+            # Closed only if still open: of two submits of one session, exactly
+            # one closes it, and only that one writes answers and pays.
+            closed = QuizSession.objects.filter(pk=session.pk, is_completed=False).update(
+                score=score, percentage=percentage, time_taken=time_taken,
+                xp_earned=xp_earned, is_completed=True, completed_at=timezone.now(),
+            )
+            if not closed:
+                return Response({'detail': 'This quiz was already submitted.'},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            QuizAnswer.objects.bulk_create(quiz_answers)
+
+            # add_xp recomputes the level; writing profile.xp directly did not,
+            # which is why three perfect quizzes left a student on level 1 with
+            # 450 XP.
+            if profile is not None:
+                profile.add_xp(xp_earned)
+
+        session.refresh_from_db()
         return Response(QuizSessionSerializer(session).data, status=status.HTTP_200_OK)
 
 
