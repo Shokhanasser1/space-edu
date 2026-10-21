@@ -353,6 +353,8 @@ SIMPLE_JWT = {
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
     'AUTH_HEADER_TYPES': ('Bearer',),
+    # A deleted account's refresh token is a 401, not a 500: apps/accounts/tokens.py.
+    'TOKEN_REFRESH_SERIALIZER': 'apps.accounts.tokens.RefreshSerializer',
 }
 
 CORS_ALLOWED_ORIGINS = _csv('CORS_ALLOWED_ORIGINS', default='http://localhost:3000')

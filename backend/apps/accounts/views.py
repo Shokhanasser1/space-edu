@@ -217,8 +217,32 @@ class MeView(generics.RetrieveUpdateAPIView):
 
 
 class DeleteAccountView(APIView):
+    """DELETE { current_password } — the account, for good.
+
+    It took a bearer token alone, while moving the address and changing the
+    password -- both undoable -- asked for the current password. An unattended
+    tab on a school computer could end somebody's account with one request.
+    """
+
     def delete(self, request):
-        request.user.delete()
+        user = request.user
+        # The same refusal as PasswordChangeView: an account without a usable
+        # password cannot pass the test, and is sent to set one by e-mail code.
+        if not user.has_usable_password():
+            return Response(
+                {
+                    'detail': 'Set a password on this account before deleting it. '
+                              'Ask for a code at /auth/password/reset/request/.',
+                    'code': 'no_password_set',
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if not user.check_password(str(request.data.get('current_password') or '')):
+            return Response(
+                {'current_password': ['That is not your current password.']},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        user.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

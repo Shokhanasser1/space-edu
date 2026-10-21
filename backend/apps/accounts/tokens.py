@@ -17,7 +17,29 @@ calls this one.
 """
 import logging
 
+from django.contrib.auth import get_user_model
+from rest_framework.exceptions import AuthenticationFailed
+from rest_framework_simplejwt.serializers import TokenRefreshSerializer
+
 logger = logging.getLogger(__name__)
+
+
+class RefreshSerializer(TokenRefreshSerializer):
+    """SimpleJWT's refresh, with a deleted account answered as a 401.
+
+    Its `validate` looks the account up with `.get()`, so a refresh token that
+    outlived its account -- deleted by its owner, or from the admin panel --
+    raised DoesNotExist: a 500, with a debug page while DEBUG defaults to on.
+    Wired in by SIMPLE_JWT['TOKEN_REFRESH_SERIALIZER'].
+    """
+
+    def validate(self, attrs):
+        try:
+            return super().validate(attrs)
+        except get_user_model().DoesNotExist:
+            raise AuthenticationFailed(
+                'No active account found for the given token.', 'no_active_account',
+            )
 
 
 def revoke_refresh_tokens(user=None):

@@ -493,3 +493,59 @@ class LogoutTests(TestCase):
     def test_the_refresh_token_is_required(self):
         r = self.client.post('/api/v1/auth/logout/', {}, format='json')
         self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class DeleteAccountTests(TestCase):
+    """Audit, 21 October 2026: deleting an account took a bearer token alone.
+
+    Moving the address and changing the password both ask for the current
+    password, because an unattended tab on a school computer must not be able to
+    do them. Deleting the account -- which cannot be undone -- asked for nothing.
+    And a refresh token outliving its account made the refresh endpoint raise
+    DoesNotExist: a 500 instead of a 401.
+    """
+
+    def setUp(self):
+        cache.clear()
+        self.user = User.objects.create_user(
+            username='pilot', email='pilot@example.com', password=VALID_PW,
+        )
+        self.client = APIClient()
+        self.client.force_authenticate(self.user)
+
+    def _delete(self, **body):
+        return self.client.delete('/api/v1/auth/delete/', body, format='json')
+
+    def test_without_the_password_nothing_is_deleted(self):
+        r = self._delete()
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('current_password', r.data)
+        self.assertTrue(User.objects.filter(pk=self.user.pk).exists())
+
+    def test_the_wrong_password_deletes_nothing(self):
+        r = self._delete(current_password='not-it')
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertTrue(User.objects.filter(pk=self.user.pk).exists())
+
+    def test_the_right_password_deletes_the_account(self):
+        r = self._delete(current_password=VALID_PW)
+        self.assertEqual(r.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(User.objects.filter(pk=self.user.pk).exists())
+
+    def test_an_account_with_no_password_is_sent_to_set_one(self):
+        self.user.set_unusable_password()
+        self.user.save(update_fields=['password'])
+        r = self._delete(current_password='')
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(r.data.get('code'), 'no_password_set')
+        self.assertTrue(User.objects.filter(pk=self.user.pk).exists())
+
+    def test_a_refresh_token_that_outlived_its_account_is_a_401(self):
+        refresh = APIClient().post(
+            '/api/v1/auth/login/', {'email': 'pilot@example.com', 'password': VALID_PW}, format='json',
+        ).data['refresh']
+        self.user.delete()
+        r = APIClient(raise_request_exception=False).post(
+            '/api/v1/auth/token/refresh/', {'refresh': refresh}, format='json',
+        )
+        self.assertEqual(r.status_code, status.HTTP_401_UNAUTHORIZED)
