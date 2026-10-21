@@ -44,6 +44,25 @@ class RegisterTests(TestCase):
         r = self.client.post('/api/v1/auth/register/', _register_payload(email=''), format='json')
         self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_blank_names_are_refused(self):
+        """Audit, 21 October 2026. `required` was set but `allow_blank` was not,
+        and AbstractUser's names are blank=True -- so "   " and "" both passed,
+        and the account had no name anywhere it is shown."""
+        r = self.client.post(
+            '/api/v1/auth/register/', _register_payload(first_name='   ', last_name=''), format='json',
+        )
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('first_name', r.data)
+        self.assertIn('last_name', r.data)
+
+    def test_a_date_of_birth_no_living_person_has_is_refused(self):
+        """The form already refuses more than 120 years; the server took 1900."""
+        r = self.client.post(
+            '/api/v1/auth/register/', _register_payload(date_of_birth='1900-01-01'), format='json',
+        )
+        self.assertEqual(r.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('date_of_birth', r.data)
+
     def test_register_happy_path(self):
         r = self.client.post('/api/v1/auth/register/', _register_payload(), format='json')
         self.assertEqual(r.status_code, status.HTTP_201_CREATED)

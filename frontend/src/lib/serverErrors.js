@@ -44,6 +44,7 @@ const EXACT = new Map([
   // apps/accounts/serializers.py
   ['This email is already registered.', ['serverErrors', 'emailTaken']],
   ['Date of birth must be in the past.', ['registerPage', 'dobFuture']],
+  ['Enter a real date of birth.', ['registerPage', 'dobInvalid']],
   ['Passwords do not match.', ['registerPage', 'passwordsDoNotMatch']],
   // django.contrib.auth.password_validation
   ['This password is too common.', ['serverErrors', 'passwordCommon']],

@@ -38,8 +38,10 @@ class RegisterSerializer(serializers.ModelSerializer):
         model = User
         fields = ('first_name', 'last_name', 'email', 'date_of_birth', 'password', 'password2')
         extra_kwargs = {
-            'first_name': {'required': True},
-            'last_name': {'required': True},
+            # allow_blank as well: the names are blank=True on AbstractUser, and
+            # `required` alone let "" and "   " through.
+            'first_name': {'required': True, 'allow_blank': False},
+            'last_name': {'required': True, 'allow_blank': False},
             'date_of_birth': {'required': True},
             # AbstractUser declares email as blank=True, which DRF turns into
             # required=False. create() then read validated_data['email'] and
@@ -56,8 +58,12 @@ class RegisterSerializer(serializers.ModelSerializer):
         # localdate, not date.today(): the server runs on UTC and the site on
         # Asia/Tashkent, so for five hours a day they disagree about the date.
         from django.utils import timezone
-        if value >= timezone.localdate():
+        today = timezone.localdate()
+        if value >= today:
             raise serializers.ValidationError('Date of birth must be in the past.')
+        # The form's own bound (lib/authValidation.js), which the server lacked.
+        if today.year - value.year > 120:
+            raise serializers.ValidationError('Enter a real date of birth.')
         return value
 
     def validate(self, attrs):

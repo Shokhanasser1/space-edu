@@ -34,6 +34,7 @@ describe('the sentences the accounts API actually sends', () => {
     ['This email is already registered.', /уже зарегистрирован/i],
     ['That code is wrong or has expired.', /код/i],
     ['Date of birth must be in the past.', /дата рождения/i],
+    ['Enter a real date of birth.', /год/i],
     ['This password is too common.', /пароль/i],
     ['This password is too short. It must contain at least 8 characters.', /8/],
     ['The password is too similar to the email address.', /похож/i],
