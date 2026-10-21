@@ -234,6 +234,36 @@ class EmailCodeTests(TestCase):
 
 
 @override_settings(PASSWORD_HASHERS=['django.contrib.auth.hashers.MD5PasswordHasher'])
+class SignInCodeBudgetTests(TestCase):
+    """Audit 21 October 2026: the sign-in code endpoints and the password check
+    shared one throttle bucket.
+
+    `CredentialRateThrottle` used the scope `login` and keyed on the same
+    (address, account) pair as `LoginRateThrottle`, so they wrote to the very
+    same cache key. Asking for ten codes -- each of which counts, by design --
+    then locked the account's password sign-in for an hour with HTTP 429, even
+    with the right password.
+    """
+
+    def setUp(self):
+        self.client = APIClient()
+        cache.clear()
+        User.objects.create_user(username='pilot', email='pilot@example.com', password=VALID_PW)
+
+    def tearDown(self):
+        cache.clear()
+
+    def test_asking_for_codes_does_not_lock_out_the_password(self):
+        for _ in range(10):
+            self.client.post('/api/v1/auth/email-code/request/', {'email': 'pilot@example.com'}, format='json')
+
+        r = self.client.post(
+            '/api/v1/auth/login/',
+            {'email': 'pilot@example.com', 'password': VALID_PW}, format='json',
+        )
+        self.assertEqual(r.status_code, status.HTTP_200_OK)
+
+
 class ClassroomThrottleTests(TestCase):
     """Third-pass finding, 24 August 2026: the credential throttles counted the
     wrong events, and locked out the people they were built to protect.

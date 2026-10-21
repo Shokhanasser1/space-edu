@@ -163,6 +163,23 @@ class GoogleSignInTests(TestCase):
         self.assertEqual(r.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertIsNotNone(squatter)
 
+    def test_a_move_the_squatter_started_is_cancelled_with_the_password(self):
+        """Audit 21 October 2026. Clearing the password and revoking refresh
+        tokens left the squatter's pending change of address in place, and an
+        access token outlives both by up to eight hours -- long enough to confirm
+        the move with a code sent to their own mailbox and take the account
+        back, address and all."""
+        squatter = User.objects.create_user(
+            'squatter', email='pupil@example.com', password=VALID_PW,
+        )
+        squatter.pending_email = 'squatter@example.com'
+        squatter.save(update_fields=['pending_email'])
+
+        self._sign_in()
+
+        squatter.refresh_from_db()
+        self.assertEqual(squatter.pending_email, '')
+
     # ── tokens we will not accept ────────────────────────────────────────
     def test_an_address_google_has_not_confirmed_is_refused(self):
         """Every branch above keys on the address. One Google has not proved

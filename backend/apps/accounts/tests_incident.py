@@ -50,6 +50,16 @@ class RotateLeakedCredentialsTests(TestCase):
         self.bystander.refresh_from_db()
         self.assertTrue(self.bystander.check_password('OtherPw123!'))
 
+    def test_a_pending_move_of_the_address_goes_with_the_password(self):
+        """Audit 21 October 2026. Whoever held the leaked password could have
+        started moving the account to their own address; an access token outlives
+        this command by up to eight hours and could still finish the move."""
+        self.leaked.pending_email = 'intruder@example.com'
+        self.leaked.save(update_fields=['pending_email'])
+        _run()
+        self.leaked.refresh_from_db()
+        self.assertEqual(self.leaked.pending_email, '')
+
     def test_dry_run_changes_nothing(self):
         output = _run('--dry-run')
         self.leaked.refresh_from_db()

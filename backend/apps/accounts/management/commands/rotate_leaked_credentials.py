@@ -22,6 +22,7 @@ from django.contrib.sessions.models import Session
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
+from apps.accounts.email_code import cancel_address_change
 from apps.accounts.tokens import revoke_refresh_tokens
 
 # The rows read out of the leaked file, from the incident report. Superusers are
@@ -86,7 +87,10 @@ class Command(BaseCommand):
                 continue
             if not dry_run:
                 user.set_unusable_password()
-                user.save(update_fields=['password'])
+                fields = ['password']
+                if cancel_address_change(user):
+                    fields.append('pending_email')
+                user.save(update_fields=fields)
             rotated.append(user.username)
         return rotated
 

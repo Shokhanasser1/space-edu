@@ -66,11 +66,16 @@ def store_code(email: str, purpose: str = LOGIN) -> str:
     return code
 
 
-def verify_and_consume(email: str, submitted: str, purpose: str = LOGIN) -> bool:
-    """Return True exactly once per issued code, and only for its own purpose.
+def check_code(email: str, submitted: str, purpose: str = LOGIN) -> bool:
+    """Whether `submitted` is the live code for `purpose`, without spending it.
 
     Wrong guesses are counted; after MAX_ATTEMPTS the code is discarded so the
     caller has to request a new one. Comparison is constant-time.
+
+    For a caller that still has something to refuse after the code is proved --
+    a password reset, whose new password can fail the validators. Spending the
+    code first meant a child who retyped a better password was told the code had
+    expired. Everybody else wants `verify_and_consume`.
     """
     key = _key(email, purpose)
     stored = cache.get(key)
@@ -80,14 +85,41 @@ def verify_and_consume(email: str, submitted: str, purpose: str = LOGIN) -> bool
     attempt_key = _attempt_key(email, purpose)
     attempts = cache.get(attempt_key) or 0
     if attempts >= MAX_ATTEMPTS:
-        cache.delete(key)
-        cache.delete(attempt_key)
+        discard_code(email, purpose)
         return False
 
     if not hmac.compare_digest(str(stored), str(submitted).strip()):
         cache.set(attempt_key, attempts + 1, TTL[purpose])
         return False
 
-    cache.delete(key)
-    cache.delete(attempt_key)
+    return True
+
+
+def discard_code(email: str, purpose: str = LOGIN) -> None:
+    cache.delete(_key(email, purpose))
+    cache.delete(_attempt_key(email, purpose))
+
+
+def verify_and_consume(email: str, submitted: str, purpose: str = LOGIN) -> bool:
+    """Return True exactly once per issued code, and only for its own purpose."""
+    if not check_code(email, submitted, purpose):
+        return False
+    discard_code(email, purpose)
+    return True
+
+
+def cancel_address_change(user) -> bool:
+    """Forget a half-finished move of the address, and the code that finishes it.
+
+    Called wherever the password changes hands. Confirming a move needs only a
+    code sent to the *new* address, which whoever started the move chose -- so a
+    move left pending survives a password reset, and an access token (eight
+    hours, not revocable) could still finish it and mint a fresh token pair.
+
+    Does not save; returns whether `pending_email` needs to be.
+    """
+    if not user.pending_email:
+        return False
+    discard_code(user.pending_email, CHANGE_EMAIL)
+    user.pending_email = ''
     return True

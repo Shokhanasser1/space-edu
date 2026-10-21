@@ -289,6 +289,12 @@ REST_FRAMEWORK = {
         'login': '10/hour',
         'login_ip': '120/hour',
 
+        # Asking for a sign-in code and answering one, per (address, account).
+        # Every request counts -- each sends an e-mail or guesses six digits.
+        # Its own bucket: sharing `login` meant asking for codes locked out the
+        # password.
+        'email_code': '10/hour',
+
         # Registration counts every attempt, because an account created is the
         # cost. Per-address, so machine-sized: a class told to sign up right now
         # passes, a script sitting on the endpoint does not.

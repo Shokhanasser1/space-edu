@@ -18,6 +18,7 @@ from django.utils import timezone
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
 
+from .email_code import cancel_address_change
 from .models import SocialAccount, User
 from .serializers import RegisterSerializer
 from .tokens import revoke_refresh_tokens
@@ -155,7 +156,10 @@ def resolve_google_user(claims):
             existing.set_unusable_password()
             password_reset_required = True
         existing.email_verified_at = timezone.now()
-        existing.save(update_fields=['password', 'email_verified_at'])
+        # A move of the address the squatter started would otherwise outlive the
+        # password: their access token could still finish it.
+        cancel_address_change(existing)
+        existing.save(update_fields=['password', 'email_verified_at', 'pending_email'])
         revoked = revoke_refresh_tokens(existing)
         logger.warning(
             'Google linked to unconfirmed account %s; password cleared, %s tokens revoked',

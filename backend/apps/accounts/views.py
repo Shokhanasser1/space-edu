@@ -9,7 +9,15 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .email_code import CHANGE_EMAIL, PASSWORD_RESET, VERIFY_EMAIL, verify_and_consume
+from .email_code import (
+    CHANGE_EMAIL,
+    PASSWORD_RESET,
+    VERIFY_EMAIL,
+    cancel_address_change,
+    check_code,
+    discard_code,
+    verify_and_consume,
+)
 from .emails import (
     send_email_change_code,
     send_email_change_notice,
@@ -373,14 +381,22 @@ class PasswordResetConfirmView(APIView):
         data = serializer.validated_data
 
         user = User.objects.filter(email__iexact=data['email'], is_active=True).first()
-        if user is None or not verify_and_consume(data['email'], data['code'], PASSWORD_RESET):
+        if user is None or not check_code(data['email'], data['code'], PASSWORD_RESET):
             # One message for "no such account" and "wrong code", because
             # telling them apart is the enumeration oracle again.
             return Response({'detail': self.INVALID}, status=status.HTTP_401_UNAUTHORIZED)
 
+        # Judged only after the code is proved: the similarity validator compares
+        # the password with the account's address, so answering before would say
+        # whether that address has an account. And the code is spent only once
+        # the password is accepted, so a refused one can be retyped with it.
         check_new_password(data['password'], data['password2'], user=user)
+        discard_code(data['email'], PASSWORD_RESET)
         user.set_password(data['password'])
-        user.save(update_fields=['password'])
+        fields = ['password']
+        if cancel_address_change(user):
+            fields.append('pending_email')
+        user.save(update_fields=fields)
 
         revoked = revoke_refresh_tokens(user)
         logger.info('Password reset for user %s; %s refresh tokens revoked', user.pk, revoked)
@@ -437,7 +453,10 @@ class PasswordChangeView(APIView):
 
         check_new_password(data['password'], data['password2'], user=user)
         user.set_password(data['password'])
-        user.save(update_fields=['password'])
+        fields = ['password']
+        if cancel_address_change(user):
+            fields.append('pending_email')
+        user.save(update_fields=fields)
 
         revoked = revoke_refresh_tokens(user)
         logger.info('Password changed for user %s; %s refresh tokens revoked', user.pk, revoked)

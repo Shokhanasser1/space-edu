@@ -266,3 +266,127 @@ class PasswordChangeTests(TestCase):
         self.client.force_authenticate(user=None)
         r = self._change()
         self.assertEqual(r.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class ResetCodeSurvivesARejectedPasswordTests(TestCase):
+    """Audit 21 October 2026: the code was spent before the password was looked at.
+
+    A child who typed a password the validators refused was told so, retyped a
+    better one with the same code, and got "that code is wrong or has expired"
+    -- because the first attempt had already consumed it. The only way on was
+    another e-mail.
+    """
+
+    def setUp(self):
+        self.client = APIClient()
+        cache.clear()
+        mail.outbox = []
+        self.user = User.objects.create_user('pilot', email='pilot@example.com', password=VALID_PW)
+
+    def _confirm(self, code, password):
+        return self.client.post(
+            '/api/v1/auth/password/reset/confirm/',
+            {'email': 'pilot@example.com', 'code': code,
+             'password': password, 'password2': password},
+            format='json',
+        )
+
+    def test_the_same_code_works_after_a_password_was_refused(self):
+        self.client.post(
+            '/api/v1/auth/password/reset/request/',
+            {'email': 'pilot@example.com'}, format='json',
+        )
+        code = _code_from_the_last_message()
+
+        refused = self._confirm(code, '12345678')
+        self.assertEqual(refused.status_code, status.HTTP_400_BAD_REQUEST)
+
+        r = self._confirm(code, NEW_PW)
+        self.assertEqual(r.status_code, status.HTTP_200_OK)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password(NEW_PW))
+
+    def test_a_wrong_code_is_refused_before_the_password_is_judged(self):
+        """Otherwise the password rules answer for an account nobody has proved
+        anything about -- and UserAttributeSimilarityValidator, which compares
+        the password with the account's own address, would say whether that
+        address has an account here."""
+        r = self._confirm('000000', 'pilot@example.com')
+        self.assertEqual(r.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class APasswordResetCancelsAnUnfinishedMoveTests(TestCase):
+    """Audit 21 October 2026: a reset did not throw out whoever caused it.
+
+    Somebody who once knew the password -- a shared school computer is enough --
+    starts moving the account to their own address. The owner notices and resets
+    the password, which revokes every refresh token. But an access token lives
+    eight hours, the move was still pending, and confirming it needs only the
+    code that went to the new address: theirs. Confirming it then handed them the
+    account's address and a brand new token pair. Reproduced before the fix.
+    """
+
+    def setUp(self):
+        self.client = APIClient()
+        cache.clear()
+        mail.outbox = []
+        self.user = User.objects.create_user('pilot', email='pilot@example.com', password=VALID_PW)
+
+    def _start_a_move_as_the_intruder(self):
+        intruder = APIClient()
+        access = intruder.post(
+            '/api/v1/auth/login/',
+            {'email': 'pilot@example.com', 'password': VALID_PW}, format='json',
+        ).data['access']
+        intruder.credentials(HTTP_AUTHORIZATION=f'Bearer {access}')
+        intruder.post(
+            '/api/v1/auth/email/change/request/',
+            {'new_email': 'intruder@example.com', 'current_password': VALID_PW}, format='json',
+        )
+        message = next(m for m in reversed(mail.outbox) if m.to == ['intruder@example.com'])
+        code = next(w for w in message.body.split() if w.isdigit() and len(w) == 6)
+        return intruder, code
+
+    def _reset_as_the_owner(self):
+        self.client.post(
+            '/api/v1/auth/password/reset/request/',
+            {'email': 'pilot@example.com'}, format='json',
+        )
+        self.client.post(
+            '/api/v1/auth/password/reset/confirm/',
+            {'email': 'pilot@example.com', 'code': _code_from_the_last_message(),
+             'password': NEW_PW, 'password2': NEW_PW},
+            format='json',
+        )
+
+    def test_the_intruder_cannot_finish_the_move_after_a_reset(self):
+        intruder, code = self._start_a_move_as_the_intruder()
+        self._reset_as_the_owner()
+
+        r = intruder.post('/api/v1/auth/email/change/confirm/', {'code': code}, format='json')
+
+        self.assertNotEqual(r.status_code, status.HTTP_200_OK)
+        self.assertNotIn('refresh', r.data)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.email, 'pilot@example.com')
+        self.assertEqual(self.user.pending_email, '')
+
+    def test_changing_the_password_cancels_it_too(self):
+        intruder, code = self._start_a_move_as_the_intruder()
+        owner = APIClient()
+        # force_authenticate hands the view this very object, so it has to carry
+        # the pending move the intruder's request wrote -- as a real request's
+        # freshly loaded user would.
+        self.user.refresh_from_db()
+        owner.force_authenticate(user=self.user)
+        owner.post(
+            '/api/v1/auth/password/change/',
+            {'current_password': VALID_PW, 'password': NEW_PW, 'password2': NEW_PW},
+            format='json',
+        )
+
+        r = intruder.post('/api/v1/auth/email/change/confirm/', {'code': code}, format='json')
+
+        self.assertNotEqual(r.status_code, status.HTTP_200_OK)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.email, 'pilot@example.com')

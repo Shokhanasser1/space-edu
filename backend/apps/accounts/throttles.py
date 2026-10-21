@@ -153,9 +153,13 @@ class CredentialRateThrottle(_AlwaysOnRateThrottle):
     e-mail, and that is the cost being bounded. Keyed on the client *and* the
     target address, so hammering one account from many addresses and one
     address against many accounts are both bounded.
+
+    Its own scope. It was `login`, and with the same (address, account) ident
+    that wrote to `LoginRateThrottle`'s very key -- so ten codes asked for, all
+    of which count, locked the account's password sign-in for an hour.
     """
 
-    scope = 'login'
+    scope = 'email_code'
 
     def get_cache_key(self, request, view):
         email = ''
