@@ -77,6 +77,30 @@ class PrivilegeBoundaryTests(TestCase):
         self.pupil.refresh_from_db()
         self.assertTrue(self.pupil.is_staff)
 
+    def test_staff_cannot_delete_another_member_of_staff(self):
+        """Audit, 21 October 2026. Deactivating a member of staff was already
+        superuser-only, but deleting one -- the destructive version of the same
+        thing -- was open to any member of staff."""
+        colleague = User.objects.create_user(
+            username='colleague', email='c@e.com', password='x', is_staff=True
+        )
+        r = self.client.delete(f'/api/v1/admin-panel/users/{colleague.id}/')
+        self.assertEqual(r.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertTrue(User.objects.filter(pk=colleague.pk).exists())
+
+    def test_a_superuser_can_delete_a_member_of_staff(self):
+        colleague = User.objects.create_user(
+            username='colleague', email='c@e.com', password='x', is_staff=True
+        )
+        su_client = APIClient()
+        su_client.force_authenticate(self.superuser)
+        r = su_client.delete(f'/api/v1/admin-panel/users/{colleague.id}/')
+        self.assertEqual(r.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_staff_can_still_delete_a_pupil(self):
+        r = self.client.delete(f'/api/v1/admin-panel/users/{self.pupil.id}/')
+        self.assertEqual(r.status_code, status.HTTP_204_NO_CONTENT)
+
     def test_staff_can_still_edit_harmless_profile_fields(self):
         r = self.client.patch(
             f'/api/v1/admin-panel/users/{self.pupil.id}/', {'first_name': 'Aziz'}, format='json'

@@ -183,6 +183,14 @@ class UserViewSet(AdminModelViewSet):
                 {'detail': 'You cannot delete your own account from here.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        # The same line `update` draws for the privilege flags: deactivating a
+        # member of staff was superuser-only while deleting one, which cannot be
+        # undone, was open to any of them.
+        if user.is_staff and not request.user.is_superuser:
+            return Response(
+                {'detail': 'Only a superuser may delete a member of staff.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         return super().destroy(request, *args, **kwargs)
 
 
