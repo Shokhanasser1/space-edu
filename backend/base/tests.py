@@ -79,6 +79,8 @@ class TestDatabaseIsolationTests(SimpleTestCase):
     def test_a_test_run_is_on_sqlite_whatever_db_url_says(self):
         from django.conf import settings
 
+        if os.environ.get('TEST_DB_URL'):
+            self.skipTest('TEST_DB_URL names a throwaway database for this run (CI)')
         self.assertIn(
             'sqlite', settings.DATABASES['default']['ENGINE'],
             'a test run reached a database that is not SQLite — check the '
@@ -265,6 +267,35 @@ class SettingsReloadMixin:
             for name in [m for m in sys.modules if m.startswith('base.settings')]:
                 sys.modules.pop(name, None)
             importlib.import_module('base.settings')
+
+
+class TestDatabaseOverrideTests(SettingsReloadMixin, SimpleTestCase):
+    """Audit, 21 October 2026: the suite only ever ran on SQLite, so a bug that
+    only PostgreSQL has went unseen -- courses.0003's duplicate index was one,
+    and `select_for_update()` outside a transaction, which SQLite ignores, would
+    be another. TEST_DB_URL lets CI run the whole suite on its own throwaway
+    PostgreSQL, and is refused if it names the database DB_URL does."""
+
+    def test_a_run_can_be_pointed_at_a_throwaway_postgres(self):
+        settings = self._reload_settings(
+            TEST_DB_URL='postgres://ci:ci@localhost:5432/ci', DB_URL='', DATABASE_URL='',
+        )
+        self.assertIn('postgresql', settings.DATABASES['default']['ENGINE'])
+
+    def test_it_refuses_to_be_the_shared_database(self):
+        from django.core.exceptions import ImproperlyConfigured
+
+        shared = 'postgres://owner:pw@ep-shared.eu-central-1.aws.neon.tech/neondb'
+        with self.assertRaises(ImproperlyConfigured):
+            self._reload_settings(TEST_DB_URL=shared, DB_URL=shared)
+
+    def test_connections_are_checked_before_they_are_reused(self):
+        """conn_max_age keeps a connection for ten minutes, and Neon's free tier
+        suspends the database after five idle ones: without the check the next
+        request after a quiet spell meets a dead connection."""
+        from django.conf import settings
+
+        self.assertTrue(settings.DATABASES['default'].get('CONN_HEALTH_CHECKS'))
 
 
 class OriginConfigTests(SettingsReloadMixin, SimpleTestCase):

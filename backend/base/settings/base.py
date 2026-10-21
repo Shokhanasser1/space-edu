@@ -131,10 +131,23 @@ _running_tests = (
     or os.path.basename(sys.argv[0] or '').startswith('pytest')
 )
 if _running_tests:
-    _db_url = f'sqlite:///{BASE_DIR / "db.sqlite3"}'
+    # TEST_DB_URL is for CI's own throwaway PostgreSQL, so the suite also runs on
+    # the engine the team uses: SQLite ignores what PostgreSQL refuses (a
+    # duplicate index, select_for_update outside a transaction). It must never
+    # name the shared database, and naming DB_URL's is refused outright.
+    _test_db_url = _text('TEST_DB_URL')
+    if _test_db_url and _test_db_url == _db_url:
+        raise ImproperlyConfigured(
+            'TEST_DB_URL names the database DB_URL does. The test runner creates and '
+            'drops databases; point it at a throwaway one, or leave it unset for SQLite.'
+        )
+    _db_url = _test_db_url or f'sqlite:///{BASE_DIR / "db.sqlite3"}'
 
 DATABASES = {
-    'default': dj_database_url.parse(_db_url, conn_max_age=600)
+    # Health checks because a connection is kept for ten minutes and Neon's free
+    # tier suspends the database after five idle ones: without the check, the
+    # first request after a quiet spell meets a dead connection.
+    'default': dj_database_url.parse(_db_url, conn_max_age=600, conn_health_checks=True)
 }
 
 AUTH_PASSWORD_VALIDATORS = [
