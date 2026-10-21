@@ -88,6 +88,52 @@ class MissionClaimTests(TestCase):
         self.assertEqual(second.status_code, status.HTTP_400_BAD_REQUEST)
 
 
+class DailyMissionTests(TestCase):
+    """Audit, 21 October 2026: a daily mission counted lifetime totals.
+
+    `is_daily` only checked that it had not been claimed today, while the
+    progress it compared against was everything the pupil had ever done -- so a
+    single lesson finished once paid "complete a lesson today" every day after,
+    forever.
+    """
+
+    def setUp(self):
+        from apps.courses.models import Sphere, Topic, TopicLesson
+
+        self.user = User.objects.create_user(username='alice', email='a@e.com', password='x')
+        self.client = APIClient()
+        self.client.force_authenticate(self.user)
+        self.mission = Mission.objects.create(
+            slug='a-lesson-a-day', title_en='Complete a lesson today', description_en='x',
+            mission_type='lesson', target_value=1, reward_xp=50, reward_fuel=10, is_daily=True,
+        )
+        sphere = Sphere.objects.create(slug='physics', title='Fizika', title_en='Physics')
+        topic = Topic.objects.create(sphere=sphere, slug='physics-kinematics', title='Kinematika')
+        self.lesson = TopicLesson.objects.create(
+            topic=topic, slug='physics-kinematics-l0', order=0, name='L0',
+        )
+
+    def _claim(self):
+        return self.client.post(
+            '/api/v1/gamification/missions/claim/', {'mission_id': self.mission.id}, format='json'
+        )
+
+    def test_a_lesson_finished_days_ago_does_not_pay_today(self):
+        from apps.progress.models import UserLessonProgress
+
+        UserLessonProgress.objects.create(user=self.user, lesson=self.lesson, score=100)
+        UserLessonProgress.objects.filter(user=self.user).update(
+            completed_at=timezone.now() - timezone.timedelta(days=3)
+        )
+        self.assertEqual(self._claim().status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_a_lesson_finished_today_pays(self):
+        from apps.progress.models import UserLessonProgress
+
+        UserLessonProgress.objects.create(user=self.user, lesson=self.lesson, score=100)
+        self.assertEqual(self._claim().status_code, status.HTTP_200_OK)
+
+
 class ProfileArithmeticTests(TestCase):
     """Findings: add_xp/add_fuel/spend_fuel were read-modify-write on a loaded
     instance, so concurrent writes lost updates; and several call sites wrote

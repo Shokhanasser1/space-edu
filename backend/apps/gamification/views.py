@@ -300,6 +300,8 @@ def mission_progress(user, mission):
     mission reading "Complete 5 lessons" handed over its reward to somebody who
     had completed none.
     """
+    from django.utils import timezone
+
     from apps.market.models import UserInventory
     from apps.progress.models import UserLessonProgress
 
@@ -309,12 +311,22 @@ def mission_progress(user, mission):
         # running" was claimable four days after the run ended, because nothing
         # lowers that column on a day nobody plays.
         return profile.live_streak
+
+    # A daily mission counts today's work. It counted everything ever done, so
+    # one lesson finished once paid "a lesson today" every day after.
+    lessons = UserLessonProgress.objects.filter(user=user)
+    items = UserInventory.objects.filter(user=user)
+    if mission.is_daily:
+        today = timezone.localdate()
+        lessons = lessons.filter(completed_at__date=today)
+        items = items.filter(purchased_at__date=today)
+
     if mission.mission_type == 'lesson':
-        return UserLessonProgress.objects.filter(user=user).count()
+        return lessons.count()
     if mission.mission_type == 'mastery':
-        return UserLessonProgress.objects.filter(user=user, is_mastered=True).count()
+        return lessons.filter(is_mastered=True).count()
     if mission.mission_type == 'inventory':
-        return UserInventory.objects.filter(user=user).count()
+        return items.count()
     # 'custom' has no machine-checkable definition, so it cannot be self-claimed.
     return None
 
