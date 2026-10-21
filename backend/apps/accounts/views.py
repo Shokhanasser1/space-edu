@@ -222,7 +222,12 @@ class DeleteAccountView(APIView):
     It took a bearer token alone, while moving the address and changing the
     password -- both undoable -- asked for the current password. An unattended
     tab on a school computer could end somebody's account with one request.
+
+    The password change's throttle, so the two share one budget of guesses at
+    the current password rather than each being a door of its own.
     """
+
+    throttle_classes = [PasswordChangeThrottle]
 
     def delete(self, request):
         user = request.user

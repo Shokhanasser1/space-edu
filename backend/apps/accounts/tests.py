@@ -549,3 +549,29 @@ class DeleteAccountTests(TestCase):
             '/api/v1/auth/token/refresh/', {'refresh': refresh}, format='json',
         )
         self.assertEqual(r.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class DeleteAccountThrottleTests(TestCase):
+    """Security review, 22 October 2026: the password check added to account
+    deletion had no throttle of its own, so it was an unlimited oracle for the
+    current password -- the one PasswordChangeView bounds at 20 an hour."""
+
+    def setUp(self):
+        cache.clear()
+        self.user = User.objects.create_user(
+            username='pilot', email='pilot@example.com', password=VALID_PW,
+        )
+        self.client = APIClient()
+        self.client.force_authenticate(self.user)
+
+    def tearDown(self):
+        cache.clear()
+
+    def test_guessing_the_password_through_deletion_is_bounded(self):
+        codes = [
+            self.client.delete(
+                '/api/v1/auth/delete/', {'current_password': f'guess-{i}'}, format='json',
+            ).status_code
+            for i in range(25)
+        ]
+        self.assertIn(status.HTTP_429_TOO_MANY_REQUESTS, codes)
