@@ -89,3 +89,31 @@ describe('the menu behind the hamburger', () => {
     expect(links.length).toBeGreaterThan(0);
   });
 });
+
+describe('the way to the admin panel', () => {
+  const adminLinks = () => [...document.querySelectorAll('nav a[href="/admin-panel"]')];
+
+  it('is in the menu for a member of staff', async () => {
+    useAuthStore.setState({
+      user: { id: 1, username: 'admin', is_staff: true },
+      accessToken: 'a', refreshToken: 'r', isAuthenticated: true,
+    });
+    renderNav();
+
+    await openTheMobileMenu();
+
+    expect(adminLinks().length).toBeGreaterThan(0);
+  });
+
+  it('is not shown to a pupil', async () => {
+    useAuthStore.setState({
+      user: { id: 2, username: 'pupil', is_staff: false },
+      accessToken: 'a', refreshToken: 'r', isAuthenticated: true,
+    });
+    renderNav();
+
+    await openTheMobileMenu();
+
+    expect(adminLinks()).toHaveLength(0);
+  });
+});

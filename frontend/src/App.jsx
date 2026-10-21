@@ -55,6 +55,7 @@ const ChatView            = lazy(() => import('@/views/chat/ChatView'));
 const QuizHubView         = lazy(() => import('@/views/quiz/QuizHubView'));
 const QuizSessionView     = lazy(() => import('@/views/quiz/QuizSessionView'));
 const AdminDashboard      = lazy(() => import('@/views/admin/AdminDashboard'));
+const AdminLoginView      = lazy(() => import('@/views/admin/AdminLoginView'));
 
 const GAME_PATH = '/space-game';
 
@@ -69,7 +70,8 @@ export default function App() {
   // auth route that is not in here gets the whole site around it.
   const isAuth  = ['/welcome', '/login', '/register', '/forgot-password', '/verify-email']
     .includes(location.pathname);
-  const isAdmin = location.pathname === '/admin-panel';
+  // The panel and its sign-in, which brings its own frame (AuthShell).
+  const isAdmin = location.pathname.startsWith('/admin-panel');
   const isHome  = location.pathname === '/';
   const shouldHideFooter = ['/history', '/live', '/3d-solar-system', '/'].includes(location.pathname) || isAdmin;
 
@@ -143,7 +145,11 @@ export default function App() {
               <Route path="/verify-email" element={<VerifyEmailView />} />
             </Route>
 
-            {/* Admin — staff only, not merely signed in */}
+            {/* Admin — staff only, not merely signed in. The sign-in sits
+                outside both guards: StaffRoute sends everyone it refuses here,
+                and GuestRoute would bounce a signed-in pupil before the screen
+                could tell them why. */}
+            <Route path="/admin-panel/login" element={<AdminLoginView />} />
             <Route element={<StaffRoute />}>
               <Route path="/admin-panel" element={<PT><AdminDashboard /></PT>} />
             </Route>
