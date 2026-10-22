@@ -1,15 +1,20 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Pause, Play, SkipForward, Sparkles } from 'lucide-react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { ArrowRight, Atom, Pause, Play, SkipForward, Sparkles } from 'lucide-react';
+import { Canvas } from '@react-three/fiber';
 import { OrbitControls, Stars } from '@react-three/drei';
 import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
 import * as THREE from 'three';
 
 import { useTranslation } from '@/hooks/useTranslation';
-import { FitToViewport, HOLO, HologramStage, ReleaseContextOnUnmount } from './Hologram';
+import { FitToViewport, ReleaseContextOnUnmount } from './Hologram';
 import { LAB_DPR, LabViewport } from './LabCanvas';
 import { LabExplain, LabFacts, LabMissions, LabPresets } from './LabKit';
+import { DotProvider, NEBULA_SECONDS, StageMorph } from './StarLifeScenes';
+import { preloadModels } from './ModelKit';
+import { BIRTH_MODELS } from './StarBirthScenes';
+import { STAR_LIFE_MODELS } from './StarDeathScenes';
+import { CRAB_MODELS } from './StarRemnants';
 import {
   CLASS_COLOUR,
   SUN_AGE_YEARS,
@@ -42,11 +47,18 @@ import {
  * would be a thousand Suns across and a neutron star twenty kilometres — and
  * the page says so.
  *
- * Kept from the old module: the particle table approach (14 000 points at
- * most, which a phone can draw at frame rate) and the shared hologram stage.
+ * The scenes are in `StarLifeScenes.jsx`: each stage morphs into the next the
+ * way the star really changes, the life starts with a cloud collapsing into a
+ * protostar. How the star shines - the fusion in its core - has a module of
+ * its own (`FusionModule.jsx`), linked from the main sequence. The hologram
+ * rings the lab's other
+ * models stand in are left out here: they framed the star in a cage and made
+ * a living star read as a diagram.
  */
 
-const STAGE_SECONDS = 2.6;
+/** How long Play lingers on each stage: the birth needs longer. */
+const STAGE_SECONDS = { nebula: NEBULA_SECONDS + 1.5, mainSequence: 5.5, supernova: 4.5 };
+const DEFAULT_STAGE_SECONDS = 4;
 const PRESETS = [
   { id: 'redDwarf', mass: 0.12, labelKey: 'uniPresetRedDwarf' },
   { id: 'sun', mass: 1, labelKey: 'uniPresetSun' },
@@ -66,6 +78,27 @@ const STAGE_KEYS = {
   blackHole: 'uniStageBlackHole',
 };
 
+/** What the viewer says while one stage turns into the next. */
+const MORPH_KEYS = {
+  'nebula>mainSequence': 'uniMorphIgnite',
+  'mainSequence>redGiant': 'uniMorphSwell',
+  'mainSequence>redSupergiant': 'uniMorphSwell',
+  'mainSequence>whiteDwarf': 'uniMorphDwarf',
+  'redGiant>planetaryNebula': 'uniMorphShed',
+  'planetaryNebula>whiteDwarf': 'uniMorphFade',
+  'redSupergiant>supernova': 'uniMorphCollapse',
+  'supernova>neutronStar': 'uniMorphRemnant',
+  'supernova>blackHole': 'uniMorphRemnant',
+};
+
+/** What the viewer says during each part of a stage that tells a story. */
+const PHASE_KEYS = {
+  nebula: { pillars: 'uniNebulaPillars', cloud: 'uniNebulaCloud', collapse: 'uniNebulaCollapse', protostar: 'uniNebulaProtostar' },
+  supernova: { blast: 'uniSupernovaBlast', remnant: 'uniSupernovaRemnant' },
+  planetaryNebula: { helix: 'uniPlanetaryHelix' },
+  neutronStar: { crab: 'uniPulsarCrab' },
+};
+
 const FATE_KEYS = {
   heliumWhiteDwarf: 'uniFateHeliumWhiteDwarf',
   whiteDwarf: 'uniFateWhiteDwarf',
@@ -73,230 +106,16 @@ const FATE_KEYS = {
   blackHole: 'uniFateBlackHole',
 };
 
-/** Points spread through a ball, a flat ring, or a thin shell. */
-function scatter(count, radius, shape) {
-  const pos = new Float32Array(count * 3);
-  for (let i = 0; i < count; i += 1) {
-    const theta = Math.random() * 2 * Math.PI;
-    let x;
-    let y;
-    let z;
-    if (shape === 'ring') {
-      const r = radius * (0.75 + 0.25 * Math.random());
-      x = r * Math.cos(theta);
-      z = r * Math.sin(theta);
-      y = (Math.random() - 0.5) * radius * 0.18;
-    } else {
-      const phi = Math.acos(2 * Math.random() - 1);
-      const r = shape === 'shell' ? radius * (0.92 + 0.08 * Math.random()) : radius * Math.cbrt(Math.random());
-      x = r * Math.sin(phi) * Math.cos(theta);
-      y = r * Math.sin(phi) * Math.sin(theta);
-      z = r * Math.cos(phi);
-    }
-    pos[i * 3] = x;
-    pos[i * 3 + 1] = y;
-    pos[i * 3 + 2] = z;
-  }
-  return pos;
-}
-
-function ParticleSystem({ count, color, size, radius, shape = 'ball', opacity = 0.6, spin = 1 }) {
-  const positions = useMemo(() => scatter(count, radius, shape), [count, radius, shape]);
-  const pointsRef = useRef(null);
-  useFrame((_, delta) => {
-    if (!pointsRef.current) return;
-    pointsRef.current.rotation.y += delta * 0.06 * spin;
-    if (shape !== 'ring') pointsRef.current.rotation.z += delta * 0.03 * spin;
-  });
-
-  return (
-    <points ref={pointsRef}>
-      <bufferGeometry>
-        <bufferAttribute attach="attributes-position" count={count} array={positions} itemSize={3} />
-      </bufferGeometry>
-      <pointsMaterial
-        size={size}
-        color={color}
-        transparent
-        opacity={opacity}
-        sizeAttenuation
-        blending={THREE.AdditiveBlending}
-        depthWrite={false}
-      />
-    </points>
-  );
-}
-
-/** A glowing ball with a soft halo; breathes slightly so it reads as alive. */
-function GlowingStar({ colour, radius, intensity = 3, halo = 1.25 }) {
-  const ref = useRef(null);
-  useFrame((state) => {
-    if (!ref.current) return;
-    const s = 1 + Math.sin(state.clock.elapsedTime * 1.3) * 0.015;
-    ref.current.scale.setScalar(s);
-  });
-  return (
-    <group ref={ref}>
-      <mesh>
-        <sphereGeometry args={[radius, 48, 48]} />
-        <meshStandardMaterial color={colour} emissive={colour} emissiveIntensity={intensity} toneMapped={false} />
-      </mesh>
-      <mesh>
-        <sphereGeometry args={[radius * halo, 32, 32]} />
-        <meshBasicMaterial
-          color={colour}
-          transparent
-          opacity={0.18}
-          side={THREE.BackSide}
-          blending={THREE.AdditiveBlending}
-          depthWrite={false}
-        />
-      </mesh>
-    </group>
-  );
-}
-
-/** The explosion grows from the core outward for its first few seconds. */
-function Supernova() {
-  const ref = useRef(null);
-  const start = useRef(null);
-  useFrame((state) => {
-    if (!ref.current) return;
-    if (start.current === null) start.current = state.clock.elapsedTime;
-    const t = Math.min(1, (state.clock.elapsedTime - start.current) / 2.5);
-    ref.current.scale.setScalar(0.15 + 0.85 * (1 - (1 - t) ** 3));
-  });
-  return (
-    <group ref={ref}>
-      <ParticleSystem count={8000} color="#00f0ff" size={0.035} radius={8} shape="shell" opacity={0.55} />
-      <ParticleSystem count={5000} color="#ffd9a0" size={0.05} radius={5} opacity={0.6} />
-      <GlowingStar colour="#ffffff" radius={1.4} intensity={8} halo={1.6} />
-    </group>
-  );
-}
-
-/** A pulsar: a tiny ball with two beams sweeping round like a lighthouse. */
-function NeutronStar() {
-  const ref = useRef(null);
-  useFrame((_, delta) => {
-    if (ref.current) ref.current.rotation.y += delta * 2.4;
-  });
-  return (
-    <group rotation={[0, 0, 0.35]}>
-      <GlowingStar colour="#cfe3ff" radius={0.16} intensity={10} halo={3} />
-      <group ref={ref}>
-        <group rotation={[0, 0, 0.5]}>
-          {[1, -1].map((side) => (
-            <mesh key={side} position={[0, side * 2.2, 0]} rotation={[side > 0 ? Math.PI : 0, 0, 0]}>
-              <coneGeometry args={[0.45, 4.2, 24, 1, true]} />
-              <meshBasicMaterial
-                color="#8fd8ff"
-                transparent
-                opacity={0.22}
-                side={THREE.DoubleSide}
-                blending={THREE.AdditiveBlending}
-                depthWrite={false}
-              />
-            </mesh>
-          ))}
-        </group>
-      </group>
-    </group>
-  );
-}
-
-function BlackHole() {
-  return (
-    <group>
-      <mesh>
-        <sphereGeometry args={[1, 64, 64]} />
-        <meshBasicMaterial color="#000000" />
-      </mesh>
-      <group rotation={[Math.PI / 2.2, 0, 0]}>
-        <ParticleSystem count={6000} color="#ffaa00" size={0.02} radius={3.6} shape="ring" spin={3} />
-        <ParticleSystem count={3000} color="#ffffff" size={0.035} radius={2.4} shape="ring" spin={4} />
-      </group>
-      {/* The thin bright rim the Event Horizon Telescope saw around M87*. */}
-      <mesh>
-        <torusGeometry args={[1.22, 0.035, 12, 96]} />
-        <meshBasicMaterial color="#ffcf8a" toneMapped={false} />
-      </mesh>
-      <mesh>
-        <sphereGeometry args={[1.1, 64, 64]} />
-        <meshBasicMaterial
-          color="#ff5500"
-          transparent
-          opacity={0.3}
-          blending={THREE.AdditiveBlending}
-          side={THREE.BackSide}
-        />
-      </mesh>
-    </group>
-  );
-}
-
-/** Each stage drawn for a star of this mass. Not to scale, by design. */
-function StageScene({ stage, mass }) {
-  const colour = CLASS_COLOUR[spectralClass(mass)];
-  const msRadius = Math.min(2.4, Math.max(0.45, 1.1 * mass ** 0.3));
-
-  switch (stage) {
-    case 'nebula':
-      return (
-        <group>
-          <ParticleSystem count={7000} color="#b026ff" size={0.05} radius={5} />
-          <ParticleSystem count={3500} color="#00f0ff" size={0.08} radius={3} />
-          <ParticleSystem count={1500} color="#ff00aa" size={0.1} radius={1.5} />
-        </group>
-      );
-    case 'mainSequence':
-      return <GlowingStar colour={colour} radius={msRadius} intensity={mass < 0.5 ? 2.2 : 3.5} />;
-    // Giants get a speckled skin: their surfaces boil in huge convection cells,
-    // and a flat disc read as a ball of paint rather than a star.
-    case 'redGiant':
-      return (
-        <group>
-          <GlowingStar colour="#ff8a4c" radius={3.1} intensity={1.6} halo={1.15} />
-          <ParticleSystem count={2200} color="#ffd0a0" size={0.07} radius={3.13} shape="shell" opacity={0.3} spin={0.3} />
-        </group>
-      );
-    case 'redSupergiant':
-      return (
-        <group>
-          <GlowingStar colour="#ff5a3c" radius={3.9} intensity={1.4} halo={1.1} />
-          <ParticleSystem count={2600} color="#ffb48a" size={0.08} radius={3.93} shape="shell" opacity={0.3} spin={0.25} />
-        </group>
-      );
-    case 'planetaryNebula':
-      return (
-        <group>
-          <group rotation={[Math.PI / 2.6, 0, 0.3]}>
-            <ParticleSystem count={5000} color="#3ef0d0" size={0.05} radius={3.6} shape="ring" spin={0.4} />
-            <ParticleSystem count={2500} color="#ff5fa8" size={0.06} radius={4.2} shape="ring" spin={0.3} />
-          </group>
-          <ParticleSystem count={1500} color="#9ad8ff" size={0.04} radius={2.6} shape="shell" opacity={0.35} />
-          <GlowingStar colour="#e8f1ff" radius={0.2} intensity={9} halo={2.5} />
-        </group>
-      );
-    case 'whiteDwarf':
-      return <GlowingStar colour="#e8f1ff" radius={0.24} intensity={9} halo={2.6} />;
-    case 'supernova':
-      return <Supernova />;
-    case 'neutronStar':
-      return <NeutronStar />;
-    case 'blackHole':
-      return <BlackHole />;
-    default:
-      return null;
-  }
-}
-
 export function UniverseChangesSimulator() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [mass, setMass] = useState(1);
-  const [stageIndex, setStageIndex] = useState(1);
+  // The life starts where a star does: in a cloud.
+  const [stageIndex, setStageIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
+  // The birth opens on the Pillars of Creation; the scene reports later phases.
+  const [phase, setPhase] = useState({ stage: 'nebula', name: 'pillars' });
+  const [morph, setMorph] = useState(null);
 
   const stages = useMemo(() => lifeStages(mass), [mass]);
   const at = Math.min(stageIndex, stages.length - 1);
@@ -314,9 +133,16 @@ export function UniverseChangesSimulator() {
       setPlaying(false);
       return undefined;
     }
-    const timer = setTimeout(() => setStageIndex(at + 1), STAGE_SECONDS * 1000);
+    const timer = setTimeout(() => setStageIndex(at + 1), (STAGE_SECONDS[stage] ?? DEFAULT_STAGE_SECONDS) * 1000);
     return () => clearTimeout(timer);
-  }, [playing, at, stages.length]);
+  }, [playing, at, stage, stages.length]);
+
+
+  // Fetch every stage's model up front (about 1.6 MB in all), so a stage
+  // opens complete rather than filling in.
+  useEffect(() => {
+    preloadModels([...BIRTH_MODELS.pillars, ...BIRTH_MODELS.dgTau, ...Object.values(STAR_LIFE_MODELS), ...CRAB_MODELS]);
+  }, []);
 
   const number = (value) => new Intl.NumberFormat(i18n.language, { maximumSignificantDigits: 2 }).format(value);
   const years = (value) => {
@@ -482,6 +308,7 @@ export function UniverseChangesSimulator() {
           />
           <LabFacts facts={facts} />
           <p className="text-[10px] leading-relaxed text-gray-500">{t('lab', 'uniModelNote')}</p>
+          <p className="text-[10px] leading-relaxed text-gray-500">{t('lab', 'uniModelCredits')}</p>
         </div>
       </div>
 
@@ -489,6 +316,18 @@ export function UniverseChangesSimulator() {
         <div className="absolute top-4 left-4 z-10 text-[10px] uppercase tracking-widest text-violet-200 bg-violet-500/15 border border-violet-400/30 px-3 py-1.5 rounded-full pointer-events-none">
           {t('lab', 'uniNotToScale')}
         </div>
+
+        {stage === 'mainSequence' ? (
+          <button
+            onClick={() => navigate('/lab/fusion')}
+            className="absolute top-4 right-4 z-10 flex items-center gap-1.5 min-h-[40px] px-3 py-2 rounded-lg text-xs font-semibold bg-amber-400/20 border border-amber-300/50 text-amber-50 hover:bg-amber-400/30 backdrop-blur-md"
+          >
+            <Atom className="w-4 h-4" /> {t('lab', 'uniToFusion')}
+          </button>
+        ) : null}
+
+        <ViewerCaption t={t} stage={stage} morph={morph} phase={phase?.stage === stage ? phase.name : null} />
+
         <Canvas
           dpr={LAB_DPR}
           camera={{ position: [0, 0, 12], fov: 45 }}
@@ -497,27 +336,53 @@ export function UniverseChangesSimulator() {
           <ReleaseContextOnUnmount />
           <FitToViewport height={9} radius={4.2} elevation={0.02} margin={1.12} />
           <ambientLight intensity={0.05} />
-          <Stars radius={100} depth={50} count={6000} factor={4} saturation={0.5} fade speed={1} />
-
-          <HologramStage
-            height={9}
-            radius={4.4}
-            accent={HOLO.accent}
-            spin={0}
-            float={false}
-            plinth={false}
-            lighting={false}
-          >
-            <StageScene key={`${stage}-${cls}`} stage={stage} mass={mass} />
-          </HologramStage>
+          <DotProvider>
+            <Stars radius={100} depth={50} count={6000} factor={4} saturation={0.5} fade speed={1} />
+            <StageMorph stage={stage} mass={mass} onPhase={setPhase} onMorph={setMorph} />
+          </DotProvider>
 
           <OrbitControls enablePan={false} autoRotate autoRotateSpeed={0.8} />
           <EffectComposer>
-            <Bloom luminanceThreshold={1} mipmapBlur intensity={stage === 'supernova' ? 3 : 1.5} />
+            <Bloom luminanceThreshold={1} mipmapBlur intensity={stage === 'supernova' ? 3 : stage === 'blackHole' ? 0.8 : 1.5} />
             <Vignette eskil={false} offset={0.1} darkness={1.1} />
           </EffectComposer>
         </Canvas>
       </LabViewport>
     </div>
   );
+}
+
+/**
+ * The line under the picture: what is happening right now. During a morph it
+ * names the change; in a stage that tells a story - the birth in the
+ * nebula, the blast and its remnant - it follows that story.
+ */
+function ViewerCaption({ t, stage, morph, phase }) {
+  const box =
+    'absolute left-4 right-4 bottom-14 z-10 md:right-auto md:max-w-sm rounded-2xl border border-white/10 bg-black/60 backdrop-blur-md p-3 text-xs leading-relaxed text-gray-200 pointer-events-none';
+
+  if (morph && MORPH_KEYS[morph]) {
+    return (
+      <div className={box} aria-live="polite">
+        <p className="text-amber-100">{t('lab', MORPH_KEYS[morph])}</p>
+      </div>
+    );
+  }
+
+  const keys = PHASE_KEYS[stage];
+  if (keys && phase && keys[phase]) {
+    const phases = Object.keys(keys);
+    return (
+      <div className={box} aria-live="polite">
+        {stage === 'nebula' ? (
+          <p className="text-[10px] uppercase tracking-widest text-pink-200">
+            {t('lab', 'uniNebulaStep', { n: phases.indexOf(phase) + 1, of: phases.length })}
+          </p>
+        ) : null}
+        <p className={stage === 'nebula' ? 'mt-1' : ''}>{t('lab', keys[phase])}</p>
+      </div>
+    );
+  }
+
+  return null;
 }

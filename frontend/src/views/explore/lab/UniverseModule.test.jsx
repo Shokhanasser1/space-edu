@@ -107,6 +107,23 @@ describe('the missions', () => {
   });
 });
 
+describe('birth, and the way to fusion', () => {
+  it('starts the life at the Pillars of Creation, and credits the models', () => {
+    renderLab();
+    expect(screen.getByText(L.uniStageNebulaDesc)).toBeTruthy();
+    expect(screen.getByText(L.uniNebulaPillars)).toBeTruthy();
+    expect(screen.getByText(L.uniModelCredits)).toBeTruthy();
+  });
+
+  it('sends the reader to the fusion lab from the main sequence', () => {
+    renderLab();
+    fireEvent.click(preset('uniPresetSun'));
+    fireEvent.click(screen.getByRole('button', { name: L.uniNextStage }));
+    fireEvent.click(screen.getByRole('button', { name: L.uniToFusion }));
+    expect(screen.getByTestId('where').textContent).toBe('/lab/fusion');
+  });
+});
+
 describe('the way to the H-R diagram', () => {
   it('opens the H-R module', () => {
     renderLab();

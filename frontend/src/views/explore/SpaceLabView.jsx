@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  Rocket, Flame, Globe2, Sparkles, Satellite, Orbit, ChartScatter, Earth, Moon, Sun, Landmark, Target,
+  Rocket, Flame, Globe2, Sparkles, Satellite, Orbit, ChartScatter, Earth, Moon, Sun, Landmark, Target, Atom,
   PanelLeftClose, PanelLeftOpen,
 } from 'lucide-react';
 
@@ -12,6 +12,7 @@ import { ApolloLaunchSimulator } from './lab/LaunchModule';
 import { SatelliteControlSimulator } from './lab/SatelliteModule';
 import { PlanetaryProcessesLab } from './lab/PlanetaryModule';
 import { UniverseChangesSimulator } from './lab/UniverseModule';
+import { FusionLab } from './lab/FusionModule';
 import { ExoplanetHunterLab } from './lab/ExoplanetModule';
 import { HrDiagramLab } from './lab/HrDiagramModule';
 import { HabitableZoneLab } from './lab/HabitableZoneModule';
@@ -92,6 +93,7 @@ export default function SpaceLabView() {
     { id: 'satellite', name: t('lab', 'satelliteControl'), icon: Satellite, color: 'text-blue-400', bg: 'bg-blue-400/10' },
     { id: 'planet', name: t('lab', 'planetaryProcesses'), icon: Globe2, color: 'text-green-400', bg: 'bg-green-400/10' },
     { id: 'universe', name: t('lab', 'universeChanges'), icon: Sparkles, color: 'text-neon-purple', bg: 'bg-neon-purple/10' },
+    { id: 'fusion', name: t('lab', 'fusTitle'), icon: Atom, color: 'text-amber-300', bg: 'bg-amber-300/10' },
     { id: 'exoplanet', name: t('lab', 'exoTitle'), icon: Orbit, color: 'text-amber-400', bg: 'bg-amber-400/10' },
     { id: 'hr', name: t('lab', 'hrTitle'), icon: ChartScatter, color: 'text-pink-400', bg: 'bg-pink-400/10' },
     { id: 'habitable', name: t('lab', 'hzTitle'), icon: Earth, color: 'text-green-400', bg: 'bg-green-400/10' },
@@ -191,6 +193,7 @@ export default function SpaceLabView() {
                 {activeModule === 'satellite' && <SatelliteControlSimulator />}
                 {activeModule === 'planet' && <PlanetaryProcessesLab />}
                 {activeModule === 'universe' && <UniverseChangesSimulator />}
+                {activeModule === 'fusion' && <FusionLab />}
                 {activeModule === 'exoplanet' && <ExoplanetHunterLab />}
                 {activeModule === 'hr' && <HrDiagramLab />}
                 {activeModule === 'habitable' && <HabitableZoneLab />}
