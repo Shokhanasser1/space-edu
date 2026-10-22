@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
-import { HelpCircle, Layers, Rocket, Ruler } from 'lucide-react';
-import { Canvas } from '@react-three/fiber';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowLeft, Focus, HelpCircle, Layers, Pause, Play, Rocket, Ruler } from 'lucide-react';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Stars } from '@react-three/drei';
-import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
+import { EffectComposer, Vignette } from '@react-three/postprocessing';
 import * as THREE from 'three';
 
 import { useTranslation } from '@/hooks/useTranslation';
@@ -15,17 +15,13 @@ import {
   explodeOffsetM,
   readFact,
 } from './labFacts';
-import {
-  FitToViewport,
-  HOLO,
-  HologramStage,
-  HoloLabel,
-  HoloMesh,
-  ReleaseContextOnUnmount,
-} from './Hologram';
+import { FitToViewport, HOLO, HoloLabel, ReleaseContextOnUnmount } from './Hologram';
+import { BASE_Y, HEIGHT, RADIUS, SCALE, SaturnV, partBounds } from './SaturnVModel';
+import { ComparisonModel } from './LandmarkModels';
 
 /**
- * Apollo, as a hologram you can take apart - and stand beside things you know.
+ * Apollo: the Saturn V you can take apart, look at up close, and stand beside
+ * things you know.
  *
  * What was here before: nothing. `RocketEngineeringLab` - the only module in
  * the lab where a rocket came apart, and the only one offering a capsule
@@ -33,174 +29,88 @@ import {
  * rendered. Ticket 12 put the rocket back, as the vehicle the ticket names,
  * with figures that have a source printed beside them.
  *
- * What the October 2026 pass added, and why:
+ * What the October 2026 passes added, and why:
  *
  * - **Something to compare it with.** "110.6 m" means nothing to a ten-year-old.
  *   A person, NASA's own two comparisons (a 36-storey building, the Statue of
- *   Liberty) and Tashkent's TV tower now stand beside the rocket at the same
- *   scale. Only the heights are to scale; the shapes are sketches, and the page
- *   says so.
+ *   Liberty) and Tashkent's TV tower stand beside the rocket at the same
+ *   scale, as models (`LandmarkModels.jsx`).
+ * - **The real rocket, not a hologram.** Readers found the glowing wireframe
+ *   unlike the thing they had seen in photographs. The model is painted and
+ *   lit by a sun now (`SaturnVModel.jsx`), with no bloom to wash it out.
+ * - **A closer look.** Opened up, a part can be picked and the camera flies to
+ *   it: everything else fades, the part turns on its own, and the reader can
+ *   drag round it all the way and zoom in - the engines from underneath, the
+ *   Lunar Module inside its opened adapter.
  * - **Goals.** Missions, a one-question quiz ("only one part came home -
- *   which?") and the shared kit's explanation and facts, so a reader who opens
- *   the module has something to do and someone who wants the physics finds it.
- * - **Labels that stay readable.** They were children of the spinning model,
- *   so every few seconds a label swung in front of the hull and the bloom
- *   washed it out. They are in world space now, beside the stack; the stack
- *   is round, so a fixed label still points at the right part.
+ *   which?") and the shared kit's explanation and facts.
+ * - **Labels that stay readable.** They are in world space beside the stack;
+ *   the stack is round, so a fixed label still points at the right part.
  *
  * Every number shown here comes from `labFacts.js`. Nothing is computed from a
  * control on the page.
  */
 
-/** 110.6 m of rocket into about 11 scene units. */
-const SCALE = 0.1;
-const HEIGHT = SATURN_V.heightM * SCALE;
-const RADIUS = (SATURN_V.diameterM / 2) * SCALE;
-const BASE_Y = -HEIGHT / 2;
+/** Opened at least this far, picking a part flies the camera to it. */
+const FOCUS_FROM = 0.3;
 
-/** A height above the base of the rocket, in metres, as a scene y. */
-function atMetres(metres) {
-  return metres * SCALE - HEIGHT / 2;
+/** Turntable speeds, radians a second: the whole stack, and one part close up. */
+const SPIN_WHOLE = 0.12;
+const SPIN_FOCUS = 0.45;
+
+/** Turns its children about the vertical axis while `spinning`. */
+function Turntable({ spinning, speed, children }) {
+  const ref = useRef(null);
+  useFrame((_, delta) => {
+    if (spinning && ref.current) ref.current.rotation.y += delta * speed;
+  });
+  return <group ref={ref}>{children}</group>;
 }
 
-/** Centre of a section, in scene units, with the whole stack centred on 0. */
-function sectionY(section) {
-  return atMetres((section.fromM + section.toM) / 2);
-}
+/**
+ * Flies the orbit controls' target and the camera's distance to `focus`, or
+ * back to the middle of the scene, then lets go so the reader's dragging owns
+ * the camera again. It keeps the direction the camera was looking from, so
+ * the move reads as zooming in rather than as a jump.
+ */
+function CameraRig({ focus }) {
+  const camera = useThree((state) => state.camera);
+  const controls = useThree((state) => state.controls);
+  const goal = useRef(null);
+  const key = focus ? `${focus.centre.join(',')}|${focus.height}|${focus.width}` : 'whole';
 
-/** The five F-1 bells: one fixed in the centre, four gimballed around it. */
-function EngineCluster({ count, bellRadiusM, ringRadiusM, lengthM, y }) {
-  const positions = [[0, 0]];
-  for (let i = 0; i < count - 1; i += 1) {
-    const angle = (i / (count - 1)) * Math.PI * 2;
-    positions.push([Math.cos(angle) * ringRadiusM * SCALE, Math.sin(angle) * ringRadiusM * SCALE]);
-  }
-  return (
-    <>
-      {positions.map(([x, z]) => (
-        <HoloMesh key={`${x}-${z}`} position={[x, y, z]}>
-          <cylinderGeometry
-            args={[bellRadiusM * 0.45 * SCALE, bellRadiusM * SCALE, lengthM * SCALE, 20, 1, true]}
-          />
-        </HoloMesh>
-      ))}
-    </>
-  );
-}
+  useEffect(() => {
+    if (!camera?.isPerspectiveCamera) return;
+    if (!focus) {
+      goal.current = { target: new THREE.Vector3(0, 0, 0), distance: null };
+      return;
+    }
+    const vertical = (camera.fov * Math.PI) / 180;
+    const horizontal = 2 * Math.atan(Math.tan(vertical / 2) * (camera.aspect || 1));
+    const distance = Math.max(
+      (focus.height * 1.4) / (2 * Math.tan(vertical / 2)),
+      (focus.width * 1.5) / (2 * Math.tan(horizontal / 2)),
+      0.6,
+    );
+    goal.current = { target: new THREE.Vector3(...focus.centre), distance };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, camera]);
 
-/** The lattice the escape motor stands on, above the Command Module. */
-function EscapeTower({ baseY, topY }) {
-  const legs = [0, 1, 2, 3].map((i) => (i / 4) * Math.PI * 2);
-  const length = topY - baseY;
-  return (
-    <>
-      {legs.map((angle) => (
-        <HoloMesh
-          key={angle}
-          position={[Math.cos(angle) * 0.05, baseY + length / 2, Math.sin(angle) * 0.05]}
-          rotation={[Math.cos(angle) * 0.09, 0, -Math.sin(angle) * 0.09]}
-        >
-          <cylinderGeometry args={[0.012, 0.012, length, 6]} />
-        </HoloMesh>
-      ))}
-    </>
-  );
-}
+  useFrame((_, delta) => {
+    const g = goal.current;
+    if (!g || !controls) return;
+    const k = 1 - Math.exp(-delta * 4);
+    const offset = camera.position.clone().sub(controls.target);
+    controls.target.lerp(g.target, k);
+    let length = offset.length();
+    if (g.distance) length += (g.distance - length) * k;
+    camera.position.copy(controls.target).add(offset.setLength(length));
+    controls.update();
+    const arrived = controls.target.distanceTo(g.target) < 0.002;
+    if (arrived && (!g.distance || Math.abs(length - g.distance) < 0.01)) goal.current = null;
+  });
 
-function SaturnV({ activePart, onSelect, explode }) {
-  return (
-    <group>
-      {SATURN_V_STACK.map((part, index) => {
-        const lift = explodeOffsetM(index, explode) * SCALE;
-        const active = activePart === part.id;
-        return (
-          <group
-            key={part.id}
-            position={[0, lift, 0]}
-            onClick={(event) => {
-              event.stopPropagation();
-              onSelect(part.id);
-            }}
-          >
-            {part.sections.map((section) => (
-              <HoloMesh
-                key={`${section.fromM}-${section.toM}`}
-                active={active}
-                position={[0, sectionY(section), 0]}
-              >
-                <cylinderGeometry
-                  args={[
-                    section.topRadiusM * SCALE,
-                    section.bottomRadiusM * SCALE,
-                    (section.toM - section.fromM) * SCALE,
-                    40,
-                    1,
-                  ]}
-                />
-              </HoloMesh>
-            ))}
-
-            {/* Five F-1 bells under the first stage, and its four base fins. */}
-            {part.id === 's-ic' && (
-              <>
-                <EngineCluster
-                  count={5}
-                  bellRadiusM={1.5}
-                  ringRadiusM={3.1}
-                  lengthM={4}
-                  y={-HEIGHT / 2 - 4 * SCALE * 0.5}
-                />
-                {[0, 1, 2, 3].map((i) => {
-                  const angle = (i / 4) * Math.PI * 2;
-                  return (
-                    <HoloMesh
-                      key={`fin-${angle}`}
-                      position={[
-                        Math.cos(angle) * 5.6 * SCALE,
-                        -HEIGHT / 2 + 3 * SCALE,
-                        Math.sin(angle) * 5.6 * SCALE,
-                      ]}
-                      rotation={[0, -angle, 0]}
-                    >
-                      <boxGeometry args={[2.4 * SCALE, 6 * SCALE, 0.3 * SCALE]} />
-                    </HoloMesh>
-                  );
-                })}
-              </>
-            )}
-
-            {/* The J-2 cluster, which only becomes visible once it is opened. */}
-            {part.id === 's-ii' && explode > 0.05 && (
-              <EngineCluster
-                count={5}
-                bellRadiusM={1.0}
-                ringRadiusM={2.2}
-                lengthM={2.8}
-                y={atMetres(42) - 2.8 * SCALE * 0.5}
-              />
-            )}
-
-            {part.id === 's-ivb' && explode > 0.05 && (
-              <EngineCluster
-                count={1}
-                bellRadiusM={1.0}
-                ringRadiusM={0}
-                lengthM={2.8}
-                y={atMetres(70) - 2.8 * SCALE * 0.5}
-              />
-            )}
-
-            {part.id === 'les' && (
-              <EscapeTower
-                baseY={atMetres(106.5)}
-                topY={atMetres(109)}
-              />
-            )}
-          </group>
-        );
-      })}
-    </group>
-  );
+  return null;
 }
 
 /**
@@ -216,10 +126,11 @@ function StackLabels({ t, explode, oneSide }) {
         const middle = ((bottom.fromM + top.toM) / 2) * SCALE - HEIGHT / 2;
         const widest = Math.max(...part.sections.map((s) => s.bottomRadiusM)) * SCALE;
         const side = oneSide || index % 2 === 0 ? 1 : -1;
+        const reach = part.id === 's-ic' ? 0.8 : widest * 1.25 + 0.12;
         return (
           <HoloLabel
             key={part.id}
-            position={[(widest * 1.25 + 0.12) * side, middle + explodeOffsetM(index, explode) * SCALE, 0]}
+            position={[reach * side, middle + explodeOffsetM(index, explode) * SCALE, 0]}
             side={side}
             accent={part.accent}
             title={t('lab', part.nameKey)}
@@ -239,136 +150,8 @@ const QUIZ_WHY = {
   les: 'apolloQuizWhyLes',
 };
 
-/** The comparison's colour: warm, so it never reads as part of the rocket. */
-const SKETCH = HOLO.accentWarm;
-
-/** A translucent, outlined solid in the comparison colour. */
-function Sketch({ children, ...props }) {
-  return (
-    <group {...props}>
-      <mesh>
-        {children}
-        <meshBasicMaterial color={SKETCH} transparent opacity={0.1} depthWrite={false} side={THREE.DoubleSide} />
-      </mesh>
-      <mesh scale={1.004}>
-        {children}
-        <meshBasicMaterial color={SKETCH} wireframe transparent opacity={0.32} depthWrite={false} />
-      </mesh>
-    </group>
-  );
-}
-
-/** Floor lines for the building: one line per storey, in one draw call. */
-function FloorLines({ widthM, heightM, floors }) {
-  const geometry = useMemo(() => {
-    const created = new THREE.BufferGeometry();
-    const half = (widthM * SCALE) / 2;
-    const corners = [[-half, -half], [half, -half], [half, half], [-half, half]];
-    const points = [];
-    for (let floor = 0; floor <= floors; floor += 1) {
-      const y = (floor / floors) * heightM * SCALE;
-      for (let c = 0; c < 4; c += 1) {
-        const [x1, z1] = corners[c];
-        const [x2, z2] = corners[(c + 1) % 4];
-        points.push(x1, y, z1, x2, y, z2);
-      }
-    }
-    for (const [x, z] of corners) points.push(x, 0, z, x, heightM * SCALE, z);
-    created.setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
-    return created;
-  }, [widthM, heightM, floors]);
-
-  useEffect(() => () => geometry.dispose(), [geometry]);
-
-  return (
-    <lineSegments geometry={geometry}>
-      <lineBasicMaterial color={SKETCH} transparent opacity={0.45} depthWrite={false} />
-    </lineSegments>
-  );
-}
-
-/**
- * The thing standing beside the rocket, its base on the rocket's base.
- * Heights are to scale; the shapes are sketches.
- */
-function ComparisonModel({ comparison, x }) {
-  const s = SCALE;
-  switch (comparison.id) {
-    case 'person':
-      return (
-        <group position={[x, BASE_Y, 0]}>
-          <Sketch position={[0, 0.75 * s, 0]}>
-            <cylinderGeometry args={[0.16 * s, 0.2 * s, 1.5 * s, 10]} />
-          </Sketch>
-          <Sketch position={[0, 1.62 * s, 0]}>
-            <sphereGeometry args={[0.13 * s, 10, 10]} />
-          </Sketch>
-        </group>
-      );
-    case 'building':
-      return (
-        <group position={[x, BASE_Y, 0]}>
-          <Sketch position={[0, (comparison.heightM * s) / 2, 0]}>
-            <boxGeometry args={[comparison.widthM * s, comparison.heightM * s, comparison.widthM * s]} />
-          </Sketch>
-          <FloorLines widthM={comparison.widthM} heightM={comparison.heightM} floors={comparison.floors} />
-        </group>
-      );
-    case 'liberty':
-      // Foundation 20 m, pedestal 27 m, then the statue, base to torch, 46 m:
-      // 93 m from the ground to the tip of the torch.
-      return (
-        <group position={[x, BASE_Y, 0]}>
-          <Sketch position={[0, 10 * s, 0]}>
-            <boxGeometry args={[30 * s, 20 * s, 30 * s]} />
-          </Sketch>
-          <Sketch position={[0, 33.5 * s, 0]}>
-            <boxGeometry args={[14 * s, 27 * s, 14 * s]} />
-          </Sketch>
-          <Sketch position={[0, 61 * s, 0]}>
-            <cylinderGeometry args={[3.2 * s, 5.5 * s, 28 * s, 16]} />
-          </Sketch>
-          <Sketch position={[0, 77.5 * s, 0]}>
-            <sphereGeometry args={[2.6 * s, 14, 12]} />
-          </Sketch>
-          <Sketch position={[3.2 * s, 82 * s, 0]} rotation={[0, 0, -0.12]}>
-            <cylinderGeometry args={[0.9 * s, 1.1 * s, 14 * s, 8]} />
-          </Sketch>
-          <Sketch position={[4.1 * s, 91 * s, 0]}>
-            <coneGeometry args={[1.4 * s, 4 * s, 10]} />
-          </Sketch>
-        </group>
-      );
-    case 'tower':
-      return (
-        <group position={[x, BASE_Y, 0]}>
-          {[0, 1, 2].map((i) => {
-            const angle = (i / 3) * Math.PI * 2;
-            return (
-              <Sketch
-                key={angle}
-                position={[Math.cos(angle) * 9 * s, 30 * s, Math.sin(angle) * 9 * s]}
-                rotation={[Math.sin(angle) * 0.3, 0, -Math.cos(angle) * 0.3]}
-              >
-                <cylinderGeometry args={[1.2 * s, 2 * s, 62 * s, 6]} />
-              </Sketch>
-            );
-          })}
-          <Sketch position={[0, 170 * s, 0]}>
-            <cylinderGeometry args={[2 * s, 4.5 * s, 340 * s, 10]} />
-          </Sketch>
-          <Sketch position={[0, 100 * s, 0]}>
-            <cylinderGeometry args={[14 * s, 14 * s, 12 * s, 20]} />
-          </Sketch>
-          <Sketch position={[0, 357.5 * s, 0]}>
-            <cylinderGeometry args={[0.6 * s, 1.2 * s, 35 * s, 6]} />
-          </Sketch>
-        </group>
-      );
-    default:
-      return null;
-  }
-}
+/** The comparison label's colour: warm, so it never reads as part of the rocket. */
+const COMPARE_ACCENT = HOLO.accentWarm;
 
 /**
  * How to frame rocket and comparison together: the frame runs from the
@@ -386,7 +169,8 @@ function frameFor(explode, comparison) {
     height,
     shift: -(BASE_Y + top) / 2,
     compareX,
-    radius: Math.max(RADIUS, (Math.abs(compareX) + compareHalfWidth) / 1.6),
+    // Room for the comparison's label too, which hangs off its left side.
+    radius: Math.max(RADIUS, (Math.abs(compareX) + compareHalfWidth + (comparison?.heightM ? 1.4 : 0)) / 1.6),
   };
 }
 
@@ -397,15 +181,52 @@ export const ApolloHologramModule = () => {
   const [explode, setExplode] = useState(0);
   const [compareId, setCompareId] = useState('none');
   const [homeGuess, setHomeGuess] = useState(null);
+  const [focusPart, setFocusPart] = useState(null);
+  const [lookedClose, setLookedClose] = useState(false);
+  const [spinning, setSpinning] = useState(true);
+  // Remounts FitToViewport on the way back from a close-up, so the whole
+  // stack is framed again.
+  const [viewKey, setViewKey] = useState(0);
 
-  const selectPart = (id) => {
+  const visit = (id) => {
     setActivePart(id);
     setVisited((seen) => (seen.has(id) ? seen : new Set([...seen, id])));
   };
 
+  const focusOn = (id) => {
+    visit(id);
+    setExplode((e) => Math.max(e, 0.6));
+    setFocusPart(id);
+    setLookedClose(true);
+    setSpinning(true);
+  };
+
+  const leaveFocus = () => {
+    setFocusPart(null);
+    setViewKey((k) => k + 1);
+  };
+
+  // Picking a part in the opened-up stack flies to it; in the closed stack it
+  // only opens its card.
+  const selectPart = (id) => {
+    if (explode >= FOCUS_FROM) focusOn(id);
+    else visit(id);
+  };
+
+  // Closing the stack again ends a close-up.
+  useEffect(() => {
+    if (focusPart && explode < FOCUS_FROM) {
+      setFocusPart(null);
+      setViewKey((k) => k + 1);
+    }
+  }, [explode, focusPart]);
+
   const comparison = SIZE_COMPARISONS.find((c) => c.id === compareId) ?? SIZE_COMPARISONS[0];
   const frame = frameFor(explode, comparison);
   const homeRight = homeGuess === 'spacecraft';
+  const bounds = focusPart ? partBounds(focusPart, explode) : null;
+  const focus = bounds ? { centre: [0, frame.shift + bounds.centreY, 0], height: bounds.height, width: bounds.width } : null;
+  const focusEntry = SATURN_V_STACK.find((part) => part.id === focusPart);
 
   const missions = useMemo(
     () => [
@@ -418,8 +239,9 @@ export const ApolloHologramModule = () => {
       { id: 'explode', title: t('lab', 'apolloMissionExplode'), done: explode >= 0.95 },
       { id: 'home', title: t('lab', 'apolloMissionHome'), done: homeRight },
       { id: 'compare', title: t('lab', 'apolloMissionCompare'), done: compareId !== 'none' },
+      { id: 'closeup', title: t('lab', 'apolloMissionCloseup'), done: lookedClose },
     ],
-    [t, visited, explode, homeRight, compareId],
+    [t, visited, explode, homeRight, compareId, lookedClose],
   );
 
   return (
@@ -465,6 +287,7 @@ export const ApolloHologramModule = () => {
               <p className="mt-2 text-[10px] leading-relaxed text-gray-500">
                 {t('lab', 'apolloCompareSketch')}
                 {comparison.source ? ` ${t('lab', 'apolloSource')}: ${comparison.source}` : ''}
+                {comparison.modelCredit ? ` ${comparison.modelCredit}.` : ''}
               </p>
             </div>
           ) : null}
@@ -483,6 +306,7 @@ export const ApolloHologramModule = () => {
               className="w-full h-10 accent-neon-blue"
               aria-label={t('lab', 'apolloExplode')}
             />
+            <p className="text-[11px] leading-relaxed text-gray-500">{t('lab', 'apolloFocusTip')}</p>
           </div>
 
           <div className="space-y-2">
@@ -513,6 +337,12 @@ export const ApolloHologramModule = () => {
                   </button>
                   {open ? (
                     <div className="px-3 pb-3">
+                      <button
+                        onClick={() => focusOn(entry.id)}
+                        className="mb-3 w-full min-h-[40px] flex items-center justify-center gap-2 rounded-lg bg-neon-blue/15 border border-neon-blue/50 text-xs font-semibold text-cyan-100 hover:bg-neon-blue/25"
+                      >
+                        <Focus className="w-4 h-4" /> {t('lab', 'apolloFocusButton')}
+                      </button>
                       <dl className="space-y-1.5 border-t border-white/10 pt-2.5">
                         {entry.facts.map((fact) => {
                           const { label, value } = readFact(fact, t);
@@ -574,31 +404,51 @@ export const ApolloHologramModule = () => {
           details={t('lab', 'apolloExplainDetails')}
         />
         <LabFacts facts={APOLLO_FACTS.map((fact) => ({ text: t('lab', fact.key), source: fact.source }))} />
+        <p className="px-1 text-[10px] leading-relaxed text-gray-500">{t('lab', 'apolloModelNote')}</p>
       </div>
 
       <div className="w-full md:w-2/3 bg-space-900/50 rounded-3xl border border-white/10 overflow-hidden relative h-[62vh] min-h-[360px] lg:h-full lg:min-h-[400px]">
         <Canvas
-          camera={{ position: [4, 1.5, 17], fov: 42 }}
-          gl={{ antialias: false, toneMapping: THREE.ACESFilmicToneMapping }}
+          camera={{ position: [4, 1.5, 17], fov: 42, near: 0.05 }}
+          gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping }}
         >
           <ReleaseContextOnUnmount />
           {/* The frame grows with the opened stack and with whatever stands
               beside it, or the escape tower - or the TV tower - leaves the top
-              of the frame. */}
-          <FitToViewport height={frame.height} radius={frame.radius} />
+              of the frame. Not while a part is close up: CameraRig owns the
+              camera then. */}
+          {focus ? null : <FitToViewport key={viewKey} height={frame.height} radius={frame.radius} />}
+          <CameraRig focus={focus} />
           <Stars radius={100} depth={50} count={3000} factor={4} saturation={0} fade speed={0.6} />
+
+          {/* Daylight: a sun, a sky above and dark ground below. */}
+          <ambientLight intensity={0.25} />
+          <hemisphereLight args={['#c9dcff', '#1b1e24', 0.65]} />
+          <directionalLight position={[9, 14, 12]} intensity={2.6} />
+          <directionalLight position={[-8, 5, -9]} intensity={0.5} color="#9db8ff" />
+
           <group position={[0, frame.shift, 0]}>
-            <HologramStage height={HEIGHT} radius={RADIUS} accent={HOLO.accent} spin={0.1}>
-              <SaturnV activePart={activePart} onSelect={selectPart} explode={explode} />
-            </HologramStage>
-            <StackLabels t={t} explode={explode} oneSide={Boolean(comparison.heightM)} />
-            {comparison.heightM ? (
+            <mesh position={[0, BASE_Y - 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+              <circleGeometry args={[30, 64]} />
+              <meshStandardMaterial color="#14171c" roughness={1} />
+            </mesh>
+            <mesh position={[0, BASE_Y - 0.005, 0]}>
+              <cylinderGeometry args={[1.2, 1.3, 0.02, 48]} />
+              <meshStandardMaterial color="#3a3d43" roughness={0.9} />
+            </mesh>
+            <Turntable spinning={spinning} speed={focus ? SPIN_FOCUS : SPIN_WHOLE}>
+              <SaturnV activePart={activePart} focusPart={focusPart} onSelect={selectPart} explode={explode} />
+            </Turntable>
+            {/* Close up, the chip above names the part; a label's dot and
+                leader would be drawn at the rocket's scale and fill the view. */}
+            {focus ? null : <StackLabels t={t} explode={explode} oneSide={Boolean(comparison.heightM)} />}
+            {comparison.heightM && !focus ? (
               <>
                 <ComparisonModel comparison={comparison} x={frame.compareX} />
                 <HoloLabel
                   position={[frame.compareX, BASE_Y + comparison.heightM * SCALE, 0]}
                   side={-1}
-                  accent={SKETCH}
+                  accent={COMPARE_ACCENT}
                   title={t('lab', comparison.labelKey)}
                   subtitle={`${comparison.heightM} m`}
                 />
@@ -606,24 +456,44 @@ export const ApolloHologramModule = () => {
             ) : null}
           </group>
           <OrbitControls
+            makeDefault
             enablePan={false}
-            minDistance={comparison.id === 'person' ? 2 : 8}
-            maxDistance={Math.max(30, frame.height * 2.6)}
-            maxPolarAngle={Math.PI / 1.7}
-            minPolarAngle={Math.PI / 6}
+            minDistance={focus ? 0.25 : comparison.id === 'person' ? 2 : 8}
+            maxDistance={focus ? 25 : Math.max(30, frame.height * 2.6)}
+            maxPolarAngle={focus ? Math.PI * 0.95 : Math.PI / 1.7}
+            minPolarAngle={focus ? Math.PI * 0.05 : Math.PI / 6}
           />
           <EffectComposer>
-            <Bloom luminanceThreshold={0.62} mipmapBlur intensity={0.5} />
-            <Vignette eskil={false} offset={0.1} darkness={1.05} />
+            <Vignette eskil={false} offset={0.1} darkness={0.9} />
           </EffectComposer>
         </Canvas>
-        {comparison.heightM ? (
+        {focusEntry ? (
+          <div className="absolute top-4 left-4 right-4 flex flex-wrap items-center gap-2">
+            <span className="text-[11px] font-semibold text-cyan-100 bg-black/55 border border-white/15 px-3 py-1.5 rounded-full backdrop-blur-md">
+              {t('lab', 'apolloFocusChip', { name: t('lab', focusEntry.nameKey) })}
+            </span>
+            <button
+              onClick={leaveFocus}
+              className="min-h-[40px] flex items-center gap-1.5 text-xs font-semibold text-white bg-black/55 border border-white/20 px-3 py-1.5 rounded-full backdrop-blur-md hover:bg-black/70"
+            >
+              <ArrowLeft className="w-4 h-4" /> {t('lab', 'apolloFocusBack')}
+            </button>
+            <button
+              onClick={() => setSpinning((on) => !on)}
+              aria-pressed={spinning}
+              className="min-h-[40px] flex items-center gap-1.5 text-xs text-white bg-black/55 border border-white/20 px-3 py-1.5 rounded-full backdrop-blur-md hover:bg-black/70"
+            >
+              {spinning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+              {t('lab', spinning ? 'apolloFocusPause' : 'apolloFocusSpin')}
+            </button>
+          </div>
+        ) : comparison.heightM ? (
           <div className="absolute top-4 left-4 max-w-[70%] text-[11px] text-amber-100 bg-amber-500/15 border border-amber-400/40 px-3 py-1.5 rounded-full backdrop-blur-md pointer-events-none">
             {t('lab', 'apolloCompareSketch')}
           </div>
         ) : null}
         <div className="absolute bottom-4 left-4 right-4 text-xs text-gray-400 bg-black/50 px-3 py-1 rounded-full backdrop-blur-md w-fit">
-          {t('lab', 'hintDrag')} — {t('lab', 'hintScroll')} — {t('lab', 'hintClick')}
+          {focusEntry ? t('lab', 'apolloFocusHint') : `${t('lab', 'hintDrag')} — ${t('lab', 'hintScroll')} — ${t('lab', 'hintClick')}`}
         </div>
       </div>
     </div>

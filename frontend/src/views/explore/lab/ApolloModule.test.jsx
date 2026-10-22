@@ -110,3 +110,42 @@ describe('a selected part shows its own facts and source', () => {
     expect(screen.getByText('890 kN (200,000 lbf)')).toBeTruthy();
   });
 });
+
+describe('a part up close', () => {
+  it('flies to a part from its card, says which, and ticks the mission', () => {
+    render(<ApolloHologramModule />);
+    fireEvent.click(partButton(SATURN_V_STACK[2]));
+    fireEvent.click(screen.getByRole('button', { name: en.lab.apolloFocusButton }));
+    expect(screen.getByText(en.lab.apolloFocusChip.replace('{name}', en.lab.apolloSivbName))).toBeTruthy();
+    expect(screen.getByText(en.lab.apolloFocusHint)).toBeTruthy();
+    expect(finished()).toContain('lab_apollo_closeup');
+    // Looking close opens the stack, so the explode mission's slider moved too.
+    expect(Number(screen.getByRole('slider', { name: en.lab.apolloExplode }).value)).toBeGreaterThanOrEqual(0.6);
+  });
+
+  it('can stop turning, and goes back to the whole rocket', () => {
+    render(<ApolloHologramModule />);
+    fireEvent.click(screen.getByRole('button', { name: en.lab.apolloFocusButton }));
+    fireEvent.click(screen.getByRole('button', { name: en.lab.apolloFocusPause }));
+    expect(screen.getByRole('button', { name: en.lab.apolloFocusSpin })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: en.lab.apolloFocusBack }));
+    expect(screen.queryByRole('button', { name: en.lab.apolloFocusBack })).toBeNull();
+  });
+
+  it('ends when the stack is closed again', () => {
+    render(<ApolloHologramModule />);
+    fireEvent.click(screen.getByRole('button', { name: en.lab.apolloFocusButton }));
+    fireEvent.change(screen.getByRole('slider', { name: en.lab.apolloExplode }), { target: { value: '0' } });
+    expect(screen.queryByRole('button', { name: en.lab.apolloFocusBack })).toBeNull();
+  });
+});
+
+describe('the artist-made landmark models', () => {
+  it('credit their authors, as CC BY asks, whenever they are shown', () => {
+    render(<ApolloHologramModule />);
+    fireEvent.click(screen.getByRole('button', { name: en.lab.apolloCompareLiberty }));
+    expect(screen.getByText(/by gravityjack \(Sketchfab\), CC BY 4\.0/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: en.lab.apolloCompareTower }));
+    expect(screen.getByText(/by qsardor57913 \(Sketchfab\), CC BY 4\.0/)).toBeTruthy();
+  });
+});

@@ -322,6 +322,8 @@ export const SIZE_COMPARISONS = [
     heightM: 93,
     widthM: 30,
     source: SOURCES.nasaKids,
+    // CC BY 4.0 asks for this credit wherever the model is shown.
+    modelCredit: '3D model "Statue Of Liberty" by gravityjack (Sketchfab), CC BY 4.0',
   },
   {
     id: 'tower',
@@ -330,6 +332,7 @@ export const SIZE_COMPARISONS = [
     heightM: 375,
     widthM: 40,
     source: SOURCES.tower,
+    modelCredit: '3D model "Tashkent TV Tower" by qsardor57913 (Sketchfab), CC BY 4.0',
   },
 ];
 
