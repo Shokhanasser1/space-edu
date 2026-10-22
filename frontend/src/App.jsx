@@ -71,7 +71,10 @@ export default function App() {
     .includes(location.pathname);
   const isAdmin = location.pathname === '/admin-panel';
   const isHome  = location.pathname === '/';
-  const shouldHideFooter = ['/history', '/live', '/3d-solar-system', '/'].includes(location.pathname) || isAdmin;
+  // The Laboratory is one window tall on a desktop, like the other full-screen
+  // tools, and a footer under it was only something to scroll into by mistake.
+  const isLab   = location.pathname === '/lab' || location.pathname.startsWith('/lab/');
+  const shouldHideFooter = ['/history', '/live', '/3d-solar-system', '/'].includes(location.pathname) || isAdmin || isLab;
 
   return (
     <div className="relative min-h-screen text-white font-sans">
@@ -155,7 +158,11 @@ export default function App() {
         </RouteErrorBoundary>
       </main>
 
-      {!isGame && !isAuth && !isAdmin && !isHome && <ChatSystem />}
+      {/* On a phone the bubble sat on the Laboratory's sliders and readouts;
+          there it is kept for md screens and up. */}
+      {!isGame && !isAuth && !isAdmin && !isHome && (
+        isLab ? <div className="hidden md:block"><ChatSystem /></div> : <ChatSystem />
+      )}
       {!isGame && !isAuth && !isAdmin && !shouldHideFooter && <Footer />}
     </div>
   );

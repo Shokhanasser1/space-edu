@@ -4,6 +4,9 @@ import api from '@/lib/api';
 
 const calcLevel = (xp) => Math.floor(Math.sqrt(xp / 100)) + 1;
 
+/** XP for finishing one Laboratory mission. Optimistic and local, like the rest. */
+export const LAB_MISSION_XP = 20;
+
 const initialState = {
   xp: 0,
   level: 1,
@@ -14,6 +17,7 @@ const initialState = {
   dailyChallengeCompleted: false,
   completedCareers: [],
   trackedEvents: [],
+  labMissions: [],
   careerTrack: null,
   skills: {},
   portfolio: [],
@@ -110,6 +114,18 @@ export const useGamificationStore = create()(
           }
         }
         get().addXp(xp);
+      },
+
+      // Laboratory missions keep their own list. `trackedEvents` counts calendar
+      // events and pays a Stargazer badge and +100 XP from its third entry on,
+      // so lab goals routed through it handed out an astronomy-events badge
+      // for moving a slider. Returns whether this call was the first.
+      completeLabMission: (missionId) => {
+        const s = get();
+        if (s.labMissions.includes(missionId)) return false;
+        set({ labMissions: [...s.labMissions, missionId] });
+        get().addXp(LAB_MISSION_XP);
+        return true;
       },
 
       markCareerExplored: (careerId) => {

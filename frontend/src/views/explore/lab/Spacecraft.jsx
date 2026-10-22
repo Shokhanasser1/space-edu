@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 /**
- * The four spacecraft in the Satellite Control module, as 3D models.
+ * The spacecraft in the Satellite Control module, as 3D models.
  *
  * Ticket 12, second part: "convert all the remaining 2D models to 3D". The
  * inventory that produced this file, taken by reading every geometry in the
@@ -22,6 +22,11 @@ import * as THREE from 'three';
  *
  * The one thing deliberately left flat is the orbit track, which is a
  * `ringGeometry` because it is a drawn line rather than a model of anything.
+ *
+ * Two more since the module's altitude range reached geostationary height:
+ * Hubble, and a generic navigation/communications satellite for the GPS and
+ * geostationary presets — the crewed stations never fly that high, and showing
+ * the ISS at 36 000 km taught the wrong thing.
  *
  * Nothing here is a claim about a dimension. These are recognisable
  * proportions, not measurements - the figures the lab states are in
@@ -204,6 +209,58 @@ function CrewDragon({ deployed }) {
   );
 }
 
+function Hubble({ deployed }) {
+  // The telescope tube lies along z so its two wings, which run along x as
+  // every SolarArray does, stand out across it as the real ones do. The
+  // aperture door at the front is drawn open.
+  return (
+    <group scale={0.7}>
+      <mesh rotation={[Math.PI / 2, 0, 0]} castShadow receiveShadow>
+        <cylinderGeometry args={[0.42, 0.42, 2.0, 32]} />
+        <meshPhysicalMaterial color="#d9dde3" metalness={0.9} roughness={0.25} />
+      </mesh>
+      {/* Aft shroud: the wider, darker section behind the tube. */}
+      <mesh position={[0, 0, -1.25]} rotation={[Math.PI / 2, 0, 0]} castShadow receiveShadow>
+        <cylinderGeometry args={[0.47, 0.47, 0.6, 32]} />
+        <meshPhysicalMaterial color="#9aa3ad" metalness={0.8} roughness={0.35} />
+      </mesh>
+      {/* The open end of the tube, and its door swung open above it. */}
+      <mesh position={[0, 0, 1.02]} castShadow>
+        <torusGeometry args={[0.42, 0.035, 10, 32]} />
+        <meshPhysicalMaterial color={FRAME} metalness={0.7} roughness={0.4} />
+      </mesh>
+      <mesh position={[0, 0.62, 1.3]} rotation={[-1.1, 0, 0]} castShadow>
+        <boxGeometry args={[0.82, 0.04, 0.82]} />
+        <meshPhysicalMaterial color="#e8ebef" metalness={0.75} roughness={0.3} />
+      </mesh>
+      <ArrayPair deployed={deployed} offset={0.45} length={1.9} width={0.7} />
+    </group>
+  );
+}
+
+function NavSatellite({ deployed }) {
+  // The common shape of a navigation or communications satellite - a GPS
+  // satellite, a geostationary relay: a box of electronics wrapped in gold
+  // insulation, two long wings, and a dish looking down at the Earth.
+  return (
+    <group scale={0.75}>
+      <mesh castShadow receiveShadow>
+        <boxGeometry args={[0.9, 0.9, 1.1]} />
+        <meshPhysicalMaterial color="#c9a24a" metalness={0.85} roughness={0.35} />
+      </mesh>
+      <mesh position={[0, -0.58, 0]} rotation={[Math.PI, 0, 0]} castShadow>
+        <coneGeometry args={[0.42, 0.2, 28, 1, true]} />
+        <meshPhysicalMaterial color="#eef1f4" metalness={0.4} roughness={0.5} side={THREE.DoubleSide} />
+      </mesh>
+      <mesh position={[0, -0.72, 0]} castShadow>
+        <cylinderGeometry args={[0.025, 0.025, 0.32, 8]} />
+        <meshPhysicalMaterial color={FRAME} metalness={0.7} roughness={0.4} />
+      </mesh>
+      <ArrayPair deployed={deployed} offset={0.45} length={2.6} width={0.85} />
+    </group>
+  );
+}
+
 function Soyuz({ deployed }) {
   // Soyuz had no arrays at all, so the "solar panels" toggle was wired to a
   // spacecraft that could not answer it. Its two wings are the thing everybody
@@ -233,7 +290,14 @@ function Soyuz({ deployed }) {
   );
 }
 
-const MODELS = { iss: ISS, tiangong: Tiangong, dragon: CrewDragon, soyuz: Soyuz };
+const MODELS = {
+  iss: ISS,
+  tiangong: Tiangong,
+  dragon: CrewDragon,
+  soyuz: Soyuz,
+  hubble: Hubble,
+  satellite: NavSatellite,
+};
 
 /** Every spacecraft the module offers, by the id its button uses. */
 export function Spacecraft({ type, deployed }) {

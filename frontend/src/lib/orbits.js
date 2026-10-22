@@ -129,3 +129,103 @@ export function orbitType(altitudeKm) {
   if (altitudeKm <= GEO_ALTITUDE_KM + 1000) return { id: 'geo', labelKey: 'orbitGeo' };
   return { id: 'heo', labelKey: 'orbitHeo' };
 }
+
+/*
+ * Everything below was added for the Laboratory's satellite module once its
+ * slider was opened up from 2000 km to beyond geostationary height. All of it
+ * is geometry on a circular orbit around a spherical Earth, with the same two
+ * WGS-84 constants as above, plus:
+ *
+ *   sidereal day  86 164.0905 s       one turn of the Earth against the stars
+ *                                      (IERS Conventions 2010)
+ *   mean radius   6371.0088 km         IUGG mean Earth radius R1, used only for
+ *                                      distances along the ground
+ */
+
+/** One rotation of the Earth relative to the stars, in minutes. */
+export const SIDEREAL_DAY_MINUTES = 86164.0905 / 60;
+
+/** IUGG mean Earth radius, km — for distances on the ground, not orbits. */
+export const MEAN_EARTH_RADIUS_KM = 6371.0088;
+
+/** The altitude of the circular orbit whose period is `periodMinutes`, in km. */
+export function altitudeForPeriodMinutes(periodMinutes) {
+  const t = (periodMinutes * 60) / (2 * Math.PI);
+  return Math.cbrt(MU_EARTH * t * t) - EARTH_RADIUS_KM;
+}
+
+/**
+ * Fraction of each orbit spent in the Earth's shadow.
+ *
+ * Cylindrical shadow (no penumbra) on a circular orbit. `betaDeg` is the angle
+ * between the orbit plane and the direction of the Sun: at 0 the orbit passes
+ * straight through the shadow, and above the critical angle asin(Re/a) it
+ * misses it altogether — which is why a geostationary satellite is only
+ * eclipsed for a few weeks around each equinox.
+ *
+ *   f = (1/pi) * acos( sqrt(h^2 + 2 Re h) / (a cos beta) )
+ */
+export function eclipseFraction(altitudeKm, betaDeg = 0) {
+  const a = EARTH_RADIUS_KM + altitudeKm;
+  const beta = (Math.abs(betaDeg) * Math.PI) / 180;
+  if (Math.sin(beta) >= EARTH_RADIUS_KM / a) return 0;
+  const x = Math.sqrt(altitudeKm * altitudeKm + 2 * EARTH_RADIUS_KM * altitudeKm) / (a * Math.cos(beta));
+  return Math.acos(Math.min(1, x)) / Math.PI;
+}
+
+/**
+ * Fraction of the Earth's surface in view from `altitudeKm` — the spherical
+ * cap inside the horizon, (1 - Re/a) / 2. About 3 % from the ISS and 42 % from
+ * geostationary height, which is why three satellites there can cover nearly
+ * the whole planet.
+ */
+export function visibleSurfaceFraction(altitudeKm) {
+  return (1 - EARTH_RADIUS_KM / (EARTH_RADIUS_KM + altitudeKm)) / 2;
+}
+
+/**
+ * The class of a circular orbit, for the Laboratory's sliders.
+ *
+ * Unlike `orbitType`, geostationary is decided by the period and the
+ * inclination, which is what makes a satellite stand still over one spot: the
+ * period must match a sidereal day (within `toleranceMinutes`) and the orbit
+ * must lie over the equator. The same period on an inclined orbit is
+ * geosynchronous — it returns over the same longitude every day but swings
+ * north and south. Anything wider than that is a high orbit.
+ */
+export function labOrbitClass(altitudeKm, inclinationDeg, toleranceMinutes = 10) {
+  if (altitudeKm < 2000) return { id: 'leo', labelKey: 'orbitLeo' };
+  const period = orbitalPeriodMinutes(altitudeKm);
+  if (Math.abs(period - SIDEREAL_DAY_MINUTES) <= toleranceMinutes) {
+    return Math.abs(inclinationDeg) <= 1
+      ? { id: 'geo', labelKey: 'orbitGeo' }
+      : { id: 'geosync', labelKey: 'satOrbitGeosync' };
+  }
+  if (period < SIDEREAL_DAY_MINUTES) return { id: 'meo', labelKey: 'orbitMeo' };
+  return { id: 'high', labelKey: 'satOrbitHigh' };
+}
+
+/** Great-circle distance between two points on the ground, km (haversine). */
+export function greatCircleKm(lat1, lon1, lat2, lon2) {
+  const rad = Math.PI / 180;
+  const dLat = (lat2 - lat1) * rad;
+  const dLon = (lon2 - lon1) * rad;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLon / 2) ** 2;
+  return 2 * MEAN_EARTH_RADIUS_KM * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
+/**
+ * A logarithmic slider between `minKm` and `maxKm`. Low orbits are a few
+ * hundred kilometres apart and geostationary is 36 000 km up; on a linear
+ * slider everything from the ISS to Hubble would sit in the first pixel.
+ */
+export function altitudeFromSlider(position, minKm, maxKm) {
+  const p = Math.min(1, Math.max(0, position));
+  return Math.exp(Math.log(minKm) + p * (Math.log(maxKm) - Math.log(minKm)));
+}
+
+/** The inverse of `altitudeFromSlider`, clamped to [0, 1]. */
+export function sliderFromAltitude(altitudeKm, minKm, maxKm) {
+  const p = (Math.log(altitudeKm) - Math.log(minKm)) / (Math.log(maxKm) - Math.log(minKm));
+  return Math.min(1, Math.max(0, p));
+}
