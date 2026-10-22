@@ -89,8 +89,9 @@ describe('a lesson row', () => {
   });
 
   it('shows the base name rather than nothing when a translation is missing', async () => {
-    // 464 of the 474 seeded lessons are in this state: name_ru is empty, so
-    // Russian has to degrade to something readable rather than to nothing.
+    // Every seeded lesson has a Russian name since 22 Oct 2026, but one added
+    // in the admin panel starts without it, and Russian has to degrade to
+    // something readable rather than to nothing.
     api.get.mockResolvedValue({
       data: {
         topics: [{
