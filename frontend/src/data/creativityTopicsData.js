@@ -1,3 +1,9 @@
+/**
+ * Names in three languages since 22 Oct 2026: `name` is the Uzbek one, as on
+ * every other row of the learn tree, `nameEn` the English one the slug is
+ * derived from. The subject comes first and what is done with it after a
+ * colon, so a generated title never has to decline the name.
+ */
 export const creativityTopicsData = {
   1: {
     id: 1,
@@ -6,13 +12,23 @@ export const creativityTopicsData = {
     titleEn: 'Planet Modules',
     color: '#f472b6',
     lessons: [
-      "Sun", "Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune"
-    ].map(name => ({
-      name,
+      { en: "Sun", uz: "Quyosh", ru: "Солнце" },
+      { en: "Mercury", uz: "Merkuriy", ru: "Меркурий" },
+      { en: "Venus", uz: "Venera", ru: "Венера" },
+      { en: "Earth", uz: "Yer", ru: "Земля" },
+      { en: "Mars", uz: "Mars", ru: "Марс" },
+      { en: "Jupiter", uz: "Yupiter", ru: "Юпитер" },
+      { en: "Saturn", uz: "Saturn", ru: "Сатурн" },
+      { en: "Uranus", uz: "Uran", ru: "Уран" },
+      { en: "Neptune", uz: "Neptun", ru: "Нептун" }
+    ].map(({ en, uz, ru }) => ({
+      name: uz,
+      nameEn: en,
+      nameRu: ru,
       subLessons: [
-        { name: `${name} Module Design` },
-        { name: `${name} Landing Systems` },
-        { name: `${name} Habitat Construction` }
+        { name: `${uz}: modul loyihasi`, nameEn: `${en} Module Design`, nameRu: `${ru}: проект модуля` },
+        { name: `${uz}: qo'nish tizimlari`, nameEn: `${en} Landing Systems`, nameRu: `${ru}: системы посадки` },
+        { name: `${uz}: yashash bazasini qurish`, nameEn: `${en} Habitat Construction`, nameRu: `${ru}: строительство обитаемой базы` }
       ]
     }))
   },
@@ -22,13 +38,26 @@ export const creativityTopicsData = {
     titleEn: 'Rockets and Satellites', titleRu: 'Ракеты и искусственные спутники',
     color: '#f472b6',
     lessons: [
-      "Falcon 9", "Falcon Heavy", "Electron", "New Shepard", "Starship", "International Space Station", "Terra", "Aqua", "Envisat", "Gaia"
-    ].map(name => ({
-      name,
+      // A spacecraft's name is a proper name and is written the same in all
+      // three languages; only the station has one that translates.
+      { en: "Falcon 9" },
+      { en: "Falcon Heavy" },
+      { en: "Electron" },
+      { en: "New Shepard" },
+      { en: "Starship" },
+      { en: "International Space Station", uz: "Xalqaro kosmik stansiya", ru: "Международная космическая станция" },
+      { en: "Terra" },
+      { en: "Aqua" },
+      { en: "Envisat" },
+      { en: "Gaia" }
+    ].map(({ en, uz = en, ru = en }) => ({
+      name: uz,
+      nameEn: en,
+      nameRu: ru,
       subLessons: [
-        { name: `${name} Engineering` },
-        { name: `${name} Operational Orbit` },
-        { name: `${name} Future Upgrades` }
+        { name: `${uz}: muhandislik yechimlari`, nameEn: `${en} Engineering`, nameRu: `${ru}: инженерные решения` },
+        { name: `${uz}: ish orbitasi`, nameEn: `${en} Operational Orbit`, nameRu: `${ru}: рабочая орбита` },
+        { name: `${uz}: kelgusi takomillashtirishlar`, nameEn: `${en} Future Upgrades`, nameRu: `${ru}: будущие улучшения` }
       ]
     }))
   }

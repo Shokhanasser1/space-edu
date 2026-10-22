@@ -70,6 +70,12 @@ const SUBJECTS = [
  * this size will be corrected for years, so a topic or a lesson may carry an
  * explicit `slug` and keep the one it already had. Set it when you fix a name;
  * never change one that is already set.
+ *
+ * The name a slug comes from is the English one, `nameEn` when the item has
+ * it — the same rule the topic slug follows and the one `TopicLesson.save()`
+ * uses for a row added in the panel. Until 22 Oct 2026 it was `name`, which
+ * held English then; moving the Uzbek title into `name` would otherwise have
+ * re-slugged all 464 lessons it touched.
  */
 function slugify(text) {
   return String(text)
@@ -123,7 +129,7 @@ function readLessonTree(topic, slugFor, prefix) {
     items.map((item, index) => {
       const name = typeof item === 'string' ? item : item.name;
       const slug = typeof item === 'string' || !item.slug
-        ? slugFor(parentPrefix, name)
+        ? slugFor(parentPrefix, typeof item === 'string' ? name : (item.nameEn ?? name))
         : slugFor(item.slug);
       const children = typeof item === 'string'
         ? []
@@ -142,7 +148,7 @@ function readLessonTree(topic, slugFor, prefix) {
   // are topic -> lesson -> sub-lesson or a bare list of lesson names.
   const roots = topic.sections
     ? topic.sections.map((section, index) => ({
-        slug: slugFor(prefix, section.name),
+        slug: slugFor(prefix, section.nameEn ?? section.name),
         order: index,
         name: section.name,
         ...translations(section, section.name),

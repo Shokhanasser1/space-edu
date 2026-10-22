@@ -93,7 +93,7 @@ describe('the featured stars point at real catalogue entries', () => {
  * Factual corrections, and the slugs they must not move.
  *
  * Every slug in the learn tree is derived from a name — a topic's from its
- * English title, a lesson's from the topic slug plus its own name — and
+ * English title, a lesson's from the topic slug plus its own English name — and
  * `TopicLesson.slug` is what progress and awards key on. That is deliberate
  * (re-ordering a topic must not orphan a row) and it has one sharp edge:
  * correcting a wrong title silently re-slugs it and everything under it, and
@@ -142,7 +142,7 @@ describe('corrected content keeps its slug', () => {
     const topic = (await topics()).find((t) => t.slug === 'astronomy-solar-system');
     const node = findNode(topic.lessons, 'astronomy-solar-system-exploration-of-the-morning-star');
     expect(node, 'the slug this lesson had must not move').toBeTruthy();
-    expect(node.name).toBe('Exploration of the Morning and Evening Star');
+    expect(node.name_en).toBe('Exploration of the Morning and Evening Star');
   });
 
   it('keeps the Titan slug while the title says what the lakes are made of', async () => {
@@ -155,6 +155,42 @@ describe('corrected content keeps its slug', () => {
       'astronomy-solar-system-titan-a-world-with-liquid-lakes',
     );
     expect(node, 'the slug this lesson had must not move').toBeTruthy();
-    expect(node.name).toBe('Titan: Lakes of Liquid Methane and Ethane');
+    expect(node.name_en).toBe('Titan: Lakes of Liquid Methane and Ethane');
+  });
+});
+
+/**
+ * 22 Oct 2026: 464 of the 474 lesson titles were English in all three
+ * languages. `name` held the English title — the slug was derived from it — so
+ * an Uzbek reader got English, and a Russian reader, with `name_ru` empty, fell
+ * back to the same English.
+ *
+ * `name` is the Uzbek title now and the slug comes from `nameEn`, which kept
+ * every slug where it was. These hold both halves: that nothing goes untitled
+ * in Russian again, and that translating a title does not move its slug.
+ */
+describe('every lesson title is in all three languages', () => {
+  const nodes = async () => {
+    const { default: data } = await import(
+      '../../../backend/apps/courses/fixtures/learn_content.json',
+      { with: { type: 'json' } }
+    );
+    const out = [];
+    const walk = (list) => list.forEach((node) => { out.push(node); walk(node.children ?? []); });
+    data.spheres.forEach((sphere) => sphere.topics.forEach((topic) => walk(topic.lessons)));
+    return out;
+  };
+
+  it('gives every lesson a name in Uzbek, English and Russian', async () => {
+    const untitled = (await nodes()).filter((n) => !n.name || !n.name_en || !n.name_ru);
+    expect(untitled.map((n) => n.slug)).toEqual([]);
+  });
+
+  it('keeps the slug of the English name when the title is translated', async () => {
+    const node = (await nodes()).find((n) => n.slug === 'physics-dynamics-mass-density');
+    expect(node, 'the slug this lesson had must not move').toBeTruthy();
+    expect(node.name).toBe('Massa. Zichlik');
+    expect(node.name_en).toBe('Mass. Density');
+    expect(node.name_ru).toBe('Масса. Плотность');
   });
 });

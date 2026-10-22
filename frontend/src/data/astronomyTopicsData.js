@@ -15,6 +15,11 @@
  *
  * `src/data/videoCredits.js` carries the channel each id belongs to, and the
  * lesson page prints it under the player.
+ *
+ * The keys are the English names. Since 22 Oct 2026 `name` is the Uzbek one,
+ * as on every other row of the learn tree, and the English sits in `nameEn` —
+ * which is also what the exporter derives the slug from, so translating a title
+ * moved no slug.
  */
 const KHAN_VIDEOS = {
   // "Massiv yulduzlarning hayot sikli" — the life cycle of a massive star.
@@ -35,7 +40,10 @@ const KHAN_VIDEOS = {
 };
 
 /** A sub-lesson, with its video if one of these lessons is genuinely about it. */
-const subLesson = (name) => ({ name, videoUrl: KHAN_VIDEOS[name] ?? '' });
+const subLesson = (names) => ({ ...names, videoUrl: KHAN_VIDEOS[names.nameEn] ?? '' });
+
+/** A capitalised Russian name, for use mid-sentence. */
+const lower = (text) => text[0].toLowerCase() + text.slice(1);
 
 export const astronomyTopicsData = {
   1: {
@@ -44,90 +52,94 @@ export const astronomyTopicsData = {
     titleEn: 'Solar System', titleRu: 'Солнечная система',
     color: '#fbbf24',
     lessons: [
-      { 
-        name: "Sun", 
+      {
+        name: "Quyosh", nameEn: "Sun", nameRu: "Солнце",
         subLessons: [
-          { name: "Structure of the Sun" },
-          { name: "Solar Energy & Fusion" },
-          { name: "The Sun's Life Cycle" }
+          { name: "Quyoshning tuzilishi", nameEn: "Structure of the Sun", nameRu: "Строение Солнца" },
+          { name: "Quyosh energiyasi va termoyadro sintezi", nameEn: "Solar Energy & Fusion", nameRu: "Энергия Солнца и термоядерный синтез" },
+          { name: "Quyoshning hayot sikli", nameEn: "The Sun's Life Cycle", nameRu: "Жизненный цикл Солнца" }
         ]
       },
-      { 
-        name: "Mercury", 
+      {
+        name: "Merkuriy", nameEn: "Mercury", nameRu: "Меркурий",
         subLessons: [
-          { name: "Mercury's Extreme Environment" },
-          { name: "Geology of the Smallest Planet" },
-          { name: "Missions to Mercury" }
+          { name: "Merkuriydagi keskin sharoitlar", nameEn: "Mercury's Extreme Environment", nameRu: "Экстремальные условия на Меркурии" },
+          { name: "Eng kichik sayyora geologiyasi", nameEn: "Geology of the Smallest Planet", nameRu: "Геология самой маленькой планеты" },
+          { name: "Merkuriyga yuborilgan missiyalar", nameEn: "Missions to Mercury", nameRu: "Миссии к Меркурию" }
         ]
       },
-      { 
-        name: "Venus", 
+      {
+        name: "Venera", nameEn: "Venus", nameRu: "Венера",
         subLessons: [
-          { name: "The Runaway Greenhouse Effect" },
-          { name: "Venusian Surface & Volcanism" },
+          { name: "Nazoratsiz issiqxona effekti", nameEn: "The Runaway Greenhouse Effect", nameRu: "Неуправляемый парниковый эффект" },
+          { name: "Venera yuzasi va vulkanizmi", nameEn: "Venusian Surface & Volcanism", nameRu: "Поверхность и вулканизм Венеры" },
           // Venus is the evening star as often as it is the morning star —
           // NASA, Venus Facts: the ancients thought it "was two objects: a
           // morning star and an evening star".
           // https://science.nasa.gov/venus/venus-facts/
           {
-            name: "Exploration of the Morning and Evening Star",
+            name: "Tong va shom yulduzi tadqiqoti",
+            nameEn: "Exploration of the Morning and Evening Star",
+            nameRu: "Исследование утренней и вечерней звезды",
             slug: "astronomy-solar-system-exploration-of-the-morning-star",
           }
         ]
       },
-      { 
-        name: "Earth", 
+      {
+        name: "Yer", nameEn: "Earth", nameRu: "Земля",
         subLessons: [
-          { name: "The Goldilocks Zone" },
-          { name: "Atmosphere & Biosphere" },
-          { name: "Earth's Magnetic Shield" }
+          { name: "Hayot uchun qulay zona", nameEn: "The Goldilocks Zone", nameRu: "Зона обитаемости" },
+          { name: "Atmosfera va biosfera", nameEn: "Atmosphere & Biosphere", nameRu: "Атмосфера и биосфера" },
+          { name: "Yerning magnit qalqoni", nameEn: "Earth's Magnetic Shield", nameRu: "Магнитный щит Земли" }
         ]
       },
-      { 
-        name: "Mars", 
+      {
+        name: "Mars", nameEn: "Mars", nameRu: "Марс",
         subLessons: [
-          { name: "The Red Planet's History" },
-          { name: "Water on Mars" },
-          { name: "Future Human Colonization" }
+          { name: "Qizil sayyora tarixi", nameEn: "The Red Planet's History", nameRu: "История Красной планеты" },
+          { name: "Marsdagi suv", nameEn: "Water on Mars", nameRu: "Вода на Марсе" },
+          { name: "Marsni kelajakda o'zlashtirish", nameEn: "Future Human Colonization", nameRu: "Будущая колонизация Марса" }
         ]
       },
-      { 
-        name: "Jupiter", 
+      {
+        name: "Yupiter", nameEn: "Jupiter", nameRu: "Юпитер",
         subLessons: [
-          { name: "The King of Planets" },
-          { name: "The Great Red Spot" },
-          { name: "Jupiter's Galilean Moons" }
+          { name: "Sayyoralar qiroli", nameEn: "The King of Planets", nameRu: "Король планет" },
+          { name: "Katta Qizil dog'", nameEn: "The Great Red Spot", nameRu: "Большое красное пятно" },
+          { name: "Yupiterning Galiley yo'ldoshlari", nameEn: "Jupiter's Galilean Moons", nameRu: "Галилеевы спутники Юпитера" }
         ]
       },
-      { 
-        name: "Saturn", 
+      {
+        name: "Saturn", nameEn: "Saturn", nameRu: "Сатурн",
         subLessons: [
-          { name: "Lord of the Rings" },
-          { name: "Saturn's Hexagon Storm" },
+          { name: "Halqalar hukmdori", nameEn: "Lord of the Rings", nameRu: "Властелин колец" },
+          { name: "Saturndagi olti burchakli bo'ron", nameEn: "Saturn's Hexagon Storm", nameRu: "Гексагон Сатурна" },
           // The liquid is methane and ethane at about -180 C, not water —
           // NASA, Titan: "rivers, lakes and seas of liquid hydrocarbons like
           // methane and ethane".
           // https://science.nasa.gov/saturn/moons/titan/
           {
-            name: "Titan: Lakes of Liquid Methane and Ethane",
+            name: "Titan: suyuq metan va etan ko'llari",
+            nameEn: "Titan: Lakes of Liquid Methane and Ethane",
+            nameRu: "Титан: озёра из жидкого метана и этана",
             slug: "astronomy-solar-system-titan-a-world-with-liquid-lakes",
           }
         ]
       },
-      { 
-        name: "Uranus", 
+      {
+        name: "Uran", nameEn: "Uranus", nameRu: "Уран",
         subLessons: [
-          { name: "The Sideways Ice Giant" },
-          { name: "Atmosphere & Composition" },
-          { name: "Uranus's Ring System" }
+          { name: "Yonboshlab aylanuvchi muz giganti", nameEn: "The Sideways Ice Giant", nameRu: "Ледяной гигант, лежащий на боку" },
+          { name: "Uran atmosferasi va tarkibi", nameEn: "Atmosphere & Composition", nameRu: "Атмосфера и состав Урана" },
+          { name: "Uranning halqalar tizimi", nameEn: "Uranus's Ring System", nameRu: "Система колец Урана" }
         ]
       },
-      { 
-        name: "Neptune", 
+      {
+        name: "Neptun", nameEn: "Neptune", nameRu: "Нептун",
         subLessons: [
-          { name: "The Windy Blue Planet" },
-          { name: "Triton: A Captured Moon" },
-          { name: "Neptune's Dark Spots" }
+          { name: "Shamolli moviy sayyora", nameEn: "The Windy Blue Planet", nameRu: "Ветреная голубая планета" },
+          { name: "Triton: tutib olingan yo'ldosh", nameEn: "Triton: A Captured Moon", nameRu: "Тритон: захваченный спутник" },
+          { name: "Neptunning qora dog'lari", nameEn: "Neptune's Dark Spots", nameRu: "Тёмные пятна Нептуна" }
         ]
       }
     ]
@@ -140,11 +152,13 @@ export const astronomyTopicsData = {
     lessons: [
       "O", "B", "A", "F", "G", "K", "M"
     ].map(type => ({
-      name: type,
+      name: `${type} sinf yulduzlari`,
+      nameEn: type,
+      nameRu: `Звёзды класса ${type}`,
       subLessons: [
-        subLesson(`${type}-Type Characteristics`),
-        subLesson(`Evolution of ${type} Stars`),
-        subLesson(`Famous ${type}-Type Stars`)
+        subLesson({ name: `${type} sinf yulduzlarining xususiyatlari`, nameEn: `${type}-Type Characteristics`, nameRu: `Характеристики звёзд класса ${type}` }),
+        subLesson({ name: `${type} sinf yulduzlarining evolyutsiyasi`, nameEn: `Evolution of ${type} Stars`, nameRu: `Эволюция звёзд класса ${type}` }),
+        subLesson({ name: `Mashhur ${type} sinf yulduzlari`, nameEn: `Famous ${type}-Type Stars`, nameRu: `Известные звёзды класса ${type}` })
       ]
     }))
   },
@@ -154,22 +168,27 @@ export const astronomyTopicsData = {
     titleEn: 'Satellites and Rockets', titleRu: 'Искусственные спутники и ракеты',
     color: '#fbbf24',
     lessons: [
-      { name: "Falcon 9", type: "rocket" },
-      { name: "Falcon Heavy", type: "rocket" },
-      { name: "Electron", type: "rocket" },
-      { name: "New Shepard", type: "rocket" },
-      { name: "Starship", type: "rocket" },
-      { name: "International Space Station", type: "satellite" },
-      { name: "Terra", type: "satellite" },
-      { name: "Aqua", type: "satellite" },
-      { name: "Envisat", type: "satellite" },
-      { name: "Gaia", type: "satellite" }
-    ].map(item => ({
-      ...item,
+      // A spacecraft's name is a proper name and is written the same in all
+      // three languages; only the station has one that translates.
+      { en: "Falcon 9", type: "rocket" },
+      { en: "Falcon Heavy", type: "rocket" },
+      { en: "Electron", type: "rocket" },
+      { en: "New Shepard", type: "rocket" },
+      { en: "Starship", type: "rocket" },
+      { en: "International Space Station", uz: "Xalqaro kosmik stansiya", ru: "Международная космическая станция", type: "satellite" },
+      { en: "Terra", type: "satellite" },
+      { en: "Aqua", type: "satellite" },
+      { en: "Envisat", type: "satellite" },
+      { en: "Gaia", type: "satellite" }
+    ].map(({ en, uz = en, ru = en, type }) => ({
+      name: uz,
+      nameEn: en,
+      nameRu: ru,
+      type,
       subLessons: [
-        { name: `${item.name} Design` },
-        { name: `${item.name} Launch History` },
-        { name: `${item.name} Mission Impact` }
+        { name: `${uz}: konstruksiyasi`, nameEn: `${en} Design`, nameRu: `${ru}: конструкция` },
+        { name: `${uz}: uchirilishlar tarixi`, nameEn: `${en} Launch History`, nameRu: `${ru}: история запусков` },
+        { name: `${uz}: missiyaning ahamiyati`, nameEn: `${en} Mission Impact`, nameRu: `${ru}: значение миссии` }
       ]
     }))
   },
@@ -180,13 +199,32 @@ export const astronomyTopicsData = {
     titleEn: 'Celestial Bodies',
     color: '#fbbf24',
     lessons: [
-      "Planets", "Natural satellites", "Asteroids", "Comets", "Meteoroids", "Meteors", "Meteorites", "Galaxies", "Black holes", "Nebulae", "Quasars", "Pulsars", "Supernovae", "Exoplanets", "Galaxy clusters", "Cosmic dust and gas clouds"
-    ].map(body => ({
-      name: body,
+      // `ruOf` is the Russian genitive plural: «Физика планет», «Наблюдения комет».
+      { en: "Planets", uz: "Sayyoralar", ru: "Планеты", ruOf: "планет" },
+      { en: "Natural satellites", uz: "Tabiiy yo'ldoshlar", ru: "Естественные спутники", ruOf: "естественных спутников" },
+      { en: "Asteroids", uz: "Asteroidlar", ru: "Астероиды", ruOf: "астероидов" },
+      { en: "Comets", uz: "Kometalar", ru: "Кометы", ruOf: "комет" },
+      { en: "Meteoroids", uz: "Meteoroidlar", ru: "Метеороиды", ruOf: "метеороидов" },
+      { en: "Meteors", uz: "Meteorlar", ru: "Метеоры", ruOf: "метеоров" },
+      { en: "Meteorites", uz: "Meteoritlar", ru: "Метеориты", ruOf: "метеоритов" },
+      { en: "Galaxies", uz: "Galaktikalar", ru: "Галактики", ruOf: "галактик" },
+      { en: "Black holes", uz: "Qora tuynuklar", ru: "Чёрные дыры", ruOf: "чёрных дыр" },
+      { en: "Nebulae", uz: "Tumanliklar", ru: "Туманности", ruOf: "туманностей" },
+      { en: "Quasars", uz: "Kvazarlar", ru: "Квазары", ruOf: "квазаров" },
+      { en: "Pulsars", uz: "Pulsarlar", ru: "Пульсары", ruOf: "пульсаров" },
+      { en: "Supernovae", uz: "O'ta yangi yulduzlar", ru: "Сверхновые", ruOf: "сверхновых" },
+      { en: "Exoplanets", uz: "Ekzosayyoralar", ru: "Экзопланеты", ruOf: "экзопланет" },
+      { en: "Galaxy clusters", uz: "Galaktikalar to'dalari", ru: "Скопления галактик", ruOf: "скоплений галактик" },
+      { en: "Cosmic dust and gas clouds", uz: "Kosmik chang va gaz bulutlari", ru: "Облака космической пыли и газа", ruOf: "облаков космической пыли и газа" }
+    ].map(({ en, uz, ru, ruOf }) => ({
+      name: uz,
+      nameEn: en,
+      nameRu: ru,
       subLessons: [
-        subLesson(`Understanding ${body}`),
-        subLesson(`Physics of ${body}`),
-        subLesson(`Observations of ${body}`)
+        subLesson({ name: `${uz} haqida tushuncha`, nameEn: `Understanding ${en}`, nameRu: `Что такое ${lower(ru)}?` }),
+        subLesson({ name: `${uz} fizikasi`, nameEn: `Physics of ${en}`, nameRu: `Физика ${ruOf}` }),
+        // Every Uzbek name above ends in -lar or -lari, so the accusative is a bare -ni.
+        subLesson({ name: `${uz}ni kuzatish`, nameEn: `Observations of ${en}`, nameRu: `Наблюдения ${ruOf}` })
       ]
     }))
   }
