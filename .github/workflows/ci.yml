@@ -71,11 +71,6 @@ jobs:
         # what PostgreSQL refuses (a duplicate index, select_for_update outside a
         # transaction). TEST_DB_URL points the runner at this job's throwaway
         # database and nowhere else -- see base/settings/base.py.
-        #
-        # Informational until its first green run: it has never run before, and
-        # a red main on day one would land on whoever pushed next. Once it is
-        # green, delete `continue-on-error` so it gates like the step above.
-        continue-on-error: true
         env:
           SECRET_KEY: ci-secret-key-not-used-anywhere-else-0123456789
           TEST_DB_URL: postgres://postgres:ci@localhost:5432/ci
