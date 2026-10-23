@@ -26,7 +26,8 @@
     "quiz": "Quiz & TEST",
     "premium": "Premium",
     "myProfile": "My Profile",
-    "language": "Language"
+    "language": "Language",
+    "adminPanel": "Admin Panel"
   },
   "home": {
     "title": "Explore the Cosmos",
@@ -1890,7 +1891,8 @@
     "privacyPolicy": "Privacy Policy",
     "termsOfUse": "Terms of Use",
     "sitemap": "Sitemap",
-    "allRightsReserved": "Space Edu — All rights reserved."
+    "allRightsReserved": "Space Edu — All rights reserved.",
+    "admin": "Admin"
   },
   "daily": {
     "challengeCompleted": "Challenge Completed!",
@@ -2839,6 +2841,20 @@
     "messages": "messages",
     "exit": "Exit",
     "console": "Console"
+  },
+  "adminLogin": {
+    "title": "Admin",
+    "highlight": "Panel",
+    "subtitle": "Sign in with a staff account to manage the platform",
+    "emailLabel": "Email or username",
+    "passwordLabel": "Password",
+    "submit": "Sign in to the panel",
+    "fillAll": "Fill in all fields.",
+    "notStaff": "This account has no admin access. Sign in with a staff account.",
+    "signedInNotStaff": "You are signed in as {{who}}, which has no admin access. Sign out to use a staff account.",
+    "signOutFirst": "Sign out",
+    "backToSite": "Back to the site",
+    "footer": "Staff only"
   },
   "skyView": {
     "canvasLabel": "The night sky over your chosen place and time",

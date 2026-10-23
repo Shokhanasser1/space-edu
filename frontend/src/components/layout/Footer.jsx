@@ -145,6 +145,12 @@ const Footer = () => {
             >
               {t('footer', 'sitemap')}
             </a>
+            {/* The staff way in. Behind it is a sign-in that refuses any
+                account without staff rights, so a pupil who follows it learns
+                nothing and changes nothing. */}
+            <Link to="/admin-panel/login" className="transition-colors hover:text-violet-300">
+              {t('footer', 'admin')}
+            </Link>
           </div>
         </div>
       </div>
