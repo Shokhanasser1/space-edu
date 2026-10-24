@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import SectionPageHeader from '@/components/layout/SectionPageHeader';
 import { useLearnTopics } from '@/hooks/useLearnTopics';
 import { lessonName, quizPath } from '@/lib/learnContent';
+import { lessonLabPath } from './sims/registry';
 import { BookOpen, FlaskConical } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -175,7 +176,7 @@ export default function PhysicsTopicView() {
               color={topic.color}
               onClick={() => navigate(`/learn/physics/${topicId}/lesson/${i}`)}
               onTest={() => navigate(quizPath('physics', lesson))}
-              onLab={() => navigate('/lab')}
+              onLab={() => navigate(lessonLabPath('physics', topicId, i, lesson))}
             />
           ))}
         </div>

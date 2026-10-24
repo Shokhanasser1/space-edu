@@ -2790,7 +2790,9 @@
     "fullScreenVideo": "Full Screen Video",
     "loading": "Loading…",
     "checkFailed": "Could not check that answer — try again.",
-    "checkTooFast": "Too many attempts. Wait a little before trying again."
+    "checkTooFast": "Too many attempts. Wait a little before trying again.",
+    "lessonLabTitle": "Laboratory · simulators for this lesson",
+    "lessonLabRead": "Read the lesson"
   },
   "admin": {
     "dashboard": "Dashboard",

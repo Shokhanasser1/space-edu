@@ -1,0 +1,637 @@
+import { Grid3x3, Orbit, Scale } from 'lucide-react';
+
+import SimCard from '../kit/SimCard';
+import { useSimText } from '../kit/lang';
+import PairSim from './UniversalGravitation.pair';
+import ScalingSim from './UniversalGravitation.scaling';
+import CavendishSim from './UniversalGravitation.cavendish';
+
+/**
+ * Lesson "Butun olam tortishish qonuni" (Dynamics, lesson 5 — index 4):
+ *  1. pair      — F = G·m₁·m₂ / r² for two people (60 kg, 50 kg, 1 m →
+ *                 2.0·10⁻⁷ N), you and the Earth (589 N = your weight),
+ *                 the Earth and the Moon (1.98·10²⁰ N), the Sun and the Earth
+ *                 (3.52·10²² N); equal and opposite forces, different
+ *                 accelerations a = F/m, the F(r) graph with 2r → F/4, and a
+ *                 "release" that lets the two bodies fall together.
+ *  2. scale     — why 1/r²: lines from m₁ spread over a sphere of area 4πr²;
+ *                 m doubled → F doubled, r doubled → F/4, r halved → 4F.
+ *  3. cavendish — the torsion balance of 1798: F ≈ 1.45·10⁻⁷ N between lead
+ *                 balls gives G = 6.67·10⁻¹¹ N·m²/kg² and the Earth's mass.
+ */
+
+const TEXT = {
+  uz: {
+    N: 'N',
+    kg: 'kg',
+    mg: 'mg',
+    min: 'min',
+    d: 'sutka',
+    mkm: 'mln km',
+    Nm2: 'N·m²/kg²',
+    common: {
+      start: 'Boshlash',
+      pause: "To'xtatish",
+      resume: 'Davom etish',
+      again: 'Yana boshlash',
+      reset: 'Qayta',
+      faster: (k) => `Vaqt ×${k} tezlashtirilgan`,
+      calc: 'Hisoblash',
+    },
+    card: {
+      eyebrow: 'Virtual laboratoriya · Dinamika',
+      title: 'Butun olam tortishish qonuni',
+      tabsLabel: 'Tajribani tanlang',
+      tabs: {
+        pair: { label: 'Ikki jism', sub: 'F = G·m₁·m₂ / r²' },
+        scale: { label: 'Masofa va massa', sub: '2r → F/4' },
+        cav: { label: 'Kavendish tajribasi', sub: 'G ni o‘lchash, 1798' },
+      },
+    },
+    facts: {
+      title: 'Eslab qoling',
+      items: [
+        { term: 'Butun olam tortishish qonuni', text: "har qanday ikki jism F = G·m₁·m₂ / r² kuch bilan tortishadi: kuch massalar ko'paytmasiga to'g'ri, masofa kvadratiga teskari proporsional." },
+        { term: 'Gravitatsiya doimiysi', text: "G = 6.67·10⁻¹¹ N·m²/kg² — 1 kg li ikki jism 1 m masofada shuncha kuch bilan tortishadi. Uni 1798-yilda G. Kavendish o'lchagan." },
+        { term: 'Kuchlar teng', text: "F₁₂ = F₂₁: jismlar bir-birini bir xil kuch bilan tortadi (Nyutonning uchinchi qonuni), ammo tezlanishlari har xil: a = F / m." },
+        { term: 'Teskari kvadrat', text: "masofa 2 marta ortsa, kuch 4 marta, 3 marta ortsa — 9 marta kamayadi. r — jismlar markazlari orasidagi masofa." },
+      ],
+    },
+    pair: {
+      presetsLabel: 'Tayyor misollar',
+      presets: {
+        people: { name: 'Ikki odam', sub: '60 kg va 50 kg · 1 m' },
+        youEarth: { name: 'Siz va Yer', sub: '60 kg · Yer sirtida' },
+        earthMoon: { name: 'Yer va Oy', sub: '384 000 km' },
+        sunEarth: { name: 'Quyosh va Yer', sub: '150 mln km' },
+      },
+      names: { person1: '1-odam', person2: '2-odam', you: 'Siz', earth: 'Yer', moon: 'Oy', sun: 'Quyosh' },
+      massLabel: {
+        person1: '1-odamning massasi',
+        person2: '2-odamning massasi',
+        you: 'Sizning massangiz',
+        earth: 'Yerning massasi',
+        moon: 'Oyning massasi',
+        sun: 'Quyoshning massasi',
+      },
+      aLabel: {
+        person1: '1-odamning tezlanishi',
+        person2: '2-odamning tezlanishi',
+        you: 'Sizning tezlanishingiz',
+        earth: 'Yerning tezlanishi',
+        moon: 'Oyning tezlanishi',
+        sun: 'Quyoshning tezlanishi',
+      },
+      release: "Qo'yib yuborish",
+      dist: 'Markazlar orasidagi masofa',
+      hints: {
+        person: 'Odatda 50–80 kg',
+        earth: 'Haqiqiy qiymat: 5.97·10²⁴ kg',
+        moon: 'Haqiqiy qiymat: 7.35·10²² kg — Yernikidan 81 marta kam',
+        sun: "Haqiqiy qiymat: 1.99·10³⁰ kg — Yernikidan 333 000 marta ko'p",
+      },
+      rHint: {
+        people: 'Odamlarning markazlari orasidagi masofa',
+        youEarth: (h) => `Yer radiusi R = 6370 km; Yer sirtidan balandlik h = r − R = ${h} km`,
+        earthMoon: "Yerdan Oygacha o'rtacha masofa — 384 000 km",
+        sunEarth: "Quyoshdan Yergacha o'rtacha masofa — 150 mln km",
+      },
+      legend: { force: 'tortishish kuchi F₁₂ = F₂₁', r: 'r — markazlar orasidagi masofa', start: "boshlang'ich o'rin", broken: 'strelka qisqartirib chizilgan' },
+      notes: {
+        people: "Faqat o'zaro tortishish hisobga olingan (ochiq kosmosdagidek)",
+        youEarth: 'Odam kattalashtirib chizilgan, Yer — masshtabda',
+        earthMoon: 'Jismlar kattalashtirib chizilgan, masofa — masshtabda',
+        sunEarth: 'Jismlar kattalashtirib chizilgan, masofa — masshtabda',
+      },
+      sceneLabel: (n1, n2, r, F) => `${n1} va ${n2}: masofa ${r}, tortishish kuchi ${F}.`,
+      readouts: {
+        F: 'Tortishish kuchi',
+        Fsub: 'F₁₂ = F₂₁ — ikkala jismga bir xil',
+        meet: 'Uchrashishgacha',
+        meetSub: "tinch holatdan qo'yib yuborilsa",
+        touching: 'jismlar tegib turibdi',
+        time: 'Vaqt',
+        timeSub: (t) => `uchrashishgacha: ${t}`,
+      },
+      graph: {
+        title: 'Grafik: F(r)',
+        curve: 'hozirgi massalar',
+        ghost: "boshlang'ich massalar",
+        note: 'Masofa 2 marta ortsa — kuch 4 marta, 3 marta ortsa — 9 marta kamayadi; masofa 2 marta kamaysa — kuch 4 marta ortadi.',
+        aria: "Tortishish kuchining masofaga bog'liqlik grafigi",
+      },
+      calcNote: 'r metrlarda olinadi. Kuchlar teng, lekin massasi kichik jism kattaroq tezlanish oladi.',
+      explain: {
+        intro: {
+          people: (F, mEq) =>
+            `Har qanday ikki jism bir-birini tortadi. 1 m masofadagi ikki odam F = ${F} N kuch bilan tortishadi — bu taxminan ${mEq} massali chang zarrasining og'irligi. Shuning uchun biz bu kuchni sezmaymiz.`,
+          youEarth: (F, W) => `Yer sizni F = ${F} N kuch bilan tortadi — bu sizning og'irlik kuchingiz: mg = 60 · 9.8 = ${W} N. Siz ham Yerni xuddi shunday ${F} N kuch bilan tortasiz!`,
+          earthMoon: (F, k) => `Yer va Oy bir-birini F = ${F} N kuch bilan tortadi. Kuchlar teng, ammo Oyning massasi ${k} marta kichik — shuning uchun Oyning tezlanishi ${k} marta katta.`,
+          sunEarth: (F) => `Quyosh Yerni F = ${F} N kuch bilan tortadi — Yer aynan shu kuch tufayli Quyosh atrofida aylanadi. Yer ham Quyoshni xuddi shunday kuch bilan tortadi.`,
+        },
+        custom: (F) => `F = G·m₁·m₂ / r² = ${F} N. Bu kuch ikkala jismga bir xil ta'sir qiladi va jismlar markazlarini tutashtiruvchi chiziq bo'ylab yo'nalgan.`,
+        rUp: (k, k2, F) => `Masofa ${k} marta ortdi — kuch ${k2} marta kamaydi: F = ${F} N. Tortishish kuchi masofa kvadratiga teskari proporsional.`,
+        rDown: (k, k2, F) => `Masofa ${k} marta kamaydi — kuch ${k2} marta ortdi: F = ${F} N. Tortishish kuchi masofa kvadratiga teskari proporsional.`,
+        mUp: (subj, k, F) => `${subj} ${k} marta ortdi — kuch ham ${k} marta ortdi: F = ${F} N. Kuch har bir massaga to'g'ri proporsional.`,
+        mDown: (subj, k, F) => `${subj} ${k} marta kamaydi — kuch ham ${k} marta kamaydi: F = ${F} N. Kuch har bir massaga to'g'ri proporsional.`,
+        fall: "Kuchlar doim teng (F₁₂ = F₂₁), lekin massasi kichik jismning tezlanishi katta: a = F / m. Jismlar yaqinlashgan sari r kamayadi va kuch tez ortib boradi.",
+        done: (t, s1, s2) => `Jismlar uchrashguncha ${t} o'tdi. Siljish: ${s1}, ${s2}. Massasi katta jism kamroq siljidi, kuchlar esa doim teng edi.`,
+        doneNote: {
+          people: '',
+          youEarth: ' Havo qarshiligi hisobga olinmagan.',
+          earthMoon: " Aslida Oy orbita bo'ylab ≈ 1 km/s tezlikda harakatlanadi, shuning uchun Yerga tushmaydi — uning atrofida aylanadi.",
+          sunEarth: " Aslida Yer orbita bo'ylab ≈ 30 km/s tezlikda harakatlanadi, shuning uchun Quyoshga tushmaydi — uning atrofida aylanadi.",
+        },
+        touchHint: "Masofani oshirib, «Qo'yib yuborish»ni bosing.",
+      },
+    },
+    scale: {
+      m1: 'Massa m₁',
+      m2: 'Massa m₂',
+      r: 'Masofa r',
+      legend: { lines: 'tortishish chiziqlari (m₁ dan)', cell: 'm₂ turgan katak', area: 'S — sfera yuzasi (4πr²)' },
+      chip: 'Chiziqlar soni m₁ ga proporsional',
+      sceneLabel: (k1, k2, kr, f) => `m₁ ×${k1}, m₂ ×${k2}, r ×${kr}: kuch F₀ · ${f}.`,
+      perCell: 'ta / katak',
+      readouts: {
+        force: 'Kuch',
+        density: 'Chiziqlar zichligi',
+        densitySub: 'm₂ turgan katakdan o‘tadi',
+        area: 'Sfera yuzasi',
+        areaSub: (kr) => `radius ×${kr} → yuza ×${kr}²`,
+        example: 'Misol: ikki odam',
+        exampleSub: (F0) => `F₀ = ${F0} N (60 kg, 50 kg, 1 m)`,
+      },
+      rule: {
+        title: 'Qoida',
+        items: ['m₁ yoki m₂ k marta ortsa — kuch k marta ortadi.', 'r k marta ortsa — kuch k² marta kamayadi.', "Bir nechta o'zgarishda ko'paytuvchilar bir-biriga ko'paytiriladi."],
+      },
+      compare: {
+        title: 'Kuchlarni taqqoslash',
+        aria: (f) => `Boshlang'ich kuch F₀ va yangi kuch F = ${f}·F₀ strelkalari`,
+        note: 'Ikkala strelka bir xil masshtabda chizilgan.',
+      },
+      areaTag: (s) => `yuza ${s}`,
+      cellTag: (n) => `1 katakka ${n} ta`,
+      linesTag: (n) => `${n} ta chiziq`,
+      explain: {
+        base: "m₁ dan chiqqan chiziqlar soni o'zgarmaydi — uzoqlashgan sari ular kattaroq yuzaga tarqaladi. m₂ turgan katakdan qancha ko'p chiziq o'tsa, tortishish shuncha kuchli. Massalarni yoki masofani o'zgartirib ko'ring.",
+        r2: "Masofa 2 marta ortdi: o'sha chiziqlar 2² = 4 marta katta yuzaga tarqaldi, m₂ turgan katakka 4 marta kam chiziq tushadi. Kuch 4 marta kamaydi: F = F₀/4.",
+        rHalf: "Masofa 2 marta kamaydi: chiziqlar 4 marta kichik yuzaga yig'ildi — katakka 4 marta ko'p chiziq tushadi. Kuch 4 marta ortdi: F = 4·F₀.",
+        m1: (k, n) => `m₁ ${k} marta ortdi — undan ${k} marta ko'p chiziq chiqadi (${n} ta), har bir katakka ham ${k} marta ko'p tushadi. Kuch ${k} marta ortdi.`,
+        m2: (k) => `m₂ ${k} marta ortdi — har bir chiziq ${k} marta katta massani tortadi. Kuch ${k} marta ortdi: F = ${k}·F₀.`,
+        combo: (expr, f) => `Ta'sirlar bir-biriga ko'paytiriladi: F = F₀ · ${expr} = F₀ · ${f}.`,
+      },
+    },
+    cav: {
+      posLabel: 'Katta sharlar holati',
+      pos: {
+        far: { name: 'Uzoqda', sub: 'tortishishlar muvozanatda' },
+        A: { name: 'Yaqinda — A holat', sub: 'r = 0.23 m' },
+        B: { name: 'Yaqinda — B holat', sub: 'qarama-qarshi tomonda' },
+      },
+      legend: { force: 'tortishish kuchlari', big: 'katta shar M', small: 'kichik shar m', rest: "sterjenning boshlang'ich holati" },
+      chip: 'Sxema: burilish kattalashtirilgan, vaqt tezlashtirilgan',
+      sceneLabel: (pos, deg) => `Kavendish tarozisi yuqoridan. Katta sharlar: ${pos}. Sterjen burilishi (chizmada) ${deg}°.`,
+      readouts: {
+        F: 'Sharlar orasidagi kuch',
+        Fsub: 'r = 0.23 m da',
+        ratio: "Og'irlikdan necha marta kam",
+        ratioSub: (w) => `kichik shar og'irligi mg = ${w} N`,
+        G: 'Gravitatsiya doimiysi',
+        Gsub: 'G = F·r² / (M·m)',
+        earth: 'Yerning massasi',
+      },
+      calcNote: "Kavendish F ni simning buralish burchagidan topgan, so'ng G ni hisoblagan. G ma'lum bo'lgach, Yer sirtidagi g va Yer radiusi R dan Yerning massasi topiladi.",
+      wire: 'sim (O)',
+      inset: (z) => `Kichik shar, ${z} marta kattalashtirilgan`,
+      scaleMark: 'shkala',
+      balanced: 'Muvozanat: simning buralishi = tortishish',
+      explain: {
+        far: "Kavendish buralma tarozisi: 1.8 m li yengil sterjen uchlarida ikkita kichik qo'rg'oshin shar bor, sterjen ingichka simga osilgan. Katta sharlarni (158 kg) kichik sharlar yoniga keltiring — A yoki B holatni tanlang.",
+        swingA: (F, k) => `Katta sharlar kichiklarini F = ${F} N kuch bilan tortmoqda — bu kichik shar og'irligidan ${k} marta kam! Shunda ham ingichka sim buraladi: sterjen tebranib, yangi muvozanat holatiga keladi.`,
+        doneA: (G) => `Sterjen yangi muvozanatda: simning buralishi tortishish kuchlarini muvozanatlaydi. Burilish burchagidan Kavendish kuchni topdi va G = F·r² / (M·m) = ${G} N·m²/kg² ni hisobladi.`,
+        swingB: "Katta sharlar qarama-qarshi tomonga o'tkazildi — sterjen teskari tomonga buriladi. Kavendish ikki muvozanat holati orasidagi farqni o'lchagan: u ikki baravar katta, shuning uchun o'lchash aniqroq.",
+        doneB: (M) => `G ma'lum bo'lgach, Yerning massasini topish mumkin: M = g·R² / G = ${M} kg. Shuning uchun Kavendish tajribasini «Yerni tortib ko'rish» deb ham atashadi.`,
+        release: "Katta sharlar uzoqlashtirildi: ularning tortishishlari endi bir-birini muvozanatlaydi va sterjen boshlang'ich holatiga qaytmoqda.",
+        back: "Sterjen yana boshlang'ich holatida. Katta sharlarni A yoki B holatga keltirib, tajribani takrorlang.",
+      },
+    },
+  },
+
+  ru: {
+    N: 'Н',
+    kg: 'кг',
+    mg: 'мг',
+    min: 'мин',
+    d: 'сут',
+    mkm: 'млн км',
+    Nm2: 'Н·м²/кг²',
+    common: {
+      start: 'Старт',
+      pause: 'Пауза',
+      resume: 'Продолжить',
+      again: 'Ещё раз',
+      reset: 'Сброс',
+      faster: (k) => `Время ускорено ×${k}`,
+      calc: 'Расчёт',
+    },
+    card: {
+      eyebrow: 'Виртуальная лаборатория · Динамика',
+      title: 'Закон всемирного тяготения',
+      tabsLabel: 'Выберите опыт',
+      tabs: {
+        pair: { label: 'Два тела', sub: 'F = G·m₁·m₂ / r²' },
+        scale: { label: 'Расстояние и масса', sub: '2r → F/4' },
+        cav: { label: 'Опыт Кавендиша', sub: 'измерение G, 1798' },
+      },
+    },
+    facts: {
+      title: 'Запомните',
+      items: [
+        { term: 'Закон всемирного тяготения', text: 'любые два тела притягиваются с силой F = G·m₁·m₂ / r²: сила прямо пропорциональна произведению масс и обратно пропорциональна квадрату расстояния.' },
+        { term: 'Гравитационная постоянная', text: 'G = 6,67·10⁻¹¹ Н·м²/кг² — с такой силой притягиваются два тела по 1 кг на расстоянии 1 м. Её измерил Г. Кавендиш в 1798 году.' },
+        { term: 'Силы равны', text: 'F₁₂ = F₂₁: тела притягивают друг друга с одинаковой силой (третий закон Ньютона), но ускорения разные: a = F / m.' },
+        { term: 'Обратный квадрат', text: 'при увеличении расстояния в 2 раза сила уменьшается в 4 раза, в 3 раза — в 9 раз. r — расстояние между центрами тел.' },
+      ],
+    },
+    pair: {
+      presetsLabel: 'Готовые примеры',
+      presets: {
+        people: { name: 'Два человека', sub: '60 кг и 50 кг · 1 м' },
+        youEarth: { name: 'Вы и Земля', sub: '60 кг · на поверхности' },
+        earthMoon: { name: 'Земля и Луна', sub: '384 000 км' },
+        sunEarth: { name: 'Солнце и Земля', sub: '150 млн км' },
+      },
+      names: { person1: 'Человек 1', person2: 'Человек 2', you: 'Вы', earth: 'Земля', moon: 'Луна', sun: 'Солнце' },
+      massLabel: {
+        person1: 'Масса 1-го человека',
+        person2: 'Масса 2-го человека',
+        you: 'Ваша масса',
+        earth: 'Масса Земли',
+        moon: 'Масса Луны',
+        sun: 'Масса Солнца',
+      },
+      aLabel: {
+        person1: 'Ускорение 1-го человека',
+        person2: 'Ускорение 2-го человека',
+        you: 'Ваше ускорение',
+        earth: 'Ускорение Земли',
+        moon: 'Ускорение Луны',
+        sun: 'Ускорение Солнца',
+      },
+      release: 'Отпустить',
+      dist: 'Расстояние между центрами',
+      hints: {
+        person: 'Обычно 50–80 кг',
+        earth: 'Настоящее значение: 5,97·10²⁴ кг',
+        moon: 'Настоящее значение: 7,35·10²² кг — в 81 раз меньше земной',
+        sun: 'Настоящее значение: 1,99·10³⁰ кг — в 333 000 раз больше земной',
+      },
+      rHint: {
+        people: 'Расстояние между центрами людей',
+        youEarth: (h) => `Радиус Земли R = 6370 км; высота над поверхностью h = r − R = ${h} км`,
+        earthMoon: 'Среднее расстояние от Земли до Луны — 384 000 км',
+        sunEarth: 'Среднее расстояние от Солнца до Земли — 150 млн км',
+      },
+      legend: { force: 'сила тяготения F₁₂ = F₂₁', r: 'r — расстояние между центрами', start: 'начальное положение', broken: 'стрелка укорочена' },
+      notes: {
+        people: 'Учтено только взаимное притяжение (как в открытом космосе)',
+        youEarth: 'Человек нарисован увеличенным, Земля — в масштабе',
+        earthMoon: 'Тела нарисованы увеличенными, расстояние — в масштабе',
+        sunEarth: 'Тела нарисованы увеличенными, расстояние — в масштабе',
+      },
+      sceneLabel: (n1, n2, r, F) => `${n1} и ${n2}: расстояние ${r}, сила тяготения ${F}.`,
+      readouts: {
+        F: 'Сила тяготения',
+        Fsub: 'F₁₂ = F₂₁ — одинакова для обоих тел',
+        meet: 'До встречи',
+        meetSub: 'если отпустить из состояния покоя',
+        touching: 'тела касаются',
+        time: 'Время',
+        timeSub: (t) => `встреча через ${t}`,
+      },
+      graph: {
+        title: 'График F(r)',
+        curve: 'текущие массы',
+        ghost: 'исходные массы',
+        note: 'Расстояние больше в 2 раза — сила меньше в 4 раза, в 3 раза — в 9 раз; расстояние меньше в 2 раза — сила больше в 4 раза.',
+        aria: 'График зависимости силы тяготения от расстояния',
+      },
+      calcNote: 'r берётся в метрах. Силы равны, но тело меньшей массы получает большее ускорение.',
+      explain: {
+        intro: {
+          people: (F, mEq) =>
+            `Любые два тела притягиваются. Два человека на расстоянии 1 м притягиваются с силой F = ${F} Н — это примерно вес пылинки массой ${mEq}. Поэтому мы эту силу не замечаем.`,
+          youEarth: (F, W) => `Земля притягивает вас с силой F = ${F} Н — это ваша сила тяжести: mg = 60 · 9,8 = ${W} Н. И вы притягиваете Землю с той же силой ${F} Н!`,
+          earthMoon: (F, k) => `Земля и Луна притягивают друг друга с силой F = ${F} Н. Силы равны, но масса Луны в ${k} раза меньше — поэтому её ускорение в ${k} раза больше.`,
+          sunEarth: (F) => `Солнце притягивает Землю с силой F = ${F} Н — именно эта сила заставляет Землю обращаться вокруг Солнца. Земля притягивает Солнце с такой же силой.`,
+        },
+        custom: (F) => `F = G·m₁·m₂ / r² = ${F} Н. Эта сила одинаково действует на оба тела и направлена вдоль линии, соединяющей их центры.`,
+        rUp: (k, k2, F) => `Расстояние увеличилось в ${k} раза — сила уменьшилась в ${k2} раза: F = ${F} Н. Сила тяготения обратно пропорциональна квадрату расстояния.`,
+        rDown: (k, k2, F) => `Расстояние уменьшилось в ${k} раза — сила выросла в ${k2} раза: F = ${F} Н. Сила тяготения обратно пропорциональна квадрату расстояния.`,
+        mUp: (subj, k, F) => `${subj} увеличилась в ${k} раза — сила тоже выросла в ${k} раза: F = ${F} Н. Сила прямо пропорциональна каждой из масс.`,
+        mDown: (subj, k, F) => `${subj} уменьшилась в ${k} раза — сила тоже уменьшилась в ${k} раза: F = ${F} Н. Сила прямо пропорциональна каждой из масс.`,
+        fall: 'Силы всё время равны (F₁₂ = F₂₁), но у тела меньшей массы ускорение больше: a = F / m. По мере сближения r уменьшается, и сила быстро растёт.',
+        done: (t, s1, s2) => `Тела встретились через ${t}. Смещение: ${s1}, ${s2}. Тело большей массы сместилось меньше, а силы всё время были равны.`,
+        doneNote: {
+          people: '',
+          youEarth: ' Сопротивление воздуха не учтено.',
+          earthMoon: ' На самом деле Луна движется по орбите со скоростью ≈ 1 км/с, поэтому не падает на Землю, а обращается вокруг неё.',
+          sunEarth: ' На самом деле Земля движется по орбите со скоростью ≈ 30 км/с, поэтому не падает на Солнце, а обращается вокруг него.',
+        },
+        touchHint: 'Увеличьте расстояние и нажмите «Отпустить».',
+      },
+    },
+    scale: {
+      m1: 'Масса m₁',
+      m2: 'Масса m₂',
+      r: 'Расстояние r',
+      legend: { lines: 'линии тяготения (от m₁)', cell: 'клетка, где m₂', area: 'S — площадь сферы (4πr²)' },
+      chip: 'Число линий пропорционально m₁',
+      sceneLabel: (k1, k2, kr, f) => `m₁ ×${k1}, m₂ ×${k2}, r ×${kr}: сила F₀ · ${f}.`,
+      perCell: 'на клетку',
+      readouts: {
+        force: 'Сила',
+        density: 'Густота линий',
+        densitySub: 'проходит через клетку с m₂',
+        area: 'Площадь сферы',
+        areaSub: (kr) => `радиус ×${kr} → площадь ×${kr}²`,
+        example: 'Пример: два человека',
+        exampleSub: (F0) => `F₀ = ${F0} Н (60 кг, 50 кг, 1 м)`,
+      },
+      rule: {
+        title: 'Правило',
+        items: ['m₁ или m₂ больше в k раз — сила больше в k раз.', 'r больше в k раз — сила меньше в k² раз.', 'При нескольких изменениях множители перемножаются.'],
+      },
+      compare: {
+        title: 'Сравнение сил',
+        aria: (f) => `Стрелки исходной силы F₀ и новой силы F = ${f}·F₀`,
+        note: 'Обе стрелки нарисованы в одном масштабе.',
+      },
+      areaTag: (s) => `площадь ${s}`,
+      cellTag: (n) => `${n} на клетку`,
+      linesTag: (n) => `${n} линий`,
+      explain: {
+        base: 'Число линий, выходящих из m₁, не меняется — с удалением они распределяются по всё большей площади. Чем больше линий проходит через клетку с m₂, тем сильнее притяжение. Измените массы или расстояние.',
+        r2: 'Расстояние выросло в 2 раза: те же линии распределились по площади в 2² = 4 раза большей, через клетку с m₂ проходит в 4 раза меньше линий. Сила уменьшилась в 4 раза: F = F₀/4.',
+        rHalf: 'Расстояние уменьшилось в 2 раза: линии собрались на площади в 4 раза меньшей — через клетку проходит в 4 раза больше линий. Сила выросла в 4 раза: F = 4·F₀.',
+        m1: (k, n) => `m₁ увеличилась в ${k} раза — из неё выходит в ${k} раза больше линий (${n}), и через каждую клетку их проходит в ${k} раза больше. Сила выросла в ${k} раза.`,
+        m2: (k) => `m₂ увеличилась в ${k} раза — каждая линия тянет в ${k} раза большую массу. Сила выросла в ${k} раза: F = ${k}·F₀.`,
+        combo: (expr, f) => `Влияния перемножаются: F = F₀ · ${expr} = F₀ · ${f}.`,
+      },
+    },
+    cav: {
+      posLabel: 'Положение больших шаров',
+      pos: {
+        far: { name: 'Далеко', sub: 'притяжения уравновешены' },
+        A: { name: 'Рядом — положение A', sub: 'r = 0,23 м' },
+        B: { name: 'Рядом — положение B', sub: 'с другой стороны' },
+      },
+      legend: { force: 'силы тяготения', big: 'большой шар M', small: 'малый шар m', rest: 'начальное положение коромысла' },
+      chip: 'Схема: поворот увеличен, время ускорено',
+      sceneLabel: (pos, deg) => `Весы Кавендиша сверху. Большие шары: ${pos}. Поворот коромысла (на рисунке) ${deg}°.`,
+      readouts: {
+        F: 'Сила между шарами',
+        Fsub: 'при r = 0,23 м',
+        ratio: 'Во сколько раз меньше веса',
+        ratioSub: (w) => `вес малого шара mg = ${w} Н`,
+        G: 'Гравитационная постоянная',
+        Gsub: 'G = F·r² / (M·m)',
+        earth: 'Масса Земли',
+      },
+      calcNote: 'Кавендиш нашёл F по углу закручивания нити и вычислил G. Зная G, по g у поверхности Земли и её радиусу R находят массу Земли.',
+      wire: 'нить (O)',
+      inset: (z) => `Малый шар, увеличение ×${z}`,
+      scaleMark: 'шкала',
+      balanced: 'Равновесие: закручивание нити = притяжение',
+      explain: {
+        far: 'Крутильные весы Кавендиша: на концах лёгкого коромысла длиной 1,8 м — два маленьких свинцовых шара, коромысло подвешено на тонкой нити. Поднесите большие шары (158 кг) к маленьким — выберите положение A или B.',
+        swingA: (F, k) => `Большие шары притягивают маленькие с силой F = ${F} Н — это в ${k} раз меньше веса маленького шара! И всё же тонкая нить закручивается: коромысло колеблется и приходит в новое положение равновесия.`,
+        doneA: (G) => `Коромысло в новом равновесии: закручивание нити уравновешивает силы тяготения. По углу поворота Кавендиш нашёл силу и вычислил G = F·r² / (M·m) = ${G} Н·м²/кг².`,
+        swingB: 'Большие шары перенесены на другую сторону — коромысло поворачивается в обратную сторону. Кавендиш измерял разницу между двумя положениями равновесия: она вдвое больше, поэтому измерение точнее.',
+        doneB: (M) => `Зная G, можно найти массу Земли: M = g·R² / G = ${M} кг. Поэтому опыт Кавендиша называют ещё «взвешиванием Земли».`,
+        release: 'Большие шары отведены: их притяжения теперь уравновешивают друг друга, и коромысло возвращается в начальное положение.',
+        back: 'Коромысло снова в начальном положении. Поднесите большие шары в положение A или B и повторите опыт.',
+      },
+    },
+  },
+
+  en: {
+    N: 'N',
+    kg: 'kg',
+    mg: 'mg',
+    min: 'min',
+    d: 'days',
+    mkm: 'million km',
+    Nm2: 'N·m²/kg²',
+    common: {
+      start: 'Start',
+      pause: 'Pause',
+      resume: 'Resume',
+      again: 'Run again',
+      reset: 'Reset',
+      faster: (k) => `Time sped up ×${k}`,
+      calc: 'Working',
+    },
+    card: {
+      eyebrow: 'Virtual laboratory · Dynamics',
+      title: 'Law of universal gravitation',
+      tabsLabel: 'Choose an experiment',
+      tabs: {
+        pair: { label: 'Two bodies', sub: 'F = G·m₁·m₂ / r²' },
+        scale: { label: 'Distance and mass', sub: '2r → F/4' },
+        cav: { label: "Cavendish's experiment", sub: 'measuring G, 1798' },
+      },
+    },
+    facts: {
+      title: 'Remember',
+      items: [
+        { term: 'Law of universal gravitation', text: 'any two bodies attract with a force F = G·m₁·m₂ / r²: proportional to the product of the masses and inversely proportional to the square of the distance.' },
+        { term: 'Gravitational constant', text: 'G = 6.67·10⁻¹¹ N·m²/kg² — the force between two 1 kg bodies 1 m apart. Henry Cavendish measured it in 1798.' },
+        { term: 'Equal forces', text: "F₁₂ = F₂₁: the bodies pull each other equally hard (Newton's third law), but their accelerations differ: a = F / m." },
+        { term: 'Inverse square', text: 'twice the distance — a quarter of the force; three times the distance — a ninth. r is the distance between the centres.' },
+      ],
+    },
+    pair: {
+      presetsLabel: 'Examples',
+      presets: {
+        people: { name: 'Two people', sub: '60 kg and 50 kg · 1 m' },
+        youEarth: { name: 'You and the Earth', sub: '60 kg · on the ground' },
+        earthMoon: { name: 'Earth and Moon', sub: '384 000 km' },
+        sunEarth: { name: 'Sun and Earth', sub: '150 million km' },
+      },
+      names: { person1: 'Person 1', person2: 'Person 2', you: 'You', earth: 'Earth', moon: 'Moon', sun: 'Sun' },
+      massLabel: {
+        person1: 'Mass of person 1',
+        person2: 'Mass of person 2',
+        you: 'Your mass',
+        earth: 'Mass of the Earth',
+        moon: 'Mass of the Moon',
+        sun: 'Mass of the Sun',
+      },
+      aLabel: {
+        person1: "Person 1's acceleration",
+        person2: "Person 2's acceleration",
+        you: 'Your acceleration',
+        earth: "Earth's acceleration",
+        moon: "Moon's acceleration",
+        sun: "Sun's acceleration",
+      },
+      release: 'Release',
+      dist: 'Distance between the centres',
+      hints: {
+        person: 'Usually 50–80 kg',
+        earth: 'Real value: 5.97·10²⁴ kg',
+        moon: "Real value: 7.35·10²² kg — 81 times less than the Earth's",
+        sun: "Real value: 1.99·10³⁰ kg — 333 000 times the Earth's",
+      },
+      rHint: {
+        people: 'Distance between the two people’s centres',
+        youEarth: (h) => `Earth's radius R = 6370 km; height above the ground h = r − R = ${h} km`,
+        earthMoon: 'Average Earth–Moon distance: 384 000 km',
+        sunEarth: 'Average Sun–Earth distance: 150 million km',
+      },
+      legend: { force: 'gravitational force F₁₂ = F₂₁', r: 'r — distance between centres', start: 'starting position', broken: 'arrow shortened' },
+      notes: {
+        people: 'Only their mutual attraction acts (as in open space)',
+        youEarth: 'The person is drawn enlarged, the Earth to scale',
+        earthMoon: 'Bodies drawn enlarged, distance to scale',
+        sunEarth: 'Bodies drawn enlarged, distance to scale',
+      },
+      sceneLabel: (n1, n2, r, F) => `${n1} and ${n2}: distance ${r}, gravitational force ${F}.`,
+      readouts: {
+        F: 'Gravitational force',
+        Fsub: 'F₁₂ = F₂₁ — the same on both bodies',
+        meet: 'Time to meet',
+        meetSub: 'if released from rest',
+        touching: 'the bodies touch',
+        time: 'Time',
+        timeSub: (t) => `they meet after ${t}`,
+      },
+      graph: {
+        title: 'Graph: F(r)',
+        curve: 'current masses',
+        ghost: 'starting masses',
+        note: 'Twice the distance — a quarter of the force, three times — a ninth; half the distance — four times the force.',
+        aria: 'Graph of the gravitational force against distance',
+      },
+      calcNote: 'r is taken in metres. The forces are equal, but the lighter body gets the larger acceleration.',
+      explain: {
+        intro: {
+          people: (F, mEq) =>
+            `Any two bodies attract each other. Two people 1 m apart pull each other with F = ${F} N — about the weight of a ${mEq} speck of dust. That is why we never notice it.`,
+          youEarth: (F, W) => `The Earth pulls you with F = ${F} N — that is your weight: mg = 60 · 9.8 = ${W} N. And you pull the Earth with the very same ${F} N!`,
+          earthMoon: (F, k) => `The Earth and the Moon pull each other with F = ${F} N. The forces are equal, but the Moon's mass is ${k} times smaller — so its acceleration is ${k} times larger.`,
+          sunEarth: (F) => `The Sun pulls the Earth with F = ${F} N — this is the force that keeps the Earth going round the Sun. The Earth pulls the Sun just as hard.`,
+        },
+        custom: (F) => `F = G·m₁·m₂ / r² = ${F} N. The same force acts on both bodies, along the line joining their centres.`,
+        rUp: (k, k2, F) => `The distance went up ${k} times — the force went down ${k2} times: F = ${F} N. Gravity is inversely proportional to the square of the distance.`,
+        rDown: (k, k2, F) => `The distance went down ${k} times — the force went up ${k2} times: F = ${F} N. Gravity is inversely proportional to the square of the distance.`,
+        mUp: (subj, k, F) => `${subj} went up ${k} times — the force went up ${k} times too: F = ${F} N. The force is proportional to each mass.`,
+        mDown: (subj, k, F) => `${subj} went down ${k} times — the force went down ${k} times too: F = ${F} N. The force is proportional to each mass.`,
+        fall: 'The forces stay equal (F₁₂ = F₂₁), but the lighter body has the larger acceleration: a = F / m. As they close in, r shrinks and the force grows fast.',
+        done: (t, s1, s2) => `The bodies met after ${t}. Distance moved: ${s1}, ${s2}. The heavier body moved less, yet the forces were always equal.`,
+        doneNote: {
+          people: '',
+          youEarth: ' Air resistance is ignored.',
+          earthMoon: ' In reality the Moon moves along its orbit at ≈ 1 km/s, so it does not fall onto the Earth — it goes round it.',
+          sunEarth: ' In reality the Earth moves along its orbit at ≈ 30 km/s, so it does not fall into the Sun — it goes round it.',
+        },
+        touchHint: 'Increase the distance and press Release.',
+      },
+    },
+    scale: {
+      m1: 'Mass m₁',
+      m2: 'Mass m₂',
+      r: 'Distance r',
+      legend: { lines: 'gravity lines (from m₁)', cell: 'the cell where m₂ is', area: 'S — area of the sphere (4πr²)' },
+      chip: 'Number of lines ∝ m₁',
+      sceneLabel: (k1, k2, kr, f) => `m₁ ×${k1}, m₂ ×${k2}, r ×${kr}: force F₀ · ${f}.`,
+      perCell: 'per cell',
+      readouts: {
+        force: 'Force',
+        density: 'Line density',
+        densitySub: 'through the cell of m₂',
+        area: 'Area of the sphere',
+        areaSub: (kr) => `radius ×${kr} → area ×${kr}²`,
+        example: 'Example: two people',
+        exampleSub: (F0) => `F₀ = ${F0} N (60 kg, 50 kg, 1 m)`,
+      },
+      rule: {
+        title: 'Rule',
+        items: ['m₁ or m₂ k times larger — the force is k times larger.', 'r k times larger — the force is k² times smaller.', 'Several changes: multiply the factors.'],
+      },
+      compare: {
+        title: 'Comparing the forces',
+        aria: (f) => `Arrows of the starting force F₀ and the new force F = ${f}·F₀`,
+        note: 'Both arrows are drawn to the same scale.',
+      },
+      areaTag: (s) => `area ${s}`,
+      cellTag: (n) => `${n} per cell`,
+      linesTag: (n) => `${n} lines`,
+      explain: {
+        base: 'The number of lines leaving m₁ never changes — further away they spread over a larger area. The more lines cross the cell where m₂ sits, the stronger the pull. Change the masses or the distance.',
+        r2: 'Twice the distance: the same lines spread over 2² = 4 times the area, so 4 times fewer cross the cell of m₂. The force is 4 times smaller: F = F₀/4.',
+        rHalf: 'Half the distance: the lines crowd into a 4 times smaller area — 4 times more cross the cell. The force is 4 times larger: F = 4·F₀.',
+        m1: (k, n) => `m₁ is ${k} times larger — ${k} times more lines leave it (${n}), and ${k} times more cross every cell. The force is ${k} times larger.`,
+        m2: (k) => `m₂ is ${k} times larger — every line pulls ${k} times more mass. The force is ${k} times larger: F = ${k}·F₀.`,
+        combo: (expr, f) => `The effects multiply: F = F₀ · ${expr} = F₀ · ${f}.`,
+      },
+    },
+    cav: {
+      posLabel: 'Position of the big balls',
+      pos: {
+        far: { name: 'Far away', sub: 'pulls balance out' },
+        A: { name: 'Close — position A', sub: 'r = 0.23 m' },
+        B: { name: 'Close — position B', sub: 'on the other side' },
+      },
+      legend: { force: 'gravitational forces', big: 'big ball M', small: 'small ball m', rest: 'starting position of the rod' },
+      chip: 'Diagram: twist exaggerated, time sped up',
+      sceneLabel: (pos, deg) => `Cavendish balance from above. Big balls: ${pos}. Twist of the rod (as drawn) ${deg}°.`,
+      readouts: {
+        F: 'Force between the balls',
+        Fsub: 'at r = 0.23 m',
+        ratio: 'Times smaller than the weight',
+        ratioSub: (w) => `weight of a small ball mg = ${w} N`,
+        G: 'Gravitational constant',
+        Gsub: 'G = F·r² / (M·m)',
+        earth: "The Earth's mass",
+      },
+      calcNote: "Cavendish found F from the twist of the wire and then worked out G. Once G is known, g at the surface and the Earth's radius R give the Earth's mass.",
+      wire: 'wire (O)',
+      inset: (z) => `Small ball, magnified ×${z}`,
+      scaleMark: 'scale',
+      balanced: 'Balance: twist of the wire = gravity',
+      explain: {
+        far: "Cavendish's torsion balance: a light 1.8 m rod with a small lead ball at each end hangs on a thin wire. Bring the big balls (158 kg) next to the small ones — choose position A or B.",
+        swingA: (F, k) => `The big balls pull the small ones with F = ${F} N — ${k} times less than a small ball's weight! Still, the thin wire twists: the rod swings and settles in a new equilibrium.`,
+        doneA: (G) => `The rod is in its new equilibrium: the twist of the wire balances the gravitational pulls. From the angle Cavendish found the force and worked out G = F·r² / (M·m) = ${G} N·m²/kg².`,
+        swingB: 'The big balls moved to the other side — the rod turns the other way. Cavendish measured the difference between the two equilibrium positions: it is twice as large, so the measurement is more precise.',
+        doneB: (M) => `Knowing G we can find the Earth's mass: M = g·R² / G = ${M} kg. That is why Cavendish's experiment is also called "weighing the Earth".`,
+        release: 'The big balls were moved away: their pulls now cancel out and the rod swings back to its starting position.',
+        back: 'The rod is back at its starting position. Bring the big balls to A or B to repeat the experiment.',
+      },
+    },
+  },
+};
+
+export default function UniversalGravitation() {
+  const T = useSimText(TEXT);
+  const tabs = T.card.tabs;
+  return (
+    <SimCard
+      idPrefix="gravitation"
+      icon={Orbit}
+      eyebrow={T.card.eyebrow}
+      title={T.card.title}
+      tabsLabel={T.card.tabsLabel}
+      tabs={[
+        { id: 'pair', label: tabs.pair.label, sub: tabs.pair.sub, icon: Orbit, render: () => <PairSim T={T} /> },
+        { id: 'scale', label: tabs.scale.label, sub: tabs.scale.sub, icon: Grid3x3, render: () => <ScalingSim T={T} /> },
+        { id: 'cav', label: tabs.cav.label, sub: tabs.cav.sub, icon: Scale, render: () => <CavendishSim T={T} /> },
+      ]}
+      facts={T.facts}
+    />
+  );
+}

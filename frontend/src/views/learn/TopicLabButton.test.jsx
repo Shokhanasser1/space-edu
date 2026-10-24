@@ -9,10 +9,10 @@
  *   AstronomyTopicView the Lab button had no handler at all, so the click
  *                     bubbled to the row — the exact shape of the Test bug
  *
- * A pupil pressing "Lab" got the lecture they were already looking at. There is
- * no per-lesson laboratory to send them to, so the button goes to `/lab`, the
- * laboratory that exists. Sending them somewhere real is the fix; inventing a
- * lesson-specific lab is not this ticket's job.
+ * A pupil pressing "Lab" got the lecture they were already looking at. The
+ * button goes to `/lab`, the laboratory that exists - unless the lesson has a
+ * laboratory of its own (`sims/registry.js`), in which case it opens that:
+ * `/learn/<subject>/<topic>/lesson/<n>/lab`.
  */
 import { createElement } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
@@ -106,6 +106,34 @@ describe('the lesson-part screen: the Lab button', () => {
     fireEvent.click(labButtons()[0]);
 
     expect(screen.getByTestId('where')).toHaveTextContent('/lab');
+    expect(screen.queryByTestId('elsewhere')).toBeNull();
+  });
+});
+
+describe('a physics lesson with simulators of its own: the Lab button', () => {
+  it('opens the laboratory made for that lesson', async () => {
+    api.get.mockResolvedValue({
+      data: {
+        topics: [{
+          order: 1, slug: 'physics-kinematics', title: 'Topic', color: '#0ff',
+          lessons: [{ name: 'Lesson one', slug: 'physics-kinematics-basic-concepts-in-mechanics', children: [] }],
+        }],
+      },
+    });
+    render(
+      <MemoryRouter initialEntries={['/learn/physics/1']}>
+        <Routes>
+          <Route path="/learn/physics/:topicId" element={createElement(PhysicsTopicView)} />
+          <Route path="/learn/physics/:topicId/lesson/:lessonIdx/lab" element={<Probe />} />
+          <Route path="*" element={<div data-testid="elsewhere"><Probe /></div>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    await screen.findByText('Lesson one');
+
+    fireEvent.click(labButtons()[0]);
+
+    expect(screen.getByTestId('where')).toHaveTextContent('/learn/physics/1/lesson/0/lab');
     expect(screen.queryByTestId('elsewhere')).toBeNull();
   });
 });

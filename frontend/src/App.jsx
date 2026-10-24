@@ -40,6 +40,9 @@ const InterviewsTopicView = lazy(() => import('@/views/learn/InterviewsTopicView
 const ProblemsView        = lazy(() => import('@/views/learn/ProblemsView'));
 const ProblemDetailView   = lazy(() => import('@/views/learn/ProblemDetailView'));
 const UniversalLessonView = lazy(() => import('@/views/learn/UniversalLessonView'));
+// Temporary: the simulator style the physics lessons will follow is being chosen here.
+const SimPreviewView      = lazy(() => import('@/views/learn/sims/SimPreviewView'));
+const LessonLabView       = lazy(() => import('@/views/learn/LessonLabView'));
 const DailyChallengeView  = lazy(() => import('@/views/community/DailyChallengeView'));
 const LeaderboardView     = lazy(() => import('@/views/community/LeaderboardView'));
 const CalendarView        = lazy(() => import('@/views/community/CalendarView'));
@@ -133,6 +136,8 @@ export default function App() {
             <Route path="/learn/:subject/:topicId/sub/:subIdx/lesson/:lessonIdx"        element={<PT><UniversalLessonView /></PT>} />
             <Route path="/learn/:subject/:topicId/lesson/:lessonIdx/part/:partIdx"      element={<PT><UniversalLessonView /></PT>} />
             <Route path="/learn/:subject/:topicId/lesson/:lessonIdx"                    element={<PT><UniversalLessonView /></PT>} />
+            <Route path="/learn/:subject/:topicId/lesson/:lessonIdx/lab"                element={<PT><LessonLabView /></PT>} />
+            <Route path="/learn/sim-preview"              element={<PT><SimPreviewView /></PT>} />
             <Route path="/learn/problems"                 element={<PT><ProblemsView /></PT>} />
             <Route path="/learn/problems/:id"             element={<PT><ProblemDetailView /></PT>} />
 

@@ -2790,7 +2790,9 @@
     "fullScreenVideo": "To'liq ekran",
     "loading": "Yuklanmoqda…",
     "checkFailed": "Javobni tekshirib bo'lmadi — qayta urinib ko'ring.",
-    "checkTooFast": "Juda ko’p urinish. Biroz kuting."
+    "checkTooFast": "Juda ko’p urinish. Biroz kuting.",
+    "lessonLabTitle": "Laboratoriya · shu darsning simulyatorlari",
+    "lessonLabRead": "Darsni o'qish"
   },
   "admin": {
     "dashboard": "Boshqaruv paneli",
