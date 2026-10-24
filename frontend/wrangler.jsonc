@@ -1,0 +1,20 @@
+// Cloudflare Workers, static assets only: `npm run build`, then `npx wrangler deploy`
+// from this directory. Workers Builds runs the same two commands when the
+// repository is connected with root directory `frontend` — see docs/HANDOVER.md,
+// "Deploying the front end to Cloudflare".
+//
+// There is no Worker script on purpose. This serves dist/ and nothing else; the
+// API is a separate service, reached through VITE_API_URL, which is baked into
+// the bundle at build time and therefore has to be a *build* variable.
+{
+  // Must match the Worker's name in the Cloudflare dashboard, or Workers Builds
+  // refuses to deploy.
+  "name": "space-edu",
+  "compatibility_date": "2026-10-24",
+  "assets": {
+    "directory": "./dist",
+    // React Router owns every path. Without this a reload on /learn, or any link
+    // shared from inside the app, is a 404 from Cloudflare rather than the page.
+    "not_found_handling": "single-page-application"
+  }
+}

@@ -516,6 +516,33 @@ starting rather than after:
 What was deliberately **kept**: Cloudflare R2 for uploaded files, and
 `dj-database-url` + `psycopg2`, so a hosted database is one `DB_URL` away.
 
+### Deploying the front end to Cloudflare
+
+*Added 24 October 2026.* The front end is a static build and can go up on its
+own; `frontend/wrangler.jsonc` serves `dist/` as Workers static assets with
+client-side routing, and `frontend/public/_headers` brings back every header
+`vercel.json` had except the CSP (see the comment there for why).
+
+Dashboard → **Workers & Pages → Create application → Import a repository**:
+
+| Setting | Value |
+|---|---|
+| Repository | `Shokhanasser1/space-edu`, branch `main` |
+| Project name | `space-edu` — must equal `name` in `wrangler.jsonc` |
+| Root directory | `frontend` |
+| Build command | `npm run build` |
+| Deploy command | `npx wrangler deploy` |
+| Build variable | `VITE_API_URL` = the API's `https://…/api/v1` |
+| Build variable *(optional)* | `VITE_GOOGLE_CLIENT_ID`, `VITE_ASSET_BASE` |
+
+`VITE_*` values are compiled into the bundle, so they go under **build**
+variables, not the Worker's runtime ones, and changing one needs a new build.
+
+**The back end is not covered by this and must not follow it yet.** The four
+items above still apply: the API cannot face the internet until the hardened
+settings module is back. Until then the deployed site renders, the lessons fall
+back to their static copies, and everything that needs an account fails.
+
 ### Where the data lives right now
 
 **Since 24 August 2026 `DB_URL` points at a shared Neon Postgres** (free tier,
