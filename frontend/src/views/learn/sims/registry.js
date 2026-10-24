@@ -92,6 +92,22 @@ const LABS = [
     ['Sliding friction force', () => import('./dynamics/SlidingFriction')],
     ['Motion under the action of multiple forces', () => import('./dynamics/MultipleForces')],
   ].map(([name, load]) => ({ slug: `physics-dynamics-${slugify(name)}`, names: [name], load })),
+
+  // Statics (with momentum, work and energy): bare titles too.
+  ...[
+    ['Center of gravity of a body', () => import('./statics/CenterOfGravity')],
+    ['Conditions of equilibrium', () => import('./statics/Equilibrium')],
+    ['Body, force, and momentum', () => import('./statics/Impulse')],
+    ['Law of conservation of momentum', () => import('./statics/MomentumConservation')],
+    ['Mechanical work', () => import('./statics/MechanicalWork')],
+    ['Kinetic energy', () => import('./statics/KineticEnergy')],
+    ['Potential energy', () => import('./statics/PotentialEnergy')],
+    ['Potential energy of a deformed spring', () => import('./statics/SpringEnergy')],
+    ['Law of conservation of total mechanical energy', () => import('./statics/EnergyConservation')],
+    ['Work of forces applied to a body. Conversion of mechanical energy into heat', () => import('./statics/FrictionWorkHeat')],
+    ['Power', () => import('./statics/Power')],
+    ['Efficiency', () => import('./statics/Efficiency')],
+  ].map(([name, load]) => ({ slug: `physics-statics-${slugify(name)}`, names: [name], load })),
 ].map((entry) => ({ ...entry, Component: lazy(entry.load) }));
 
 const BY_SLUG = new Map(LABS.map((e) => [e.slug, e.Component]));
