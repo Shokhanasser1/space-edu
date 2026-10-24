@@ -32,6 +32,9 @@ backend/staticfiles/
 frontend/node_modules
 frontend/dist/
 frontend/coverage/
+# Wrangler's local state, and its local secrets file (frontend/wrangler.jsonc)
+frontend/.wrangler
+.dev.vars*
 
 # Browser-automation output (snapshots, console logs) from Playwright MCP
 .playwright-mcp/

@@ -1,0 +1,23 @@
+# Response headers for the Cloudflare deployment (frontend/wrangler.jsonc).
+# Cloudflare reads this file at deploy time and does not serve it.
+#
+# These lived in frontend/vercel.json until 24 August 2026 and left with it
+# (docs/HANDOVER.md, "The deployment is gone, on purpose").
+#
+# Content-Security-Policy is NOT here yet, deliberately. The old one allow-listed
+# the API origin in connect-src, and there is no API origin until the backend is
+# deployed. A CSP naming the wrong one blocks every request without an error
+# anyone sees. Add it back with the real origin; the previous value is
+# `git show 6f1cd68^:frontend/vercel.json`.
+
+# Vite fingerprints everything under /assets/, so a file there never changes
+# under the same name.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: SAMEORIGIN
+  Referrer-Policy: strict-origin-when-cross-origin
+  # camera is for /explore's AR view (ARCameraView.jsx); nothing uses the others.
+  Permissions-Policy: camera=(self), microphone=(), geolocation=()
