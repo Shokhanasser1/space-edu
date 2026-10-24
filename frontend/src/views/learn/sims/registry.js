@@ -108,6 +108,17 @@ const LABS = [
     ['Power', () => import('./statics/Power')],
     ['Efficiency', () => import('./statics/Efficiency')],
   ].map(([name, load]) => ({ slug: `physics-statics-${slugify(name)}`, names: [name], load })),
+
+  // Mechanics of fluids and gases: bare titles too.
+  ...[
+    ["Pressure. Pascal's law", () => import('./fluids/PascalLaw')],
+    ['Hydrostatic pressure', () => import('./fluids/HydrostaticPressure')],
+    ['Communicating vessels', () => import('./fluids/CommunicatingVessels')],
+    ['Atmospheric pressure', () => import('./fluids/AtmosphericPressure')],
+    ['Hydraulic press', () => import('./fluids/HydraulicPress')],
+    ["Archimedes' force", () => import('./fluids/Archimedes')],
+    ["Flow of liquids in a pipe. Bernoulli's law", () => import('./fluids/Bernoulli')],
+  ].map(([name, load]) => ({ slug: `physics-mechanics-of-fluids-and-gases-${slugify(name)}`, names: [name], load })),
 ].map((entry) => ({ ...entry, Component: lazy(entry.load) }));
 
 const BY_SLUG = new Map(LABS.map((e) => [e.slug, e.Component]));

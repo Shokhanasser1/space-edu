@@ -1,5 +1,5 @@
 /**
- * Every Kinematics, Dynamics and Statics lesson has a laboratory behind its "Lab"
+ * Every Kinematics, Dynamics, Statics and fluids lesson has a laboratory behind its "Lab"
  * button - written lessons by their slugs, bare titles by their names (and
  * the slug the content export will give them) - and a lesson without one
  * still goes to the general laboratory.
@@ -38,13 +38,24 @@ describe('the lesson laboratories', () => {
     expect(lessonLab({ name: 'Quvvat', slug: 'physics-statics-power' })).not.toBeNull();
   });
 
+  it('cover all seven lessons on fluids and gases', () => {
+    const lessons = physicsTopicsData[4].lessons;
+    expect(lessons).toHaveLength(7);
+    lessons.forEach((lesson, i) => {
+      expect(lessonLab(lesson), `lesson ${i}`).not.toBeNull();
+    });
+    expect(
+      lessonLab({ name: 'Arximed kuchi', slug: 'physics-mechanics-of-fluids-and-gases-archimedes-force' }),
+    ).not.toBeNull();
+  });
+
   it('match a lesson the API serves by its slug', () => {
     expect(lessonLab({ name: 'Aylanma harakat', slug: 'physics-kinematics-transmission-of-rotational-motion' })).not.toBeNull();
   });
 
   it('send a lesson with no laboratory yet to the general one', () => {
-    const lesson = physicsTopicsData[4].lessons[0];
+    const lesson = physicsTopicsData[5].lessons[0];
     expect(lessonLab(lesson)).toBeNull();
-    expect(lessonLabPath('physics', 4, 0, lesson)).toBe('/lab');
+    expect(lessonLabPath('physics', 5, 0, lesson)).toBe('/lab');
   });
 });
