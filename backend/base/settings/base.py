@@ -417,6 +417,12 @@ DEFAULT_FROM_EMAIL = _text('DEFAULT_FROM_EMAIL', 'noreply@localhost')
 # that stops answering would otherwise hold a worker until the client gave up.
 EMAIL_TIMEOUT = _int('EMAIL_TIMEOUT', 10)
 
+# How many messages the whole site sends in a day (apps/accounts/emails.py).
+# Below the mail account's own cap -- about 500 for a personal Gmail -- because
+# passing that stops the account sending for a day, codes and resets included.
+# Raise it with a transactional mail provider.
+EMAIL_DAILY_LIMIT = _int('EMAIL_DAILY_LIMIT', 400)
+
 if 'smtp' in EMAIL_BACKEND and not EMAIL_HOST:
     raise ImproperlyConfigured(
         'EMAIL_BACKEND is set to SMTP but EMAIL_HOST is empty. Set EMAIL_HOST, '

@@ -15,10 +15,13 @@ Sending never raises. A message that fails to leave must not take a
 registration, a password change or a sign-in attempt down with it -- but it is
 logged, loudly, because "the child never got the code" is otherwise invisible.
 """
+import hashlib
 import logging
 
 from django.conf import settings
+from django.core.cache import cache
 from django.core.mail import send_mail
+from django.utils import timezone
 
 from apps.links import frontend_link
 
@@ -27,7 +30,45 @@ from .email_code import CHANGE_EMAIL, LOGIN, PASSWORD_RESET, TTL, VERIFY_EMAIL, 
 logger = logging.getLogger(__name__)
 
 
+# Every message counts against two budgets (audit, 28 October 2026: five
+# throwaway accounts made the site send 205 messages to 55 addresses of the
+# caller's choosing). Per recipient, so nobody can be flooded through us; and
+# per day for the whole site, below the mail account's own cap -- Gmail stops
+# an account sending for a day once it passes that, and then every sign-in
+# code and password reset fails. EMAIL_DAILY_LIMIT is in settings.
+PER_RECIPIENT_PER_HOUR = 5
+
+
+def _take(key, limit, ttl):
+    """Count one more against `key`; False once that passes `limit`. Atomic."""
+    if cache.add(key, 1, ttl):
+        return True
+    try:
+        taken = cache.incr(key)
+    except ValueError:
+        cache.add(key, 1, ttl)
+        return True
+    if taken == 1:
+        cache.touch(key, ttl)  # recreated by an incr racing the expiry
+    return taken <= limit
+
+
+def _within_budget(recipient):
+    address = str(recipient).strip().lower()
+    digest = hashlib.sha256(address.encode()).hexdigest()[:32]
+    if not _take(f'mail:to:{digest}', PER_RECIPIENT_PER_HOUR, 3600):
+        logger.warning('Mail held back: %s messages this hour to one address already', PER_RECIPIENT_PER_HOUR)
+        return False
+    day = timezone.localdate().isoformat()
+    if not _take(f'mail:day:{day}', settings.EMAIL_DAILY_LIMIT, 25 * 3600):
+        logger.error('Mail held back: the daily limit of %s messages is spent', settings.EMAIL_DAILY_LIMIT)
+        return False
+    return True
+
+
 def _deliver(subject, body, recipient):
+    if not _within_budget(recipient):
+        return
     try:
         send_mail(
             subject=subject,
