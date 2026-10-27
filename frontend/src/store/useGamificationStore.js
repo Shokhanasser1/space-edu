@@ -45,7 +45,7 @@ export const useGamificationStore = create()(
       },
 
       addFuel: (amount) => {
-        set((s) => ({ fuel: Math.min(1000, s.fuel + amount) }));
+        set((s) => ({ fuel: s.fuel + amount }));
       },
 
       addRewards: (xp, fuel) => {
@@ -53,7 +53,7 @@ export const useGamificationStore = create()(
         set((s) => ({
           xp: newXp,
           level: calcLevel(newXp),
-          fuel: Math.min(1000, s.fuel + fuel),
+          fuel: s.fuel + fuel,
         }));
         get().checkBadges();
       },
@@ -185,7 +185,7 @@ export const useGamificationStore = create()(
         set((s) => ({
           xp: s.xp + xp_earned,
           level: new_level,
-          fuel: Math.min(1000, s.fuel + fuel_earned),
+          fuel: s.fuel + fuel_earned,
         }));
       },
 

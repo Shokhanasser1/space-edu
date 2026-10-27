@@ -30,8 +30,6 @@ class UserGamificationProfile(models.Model):
     def __str__(self):
         return f'{self.user.username} — Level {self.level}'
 
-    FUEL_CAP = 1000
-
     @staticmethod
     def level_for_xp(xp):
         return math.floor(math.sqrt(max(xp, 0) / 100)) + 1
@@ -67,7 +65,7 @@ class UserGamificationProfile(models.Model):
                 .select_for_update()
                 .get(pk=self.pk)
             )
-            locked.fuel = min(locked.fuel + int(amount), self.FUEL_CAP)
+            locked.fuel = locked.fuel + int(amount)
             locked.save(update_fields=['fuel'])
         self.refresh_from_db(fields=['fuel'])
         return self
@@ -134,7 +132,7 @@ class UserGamificationProfile(models.Model):
             yesterday = today - timezone.timedelta(days=1)
             locked.streak = locked.streak + 1 if locked.last_play_date == yesterday else 1
             locked.last_play_date = today
-            locked.fuel = min(locked.fuel + int(bonus_fuel), self.FUEL_CAP)
+            locked.fuel = locked.fuel + int(bonus_fuel)
             locked.save(update_fields=['streak', 'last_play_date', 'fuel'])
 
         self.refresh_from_db(fields=['streak', 'last_play_date', 'fuel'])

@@ -111,9 +111,11 @@ describe('local arithmetic stays sane', () => {
     useGamificationStore.setState({ xp: 0, level: 1, fuel: 100 }, false);
   });
 
-  it('fuel is capped', () => {
-    useGamificationStore.getState().addFuel(99999);
-    expect(useGamificationStore.getState().fuel).toBeLessThanOrEqual(1000);
+  it('fuel has no ceiling, the same as on the server', () => {
+    // It stopped at 1000 while rewards cost up to 1600 (audit, 28 October 2026).
+    useGamificationStore.setState({ fuel: 900 }, false);
+    useGamificationStore.getState().addFuel(600);
+    expect(useGamificationStore.getState().fuel).toBe(1500);
   });
 
   it('spendFuel refuses to go negative', () => {

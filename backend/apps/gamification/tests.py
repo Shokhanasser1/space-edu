@@ -162,10 +162,13 @@ class ProfileArithmeticTests(TestCase):
         self.profile.refresh_from_db()
         self.assertEqual(self.profile.fuel, 30)
 
-    def test_add_fuel_respects_the_cap(self):
+    def test_add_fuel_pays_all_of_it(self):
+        """There used to be a 1000 ceiling that ate the rest; see
+        DailyStreakClaimTests.test_fuel_has_no_ceiling."""
+        before = self.profile.fuel
         self.profile.add_fuel(5000)
         self.profile.refresh_from_db()
-        self.assertLessEqual(self.profile.fuel, 1000)
+        self.assertEqual(self.profile.fuel, before + 5000)
 
 
 class RewardPurchaseTests(TestCase):
@@ -319,14 +322,20 @@ class DailyStreakClaimTests(TestCase):
         streak, _ = self.profile.claim_daily_streak()
         self.assertEqual(streak, 1)
 
-    def test_the_bonus_respects_the_fuel_cap(self):
-        UserGamificationProfile.objects.filter(pk=self.profile.pk).update(
-            fuel=UserGamificationProfile.FUEL_CAP,
-        )
+    def test_fuel_has_no_ceiling(self):
+        """Audit, 28 October 2026: fuel stopped at 1000, while five seeded
+        rewards cost 1200 to 1600 -- they could never be bought -- and every
+        award past the cap vanished while the response still announced it.
+        Fuel is earned to be spent; the bonus is all paid."""
+        UserGamificationProfile.objects.filter(pk=self.profile.pk).update(fuel=1000)
         self.profile.refresh_from_db()
-        self.profile.claim_daily_streak()
+        _, awarded = self.profile.claim_daily_streak()
         self.profile.refresh_from_db()
-        self.assertEqual(self.profile.fuel, UserGamificationProfile.FUEL_CAP)
+        self.assertEqual(self.profile.fuel, 1000 + awarded)
+
+        self.profile.add_fuel(600)
+        self.profile.refresh_from_db()
+        self.assertEqual(self.profile.fuel, 1600 + awarded)
 
     def test_the_day_is_the_users_day_not_the_servers(self):
         """The site runs on Asia/Tashkent and the server on UTC, so between

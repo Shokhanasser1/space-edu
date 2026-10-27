@@ -2196,6 +2196,8 @@
     "goBack": "Назад"
   },
   "market": {
+    "fuel": "топлива",
+    "confirmBuy": "Купить «{title}» за {fuel} топлива?",
     "hub": "Магазин",
     "shopTitle": "Космический",
     "titleHighlight": "Магазин",

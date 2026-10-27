@@ -2196,6 +2196,8 @@
     "goBack": "Go Back"
   },
   "market": {
+    "fuel": "fuel",
+    "confirmBuy": "Buy “{title}” for {fuel} fuel?",
     "hub": "Shop",
     "shopTitle": "Space",
     "titleHighlight": "Shop",

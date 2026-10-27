@@ -191,21 +191,85 @@ describe('a real product sends the child to the shop that sells it', () => {
     expect(screen.queryByText(/59\.99/)).toBeNull();
   });
 
-  it('leaves the fuel purchase exactly as it was for a virtual item', async () => {
+  it('leaves the fuel purchase in place for a virtual item', async () => {
     const { useAuthStore } = await import('@/store/useAuthStore');
+    const { useGamificationStore } = await import('@/store/useGamificationStore');
     useAuthStore.setState({ isAuthenticated: true });
+    useGamificationStore.setState({ fuel: 1000 }, false);
     vi.spyOn(window, 'alert').mockImplementation(() => {});
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
     api.get.mockResolvedValue(catalogue(VIRTUAL_ITEM));
     api.post.mockResolvedValue({ data: {} });
     render(<MarketView />);
 
-    const button = await screen.findByRole('button', { name: /to cart/i });
+    const button = await screen.findByRole('button', { name: /purchase item · 300/i });
     await userEvent.click(button);
 
     expect(api.post).toHaveBeenCalledWith('/market/purchase/', { item_slug: 'falcon-9-model' });
     expect(screen.queryByRole('link', { name: /open at the shop/i })).toBeNull();
 
     useAuthStore.setState({ isAuthenticated: false });
+  });
+});
+
+/**
+ * Audit, 28 October 2026: the card printed "45 000 so'm" -- the leftover soum
+ * column -- under a "To cart" button that took 300 fuel on the first click,
+ * with no confirmation and no fuel price anywhere on the page.
+ */
+describe('a fuel purchase says what it costs and asks first', () => {
+  const signedInWith = async (fuel) => {
+    const { useAuthStore } = await import('@/store/useAuthStore');
+    const { useGamificationStore } = await import('@/store/useGamificationStore');
+    useAuthStore.setState({ isAuthenticated: true });
+    useGamificationStore.setState({ fuel }, false);
+    return () => useAuthStore.setState({ isAuthenticated: false });
+  };
+
+  it('shows the price in fuel, not the soum column', async () => {
+    api.get.mockResolvedValue(catalogue(VIRTUAL_ITEM));
+    render(<MarketView />);
+
+    await screen.findByRole('button', { name: /purchase item · 300/i });
+    expect(screen.queryByText(/45\s?000/)).toBeNull();
+  });
+
+  it('spends nothing when the child changes their mind', async () => {
+    const signOut = await signedInWith(1000);
+    vi.spyOn(window, 'confirm').mockReturnValue(false);
+    api.get.mockResolvedValue(catalogue(VIRTUAL_ITEM));
+    render(<MarketView />);
+
+    await userEvent.click(await screen.findByRole('button', { name: /purchase item/i }));
+
+    expect(window.confirm).toHaveBeenCalled();
+    expect(api.post).not.toHaveBeenCalledWith('/market/purchase/', expect.anything());
+    signOut();
+  });
+
+  it('says so when there is not enough fuel, instead of letting the server refuse', async () => {
+    const signOut = await signedInWith(100);
+    api.get.mockResolvedValue(catalogue(VIRTUAL_ITEM));
+    render(<MarketView />);
+
+    expect(await screen.findByRole('button', { name: /insufficient fuel/i })).toBeDisabled();
+    signOut();
+  });
+
+  it('refreshes the balance from the server after buying', async () => {
+    const signOut = await signedInWith(1000);
+    const { useGamificationStore } = await import('@/store/useGamificationStore');
+    const pull = vi.spyOn(useGamificationStore.getState(), 'pullFromServer').mockResolvedValue();
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    vi.spyOn(window, 'alert').mockImplementation(() => {});
+    api.get.mockResolvedValue(catalogue(VIRTUAL_ITEM));
+    api.post.mockResolvedValue({ data: {} });
+    render(<MarketView />);
+
+    await userEvent.click(await screen.findByRole('button', { name: /purchase item/i }));
+
+    expect(pull).toHaveBeenCalled();
+    signOut();
   });
 });
 

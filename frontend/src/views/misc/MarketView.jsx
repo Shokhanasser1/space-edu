@@ -215,13 +215,56 @@ const MOCK_ITEMS = [
   },
 ];
 
-const formatPrice = (price, t) => {
-  if (price == null) return '—';
-  const formatted = formatMoney(price);
-  return `${formatted} ${t('market', 'sum')}`;
-};
+// What our own goods cost. They used to show `price`, a soum column left over
+// from when this was a shop, while the button took `cost_fuel` -- a child saw
+// "45 000 so'm" and paid 300 fuel.
+const fuelCost = (item) => item.cost_fuel ?? 0;
 
-const getPrice = (item) => item.price ?? item.cost_fuel ?? 0;
+function FuelPrice({ amount, large = false }) {
+  const { t } = useTranslation();
+  return (
+    <span className={`inline-flex items-center gap-1.5 font-[900] text-amber-300 leading-none ${large ? 'text-4xl' : 'text-xl'}`}>
+      <Fuel className={large ? 'w-7 h-7' : 'w-4 h-4'} />
+      {formatMoney(amount)}
+      <span className={`font-[700] text-amber-200/70 ${large ? 'text-lg' : 'text-xs'}`}>{t('market', 'fuel')}</span>
+    </span>
+  );
+}
+
+/**
+ * The fuel purchase. It read "To cart", spent the fuel on the first click and
+ * left the balance in the menu stale; now it names the price, says when the
+ * fuel is not there, and asks first (`handleBuy`).
+ */
+function BuyButton({ item, onBuy, buying, owned, large = false }) {
+  const { t } = useTranslation();
+  const fuel = useGamificationStore((s) => s.fuel);
+  const { isAuthenticated } = useAuthStore();
+  const short = isAuthenticated && !owned && fuel < fuelCost(item);
+  const Icon = owned ? Check : buying ? Loader : Fuel;
+  const tone = owned
+    ? 'bg-emerald-700/50 text-white/80'
+    : short
+      ? 'bg-white/[0.06] text-white/45'
+      : 'bg-violet-600 hover:bg-violet-500 text-white';
+  return (
+    <button
+      onClick={(e) => {
+        e.stopPropagation();
+        onBuy(item);
+      }}
+      disabled={buying || owned || short}
+      className={`w-full ${large ? 'mt-6 py-4 text-[15px]' : 'py-3 text-[13px]'} ${tone} rounded-xl font-[700] flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:cursor-not-allowed`}
+    >
+      <Icon className={`${large ? 'w-5 h-5' : 'w-4 h-4'} ${buying ? 'animate-spin' : ''}`} />
+      {owned
+        ? t('market', 'acquired')
+        : short
+          ? t('market', 'insufficient')
+          : `${t('market', 'purchase')} · ${formatMoney(fuelCost(item))}`}
+    </button>
+  );
+}
 
 /**
  * A real product: something another shop sells for money, reached by a link.
@@ -253,7 +296,7 @@ const formatShopPrice = (item, t) => {
   return sign ? `${sign}${shown}` : `${shown} ${item.currency}`;
 };
 
-function ItemCard({ item, onClick, onBuy, buying }) {
+function ItemCard({ item, onClick, onBuy, buying, owned }) {
   const getAccent = () => {
     switch (item.item_type) {
       case 'book': return '#3b82f6';
@@ -330,13 +373,8 @@ function ItemCard({ item, onClick, onBuy, buying }) {
             <span className="text-lg font-[800] text-emerald-300 leading-none">
               {shopPrice || t('market', 'priceAtShop')}
             </span>
-          ) : item.original_price ? (
-            <div className="flex items-end gap-2 flex-wrap">
-              <span className="text-xl font-[900] text-red-400 leading-none">{formatPrice(getPrice(item), t)}</span>
-              <span className="text-sm font-medium text-white/30 line-through leading-none">{formatPrice(item.original_price, t)}</span>
-            </div>
           ) : (
-            <span className="text-xl font-[900] text-white leading-none">{formatPrice(getPrice(item), t)}</span>
+            <FuelPrice amount={fuelCost(item)} />
           )}
         </div>
         
@@ -360,17 +398,7 @@ function ItemCard({ item, onClick, onBuy, buying }) {
             {t('market', 'openAtShop')}{item.merchant ? ` · ${item.merchant}` : ''}
           </a>
         ) : (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onBuy(item.slug);
-            }}
-            disabled={buying}
-            className="w-full bg-violet-600 hover:bg-violet-500 text-white py-3 rounded-xl font-[700] text-[13px] flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
-          >
-            {buying ? <Loader className="w-4 h-4 animate-spin" /> : <ShoppingCart className="w-4 h-4" />}
-            {t('market', 'inCart')}
-          </button>
+          <BuyButton item={item} onBuy={onBuy} buying={buying} owned={owned} />
         )}
       </div>
     </div>
@@ -378,7 +406,7 @@ function ItemCard({ item, onClick, onBuy, buying }) {
 }
 
 // Product Modal Component
-function ProductModal({ item, onClose, onBuy, buying }) {
+function ProductModal({ item, onClose, onBuy, buying, owned }) {
   const { t, i18n } = useTranslation();
   if (!item) return null;
   const title = item[`title_${i18n.language}`] || item.title_en;
@@ -460,16 +488,7 @@ function ProductModal({ item, onClose, onBuy, buying }) {
                   )}
                 </>
               ) : (
-                <>
-                  {item.original_price && (
-                    <div className="text-white/40 line-through text-lg font-medium mb-1">
-                      {formatPrice(item.original_price, t)}
-                    </div>
-                  )}
-                  <div className="flex items-center gap-4">
-                    <span className="text-4xl font-[900] text-white">{formatPrice(getPrice(item), t)}</span>
-                  </div>
-                </>
+                <FuelPrice amount={fuelCost(item)} large />
               )}
 
               {real ? (
@@ -483,14 +502,7 @@ function ProductModal({ item, onClose, onBuy, buying }) {
                   {t('market', 'openAtShop')}{item.merchant ? ` · ${item.merchant}` : ''}
                 </a>
               ) : (
-                <button
-                  onClick={() => onBuy(item.slug)}
-                  disabled={buying}
-                  className="w-full mt-6 bg-violet-600 hover:bg-violet-500 text-white py-4 rounded-xl font-[800] text-[15px] flex items-center justify-center gap-2 transition-all shadow-[0_10px_30px_rgba(124,58,237,0.3)] active:scale-[0.98]"
-                >
-                  {buying ? <Loader className="w-5 h-5 animate-spin" /> : <ShoppingCart className="w-5 h-5" />}
-                  {t('market', 'addCart')}
-                </button>
+                <BuyButton item={item} onBuy={onBuy} buying={buying} owned={owned} large />
               )}
             </div>
 
@@ -561,8 +573,9 @@ export async function fetchAllPages(url) {
 
 
 export default function MarketView() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { isAuthenticated } = useAuthStore();
+  const fuel = useGamificationStore((s) => s.fuel);
 
   const [items, setItems] = useState([]);
   const [inventory, setInventory] = useState(new Set());
@@ -604,15 +617,20 @@ export default function MarketView() {
     fetchData();
   }, [isAuthenticated]);
 
-  const handleBuy = async (slug) => {
+  const handleBuy = async (item) => {
     if (!isAuthenticated) {
       alert(t('market', 'loginRequired'));
       return;
     }
+    const title = item[`title_${i18n.language}`] || item.title_en;
+    if (!window.confirm(t('market', 'confirmBuy', { title, fuel: formatMoney(fuelCost(item)) }))) return;
+    const slug = item.slug;
     setBuying(slug);
     try {
       await api.post('/market/purchase/', { item_slug: slug });
       setInventory(prev => new Set([...prev, slug]));
+      // The balance in the menu is the server's; it was left showing the old one.
+      useGamificationStore.getState().pullFromServer();
       alert(t('market', 'purchaseSuccess'));
     } catch (err) {
       alert(purchaseErrorMessage(err.response?.data, t));
@@ -634,8 +652,8 @@ export default function MarketView() {
       return true;
     })
     .sort((a, b) => {
-      if (sortOrder === 'price-asc') return getPrice(a) - getPrice(b);
-      if (sortOrder === 'price-desc') return getPrice(b) - getPrice(a);
+      if (sortOrder === 'price-asc') return fuelCost(a) - fuelCost(b);
+      if (sortOrder === 'price-desc') return fuelCost(b) - fuelCost(a);
       if (sortOrder === 'discount') return (b.discount_percent || 0) - (a.discount_percent || 0);
       return 0;
     });
@@ -678,10 +696,13 @@ export default function MarketView() {
             )}
           </div>
 
-          <button className="shrink-0 relative bg-white/[0.05] hover:bg-white/10 p-3 rounded-xl transition-colors border border-white/5">
-            <ShoppingCart className="w-5 h-5 text-white" />
-            <span className="absolute -top-1.5 -right-1.5 bg-violet-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">0</span>
-          </button>
+          {/* Was a cart button with a hard-coded 0 and nothing behind it. */}
+          {isAuthenticated && (
+            <div className="shrink-0 flex items-center gap-1.5 bg-white/[0.05] px-3 py-2.5 rounded-xl border border-white/5 text-amber-300 font-[800] text-sm" title={t('market', 'availableFuel')}>
+              <Fuel className="w-4 h-4" />
+              {formatMoney(fuel)}
+            </div>
+          )}
         </div>
       </div>
 
@@ -785,7 +806,7 @@ export default function MarketView() {
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
                       {bestSellers.map(item => (
-                        <ItemCard key={`bs-${item.slug}`} item={item} onClick={setSelectedItem} onBuy={handleBuy} buying={buying === item.slug} />
+                        <ItemCard key={`bs-${item.slug}`} item={item} onClick={setSelectedItem} onBuy={handleBuy} buying={buying === item.slug} owned={inventory.has(item.slug)} />
                       ))}
                     </div>
                   </section>
@@ -799,7 +820,7 @@ export default function MarketView() {
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
                       {forYou.map(item => (
-                        <ItemCard key={`fy-${item.slug}`} item={item} onClick={setSelectedItem} onBuy={handleBuy} buying={buying === item.slug} />
+                        <ItemCard key={`fy-${item.slug}`} item={item} onClick={setSelectedItem} onBuy={handleBuy} buying={buying === item.slug} owned={inventory.has(item.slug)} />
                       ))}
                     </div>
                   </section>
@@ -813,7 +834,7 @@ export default function MarketView() {
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
                       {wowPrices.map(item => (
-                        <ItemCard key={`wow-${item.slug}`} item={item} onClick={setSelectedItem} onBuy={handleBuy} buying={buying === item.slug} />
+                        <ItemCard key={`wow-${item.slug}`} item={item} onClick={setSelectedItem} onBuy={handleBuy} buying={buying === item.slug} owned={inventory.has(item.slug)} />
                       ))}
                     </div>
                   </section>
@@ -828,7 +849,7 @@ export default function MarketView() {
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
                       {newModels.map(item => (
-                        <ItemCard key={`new-${item.slug}`} item={item} onClick={setSelectedItem} onBuy={handleBuy} buying={buying === item.slug} />
+                        <ItemCard key={`new-${item.slug}`} item={item} onClick={setSelectedItem} onBuy={handleBuy} buying={buying === item.slug} owned={inventory.has(item.slug)} />
                       ))}
                     </div>
                   </section>
@@ -860,7 +881,7 @@ export default function MarketView() {
                   ) : (
                     <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
                       {filteredItems.map(item => (
-                        <ItemCard key={item.slug} item={item} onClick={setSelectedItem} onBuy={handleBuy} buying={buying === item.slug} />
+                        <ItemCard key={item.slug} item={item} onClick={setSelectedItem} onBuy={handleBuy} buying={buying === item.slug} owned={inventory.has(item.slug)} />
                       ))}
                     </div>
                   )}
@@ -879,6 +900,7 @@ export default function MarketView() {
           onClose={() => setSelectedItem(null)} 
           onBuy={handleBuy} 
           buying={buying === selectedItem.slug} 
+          owned={inventory.has(selectedItem.slug)}
         />
       )}
     </div>

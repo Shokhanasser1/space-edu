@@ -2196,6 +2196,8 @@
     "goBack": "Orqaga"
   },
   "market": {
+    "fuel": "yoqilg'i",
+    "confirmBuy": "«{title}» ni {fuel} yoqilg'iga sotib olasizmi?",
     "hub": "Do'kon",
     "shopTitle": "Kosmik",
     "titleHighlight": "Do'kon",
