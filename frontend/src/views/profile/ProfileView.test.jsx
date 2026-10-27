@@ -142,3 +142,50 @@ describe('a finished lesson', () => {
     expect(title.parentElement.textContent).toMatch(/80%/);
   });
 });
+
+/**
+ * Audit, 28 October 2026: mission progress was worked out in the browser. A
+ * streak mission read 0% until its own button was pressed, and the button
+ * stayed disabled until 100% -- no pupil could ever claim one. A daily
+ * lesson mission counted lessons ever finished, so it offered a reward the
+ * server refused. The page shows the server's number now.
+ */
+describe('a mission', () => {
+  const missions = (rows) => {
+    api.get.mockImplementation((url) => {
+      if (url === '/gamification/profile/full/') {
+        const full = fullProfile({ rank: null, total_players: 0 });
+        full.data.missions = rows;
+        return Promise.resolve(full);
+      }
+      if (url === '/progress/') {
+        return Promise.resolve({ data: { lessons: [{ lesson_slug: 'old', score: 0 }], enrollments: [] } });
+      }
+      return Promise.resolve({ data: [] });
+    });
+  };
+  const mission = (overrides) => ({
+    mission: {
+      id: 1, slug: 'm', title_en: 'Mission', description_en: '', reward_fuel: 10, reward_xp: 0,
+      target_value: 3, is_daily: false, mission_type: 'streak', ...overrides,
+    },
+    is_completed: false,
+  });
+
+  it('can be claimed once the server says the streak has reached it', async () => {
+    missions([{ ...mission({ title_en: 'Three days running' }), progress: 3 }]);
+    show();
+    await screen.findByText('Three days running');
+    expect(screen.getByRole('button', { name: 'Claim reward' })).toBeEnabled();
+  });
+
+  it('is not offered for a lesson finished on another day', async () => {
+    missions([{
+      ...mission({ title_en: 'A lesson today', mission_type: 'lesson', target_value: 1, is_daily: true }),
+      progress: 0,
+    }]);
+    show();
+    await screen.findByText('A lesson today');
+    expect(screen.queryByRole('button', { name: 'Claim reward' })).toBeNull();
+  });
+});

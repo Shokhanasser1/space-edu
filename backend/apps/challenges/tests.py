@@ -1031,3 +1031,36 @@ class LessonTestCoverageTests(TestCase):
             ChallengeQuestion.objects.exclude(lesson=None).values_list('question', 'lesson_id')
         )
         self.assertEqual(before, after)
+
+
+class StreakFromChallengesTests(TestCase):
+    """The quiz and the daily challenge count the day too (see
+    progress.tests.StreakFromLessonsTests)."""
+
+    def setUp(self):
+        cache.clear()
+        self.questions = [_question(i) for i in range(6)]
+        self.user = User.objects.create_user(username='alice', email='a@e.com', password='x')
+        self.client = APIClient()
+        self.client.force_authenticate(self.user)
+
+    def _streak(self):
+        from apps.gamification.models import UserGamificationProfile
+
+        profile, _ = UserGamificationProfile.objects.get_or_create(user=self.user)
+        return profile.live_streak
+
+    def test_a_finished_quiz_counts_the_day(self):
+        r = self.client.post(
+            '/api/v1/challenges/quiz/start/', {'category': 'physics', 'count': 5}, format='json')
+        answers = [{'question_id': q['id'], 'selected': 0} for q in r.data['questions']]
+        self.client.post(
+            f'/api/v1/challenges/quiz/{r.data["session_id"]}/submit/', {'answers': answers}, format='json')
+        self.assertEqual(self._streak(), 1)
+
+    def test_the_daily_challenge_counts_the_day(self):
+        challenge = DailyChallenge.get_or_create_today()
+        qid = challenge.questions.first().id
+        self.client.post(
+            '/api/v1/challenges/submit/', {'answers': [{'question_id': qid, 'selected': 1}]}, format='json')
+        self.assertEqual(self._streak(), 1)

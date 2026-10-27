@@ -36,21 +36,6 @@ import SecurityPanel from '@/components/profile/SecurityPanel';
 import { useFormat } from '@/hooks/useFormat';
 
 const CLAIMS_KEY = 'space-edu-profile-mission-claims';
-const STREAK_CLAIM_DAY_KEY = 'space-edu-profile-streak-claim-day';
-
-function streakClaimedToday() {
-  try {
-    return localStorage.getItem(STREAK_CLAIM_DAY_KEY) === new Date().toDateString();
-  } catch {
-    return false;
-  }
-}
-
-function setStreakClaimedToday() {
-  try {
-    localStorage.setItem(STREAK_CLAIM_DAY_KEY, new Date().toDateString());
-  } catch { /* ignore */ }
-}
 
 // We no longer need local storage for claims except fallback for streak
 function loadClaimedIds() { return []; }
@@ -139,7 +124,6 @@ export default function ProfileView() {
   const [showBadgesModal, setShowBadgesModal] = useState(false);
   
   const [claimedMissionIds, setClaimedMissionIds] = useState(loadClaimedIds);
-  const [streakDoneToday, setStreakDoneToday] = useState(streakClaimedToday);
 
   // Editable Profile States
   const [firstName, setFirstName] = useState('');
@@ -255,7 +239,6 @@ export default function ProfileView() {
   };
 
   const lessons = progress?.lessons ?? [];
-  const masteredCount = lessons.filter((l) => l.is_mastered).length;
   const hasAnyLesson = lessons.length > 0;
   
   const gamProfile = fullProfile?.gamification || {};
@@ -271,25 +254,15 @@ export default function ProfileView() {
   const missions = useMemo(() => {
     return apiMissions.map((item) => {
       const m = item.mission;
-      let progress = 0;
-      
-      switch (m.mission_type) {
-        case 'streak':
-          progress = streakDoneToday ? 100 : 0;
-          break;
-        case 'lesson':
-          progress = Math.min(100, Math.round((lessons.length / Math.max(1, m.target_value)) * 100));
-          break;
-        case 'mastery':
-          progress = Math.min(100, Math.round((masteredCount / Math.max(1, m.target_value)) * 100));
-          break;
-        case 'inventory':
-          progress = Math.min(100, Math.round((inventory.length / Math.max(1, m.target_value)) * 100));
-          break;
-        default:
-          progress = item.is_completed ? 100 : 0;
-      }
-      
+      // The server's count (full_profile.py), today's for a daily mission.
+      // It used to be worked out here from all-time totals, so "a lesson
+      // today" offered its reward to anyone with an old lesson and the claim
+      // was refused; and a streak mission waited for a streak only its own
+      // disabled button could start. `null` is a mission nobody can self-claim.
+      const progress = item.progress == null
+        ? 0
+        : Math.min(100, Math.round((item.progress / Math.max(1, m.target_value)) * 100));
+
       return {
         id: m.id,
         slug: m.slug,
@@ -303,26 +276,11 @@ export default function ProfileView() {
         mission_type: m.mission_type,
       };
     });
-  }, [apiMissions, lessons.length, masteredCount, inventory.length, streakDoneToday]);
+  }, [apiMissions]);
 
   const claimMission = async (mission) => {
     if (mission.is_completed) return;
     if (mission.progress < 100) return;
-
-    if (mission.mission_type === 'streak') {
-      try {
-        const { data } = await api.post('/gamification/streak/');
-        await api.post('/gamification/missions/claim/', { mission_id: mission.id });
-        await fetchAll();
-        setStreakClaimedToday();
-        setStreakDoneToday(true);
-        if (data.updated) showToast(`Streak updated! +${(data.fuel_bonus ?? 10) + mission.reward_fuel} fuel`);
-        else showToast(`Reward claimed! +${mission.reward_fuel} fuel`);
-      } catch {
-        showToast('Streak request failed', true);
-      }
-      return;
-    }
 
     try {
       await api.post('/gamification/missions/claim/', { mission_id: mission.id });

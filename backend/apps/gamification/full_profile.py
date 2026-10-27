@@ -180,6 +180,8 @@ class FullProfileView(APIView):
         ]
 
         # ── 11. Missions ──
+        from .views import mission_progress
+
         all_missions = Mission.objects.filter(is_active=True).order_by('order', 'id')
         user_missions = UserMission.objects.filter(user=user).select_related('mission')
         user_missions_map = {um.mission_id: um for um in user_missions}
@@ -202,6 +204,10 @@ class FullProfileView(APIView):
             missions_data.append({
                 'mission': MissionSerializer(m).data,
                 'is_completed': is_completed,
+                # The server's own count -- today's for a daily mission. The
+                # page used to work it out from all-time totals and offered
+                # rewards the claim endpoint then refused.
+                'progress': mission_progress(user, m),
             })
 
         # ── ASSEMBLE ──

@@ -106,6 +106,10 @@ class LessonCompleteView(APIView):
 
         fuel_earned += self._maybe_finish_topic(request.user, lesson.topic, profile)
 
+        # A day with a lesson in it is a day of the streak. Before the badge
+        # check, so a streak badge earned today is awarded today.
+        profile.claim_daily_streak()
+
         total_lessons = UserLessonProgress.objects.filter(user=request.user).count()
         new_badges = check_and_award_badges(request.user, profile, total_lessons)
 

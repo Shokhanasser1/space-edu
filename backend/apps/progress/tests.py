@@ -162,3 +162,27 @@ class ProgressTests(TestCase):
             self.assertEqual(
                 self.client.get(path).status_code, status.HTTP_404_NOT_FOUND, path,
             )
+
+
+class StreakFromLessonsTests(TestCase):
+    """Audit, 28 October 2026: the streak was only ever advanced by the
+    profile's streak mission button, and that button stayed disabled until
+    the streak had advanced -- so no pupil ever had a streak, and the streak
+    badges, the streak missions and the daily +10 fuel were out of reach. A
+    day with a lesson in it is a day of the streak now."""
+
+    setUp = ProgressTests.setUp
+    _complete = ProgressTests._complete
+
+    def test_completing_a_lesson_counts_the_day(self):
+        self._complete('kin-one')
+        profile = self.user.gamification
+        profile.refresh_from_db()
+        self.assertEqual(profile.live_streak, 1)
+
+    def test_a_second_lesson_the_same_day_does_not_count_it_twice(self):
+        self._complete('kin-one')
+        self._complete('kin-two')
+        profile = self.user.gamification
+        profile.refresh_from_db()
+        self.assertEqual(profile.streak, 1)

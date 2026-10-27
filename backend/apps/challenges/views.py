@@ -160,6 +160,9 @@ class SubmitChallengeView(APIView):
         profile, _ = UserGamificationProfile.objects.get_or_create(user=request.user)
         profile.add_xp(xp_earned)
         profile.add_fuel(fuel_earned)
+        # The profile's streak, which nothing but a disabled button used to
+        # advance (progress.views counts lessons the same way).
+        profile.claim_daily_streak()
 
         return Response({
             'result': UserChallengeResultSerializer(result).data,
@@ -401,6 +404,7 @@ class QuizSubmitView(APIView):
             # 450 XP.
             if profile is not None:
                 profile.add_xp(xp_earned)
+                profile.claim_daily_streak()
 
             # A lesson's whole test, graded here, is what masters the lesson --
             # not the score the lesson page used to report about itself. Whole:

@@ -726,3 +726,31 @@ class QuizLeaderboardTests(TestCase):
             percentage=0.0, is_completed=False,
         )
         self.assertEqual(self._board()['leaderboard'], [])
+
+
+class MissionProgressInProfileTests(TestCase):
+    """Audit, 28 October 2026: the profile worked out a mission's progress in
+    the browser from all-time counts, while the server counts today's for a
+    daily mission -- so "a lesson today" offered its reward to anyone with an
+    old lesson, and the server refused the claim. The profile carries the
+    server's own number now."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='alice', email='a@e.com', password='x')
+        self.client = APIClient()
+        self.client.force_authenticate(self.user)
+
+    def _progress(self, slug):
+        missions = self.client.get('/api/v1/gamification/profile/full/').data['missions']
+        return next(m['progress'] for m in missions if m['mission']['slug'] == slug)
+
+    def test_a_streak_mission_reports_the_live_streak(self):
+        Mission.objects.create(slug='three-days', title_en='3 days', description_en='x',
+                               mission_type='streak', target_value=3)
+        UserGamificationProfile.objects.get_or_create(user=self.user)[0].claim_daily_streak()
+        self.assertEqual(self._progress('three-days'), 1)
+
+    def test_a_daily_lesson_mission_counts_today_only(self):
+        Mission.objects.create(slug='lesson-today', title_en='A lesson today', description_en='x',
+                               mission_type='lesson', target_value=1, is_daily=True)
+        self.assertEqual(self._progress('lesson-today'), 0)
