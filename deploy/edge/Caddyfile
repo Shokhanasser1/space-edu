@@ -1,2 +1,15 @@
-# One file per project in sites/, each a domain and the container it goes to.
+# Shared by every project on the server; installed once into /opt/edge.
+{
+	servers {
+		# A client that sends its headers or body a byte at a time is cut off
+		# here, before it can hold a thread in any project behind us.
+		timeouts {
+			read_header 10s
+			read_body 30s
+			idle 2m
+		}
+	}
+}
+
+# One file per project in sites/, each a domain and the address it goes to.
 import /etc/caddy/sites/*.caddy

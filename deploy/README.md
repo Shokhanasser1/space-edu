@@ -20,7 +20,13 @@ internet ──443──> edge Caddy (/opt/edge)        certificates; one file p
 The edge proxy is shared: a second project on the same server joins the `edge`
 network and drops its own `sites/<name>.caddy` next to ours. The edge Caddy has
 a fixed address, `10.200.0.2`, and a project's own server should trust
-forwarded headers from that address only — never from the whole network.
+forwarded headers from that address only — never from the whole network. Each
+project's site gets a fixed address too (ours is `10.200.0.10`), from
+`10.200.0.0/25`; the edge proxies to the address, not a name another project
+could also claim.
+
+Django's `/admin/` is not served: it has no limit on sign-in attempts. Staff use
+`/admin-panel`; `/admin/` works locally against the same database.
 
 ## First time on a server
 

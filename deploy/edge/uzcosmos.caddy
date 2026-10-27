@@ -1,5 +1,5 @@
 # Installed by deploy/remote-release.sh as /opt/edge/sites/uzcosmos.caddy,
 # with __DOMAIN__ replaced by DOMAIN from deploy/deploy.conf.
 __DOMAIN__ {
-	reverse_proxy uzcosmos-web:80
+	reverse_proxy 10.200.0.10:80
 }

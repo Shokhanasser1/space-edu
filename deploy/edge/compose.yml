@@ -23,6 +23,9 @@ services:
         # share the network and must not be able to claim a client's address.
         ipv4_address: 10.200.0.2
     restart: unless-stopped
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
     logging:
       driver: json-file
       options:
@@ -33,10 +36,14 @@ networks:
   edge:
     name: edge
     # Outside Docker's default pools (172.17-31.x, 192.168.x), so a network
-    # Docker assigns on its own can never take it first.
+    # Docker assigns on its own can never take it first. Containers without a
+    # fixed address get the upper half; the lower half is for fixed ones —
+    # this proxy at .2, each project's site at an address of its own — so
+    # none of them can be taken by a container that started first.
     ipam:
       config:
         - subnet: 10.200.0.0/24
+          ip_range: 10.200.0.128/25
 
 volumes:
   data:

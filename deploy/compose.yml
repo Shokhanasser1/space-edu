@@ -19,11 +19,15 @@ services:
       # The edge proxy, then the site's own Caddy: the client is the second
       # address from the right in X-Forwarded-For (DRF NUM_PROXIES).
       NUM_PROXIES: "2"
-      # Only Caddy can reach this port, so its X-Forwarded-Proto is trusted.
-      FORWARDED_ALLOW_IPS: "*"
+      # FORWARDED_ALLOW_IPS stays at gunicorn's default on purpose. Django reads
+      # X-Forwarded-Proto itself (SECURE_PROXY_SSL_HEADER); trusting the proxy
+      # in gunicorn would also let a client's SCRIPT_NAME header rewrite the
+      # path Django routes, past Caddy's block on /admin/.
     depends_on: [redis]
     restart: unless-stopped
     logging: *logging
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
 
   web:
     build:
@@ -34,10 +38,17 @@ services:
     depends_on: [api]
     restart: unless-stopped
     logging: *logging
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
     networks:
       default:
       edge:
-        aliases: [uzcosmos-web]
+        # The edge proxies to this address (deploy/edge/uzcosmos.caddy). A name
+        # would do as well until another project on the shared network claimed
+        # the same one and got a share of our traffic. Fixed addresses come
+        # from 10.200.0.0/25; Docker hands out the upper half on its own.
+        ipv4_address: 10.200.0.10
 
   # Sign-in codes, throttle counters and the chat limits. Nothing in it has to
   # outlive a restart, so it is not written to disk.
