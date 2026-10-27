@@ -9,7 +9,10 @@
 		# The edge proxy reaches us over the Docker network. Without this the
 		# client's address and the https it arrived on would be replaced by
 		# the proxy's own, and Django would see every pupil as one http client.
-		trusted_proxies static private_ranges
+		# Its address alone (deploy/edge/compose.yml): other projects share
+		# that network, and trusting them would let one forge a client address
+		# past the sign-in throttles.
+		trusted_proxies static 10.200.0.2
 	}
 }
 

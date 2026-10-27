@@ -16,7 +16,12 @@ services:
       - ./sites:/etc/caddy/sites:ro
       - data:/data
       - config:/config
-    networks: [edge]
+    networks:
+      edge:
+        # Fixed, because each project's server trusts X-Forwarded-For from
+        # this address alone (deploy/web/Caddyfile). Other projects' containers
+        # share the network and must not be able to claim a client's address.
+        ipv4_address: 10.200.0.2
     restart: unless-stopped
     logging:
       driver: json-file
@@ -27,6 +32,11 @@ services:
 networks:
   edge:
     name: edge
+    # Outside Docker's default pools (172.17-31.x, 192.168.x), so a network
+    # Docker assigns on its own can never take it first.
+    ipam:
+      config:
+        - subnet: 10.200.0.0/24
 
 volumes:
   data:

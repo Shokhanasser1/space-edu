@@ -18,7 +18,9 @@ internet ──443──> edge Caddy (/opt/edge)        certificates; one file p
 ```
 
 The edge proxy is shared: a second project on the same server joins the `edge`
-network and drops its own `sites/<name>.caddy` next to ours.
+network and drops its own `sites/<name>.caddy` next to ours. The edge Caddy has
+a fixed address, `10.200.0.2`, and a project's own server should trust
+forwarded headers from that address only — never from the whole network.
 
 ## First time on a server
 
