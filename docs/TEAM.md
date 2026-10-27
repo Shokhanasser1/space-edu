@@ -201,8 +201,10 @@ It also means one person can ruin everyone's afternoon.
    and category before writing its own), `rotate_leaked_credentials`, an
    unfiltered `delete()` in `manage.py shell`. If you are about to type one, you want your
    local database, not this one.
-3. **Never point a deployed thing at it.** This is a development database. It
-   holds throwaway accounts and half-written lessons.
+3. **The live site runs on it.** Since 28 October 2026 the deployed site
+   (`deploy/README.md`) uses this same database — the owner's choice. A test
+   account you register, a lesson you half-write in the admin, a row you
+   delete: real pupils see it. Experiment on your local SQLite instead.
 4. **Back it up before anything structural.** A month of admin-authored content
    lives only here:
 

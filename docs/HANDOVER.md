@@ -4,6 +4,10 @@
 branch and it is pushed. The deployment configuration has since been removed —
 see "The deployment is gone, on purpose" below.*
 
+*28 October 2026: deployed again, on a server of our own — `deploy/README.md`.
+The four things listed under "The deployment is gone" all came back, with
+tests (`ProductionSettingsTests`) and a CI step (`check --deploy`).*
+
 ---
 
 ## Start here
@@ -475,6 +479,11 @@ columns are fractional, but it gives a phone two very narrow columns.
 ---
 
 ## The deployment is gone, on purpose
+
+*History. Replaced on 28 October 2026 by `deploy/` — Docker Compose on one
+server, Caddy for TLS and the security headers (`deploy/web/Caddyfile`),
+gunicorn + WhiteNoise, and `base/settings/production.py` loaded by default from
+`wsgi.py`/`asgi.py` while `manage.py` stays on development.*
 
 Removed on 24 August 2026 at the owner's request, to be set up again from
 scratch later. What is no longer in the repository:

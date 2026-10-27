@@ -1,0 +1,16 @@
+# deploy/compose.yml builds from the repository root. On the server the tree is
+# a `git archive`, so most of this is absent anyway; it matters when somebody
+# builds from a working copy, where it keeps secrets and bulk out of the image.
+.git
+**/.env
+**/.env.*
+!**/.env.example
+deploy/deploy.conf
+**/node_modules
+**/__pycache__
+frontend/dist
+backend/db.sqlite3
+backend/staticfiles
+backend/media
+.playwright-mcp
+space-edu

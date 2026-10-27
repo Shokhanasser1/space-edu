@@ -1,0 +1,33 @@
+# The only thing on the server that listens on 80 and 443, shared by every
+# project on it. It gets the certificates and hands each domain to a project's
+# container over the `edge` network; each project adds one file to sites/.
+# Lives in /opt/edge, installed once by deploy/remote-release.sh.
+name: edge
+
+services:
+  caddy:
+    image: caddy:2.10-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./sites:/etc/caddy/sites:ro
+      - data:/data
+      - config:/config
+    networks: [edge]
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+networks:
+  edge:
+    name: edge
+
+volumes:
+  data:
+  config:

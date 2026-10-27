@@ -1,0 +1,5 @@
+# Copy to deploy/deploy.conf (git-ignored) and fill in.
+# The ssh login of a sudo user on the server; its key must already work.
+HOST=user@203.0.113.10
+# A name whose A record points at that server. Caddy gets the certificate.
+DOMAIN=example.duckdns.org

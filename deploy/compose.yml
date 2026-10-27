@@ -1,0 +1,52 @@
+# UZ COSMOS on the server. Started by deploy/remote-release.sh from a release
+# directory; deploy/.env is a link to the secrets file kept beside the releases.
+name: uzcosmos
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: "3"
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/api.Dockerfile
+    env_file: .env
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      # The edge proxy, then the site's own Caddy: the client is the second
+      # address from the right in X-Forwarded-For (DRF NUM_PROXIES).
+      NUM_PROXIES: "2"
+      # Only Caddy can reach this port, so its X-Forwarded-Proto is trusted.
+      FORWARDED_ALLOW_IPS: "*"
+    depends_on: [redis]
+    restart: unless-stopped
+    logging: *logging
+
+  web:
+    build:
+      context: ..
+      dockerfile: deploy/web.Dockerfile
+      args:
+        VITE_GOOGLE_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID:-}
+    depends_on: [api]
+    restart: unless-stopped
+    logging: *logging
+    networks:
+      default:
+      edge:
+        aliases: [uzcosmos-web]
+
+  # Sign-in codes, throttle counters and the chat limits. Nothing in it has to
+  # outlive a restart, so it is not written to disk.
+  redis:
+    image: redis:7-alpine
+    command: redis-server --save "" --appendonly no --maxmemory 256mb --maxmemory-policy allkeys-lru
+    restart: unless-stopped
+    logging: *logging
+
+networks:
+  edge:
+    external: true
