@@ -153,6 +153,7 @@ class Problem(models.Model):
     answer = models.CharField(max_length=500)
     explanation = models.TextField(blank=True, default='')
     explanation_en = models.TextField(blank=True, default='')
+    explanation_ru = models.TextField(blank=True, default='')
     difficulty = models.CharField(
         max_length=12,
         choices=[('easy', 'Easy'), ('medium', 'Medium'), ('hard', 'Hard')],

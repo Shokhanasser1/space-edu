@@ -103,14 +103,14 @@ class ProblemFullSerializer(serializers.ModelSerializer):
     class Meta:
         model = Problem
         fields = ('id', 'number', 'question', 'question_en', 'question_ru',
-                  'answer', 'explanation', 'explanation_en', 'difficulty')
+                  'answer', 'explanation', 'explanation_en', 'explanation_ru', 'difficulty')
 
 
 class ProblemWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Problem
         fields = ('id', 'sphere', 'number', 'question', 'question_en', 'question_ru',
-                  'answer', 'explanation', 'explanation_en', 'difficulty')
+                  'answer', 'explanation', 'explanation_en', 'explanation_ru', 'difficulty')
 
 
 # ── Sphere ──

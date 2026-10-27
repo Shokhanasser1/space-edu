@@ -287,6 +287,40 @@ class ProblemCheckTests(TestCase):
         )
         self.assertTrue(r.data['correct'])
 
+    def test_a_number_is_graded_as_a_number(self):
+        """Audit, 28 October 2026. A pupil who works out 6 newtons types "6",
+        "6.0" or, on a Russian keyboard, "6 Н" -- all marked wrong against "6 N"
+        by a string comparison. The number is what the problem asks for."""
+        for given in ('6', '6.0', '6,0', '6 Н', '6 newton', '6N'):
+            self.assertTrue(self._check(given).data['correct'], given)
+
+    def test_a_rounded_answer_is_close_enough(self):
+        """sqrt(8) is 2.83; 2.8 is what a pupil without a calculator writes."""
+        problem = Problem.objects.create(
+            sphere=self.sphere, number=3, question='?', answer='2.83 s',
+        )
+        check = lambda given: self.anon.post(
+            f'/api/v1/courses/problems/{problem.id}/check/', {'answer': given}, format='json',
+        ).data['correct']
+        self.assertTrue(check('2.8'))
+        self.assertTrue(check('2.83 с'))
+        self.assertFalse(check('3'))
+        self.assertFalse(check('28'))
+
+    def test_a_different_number_with_the_right_unit_is_still_wrong(self):
+        self.assertFalse(self._check('60 N').data['correct'])
+        self.assertFalse(self._check('-6 N').data['correct'])
+
+    def test_the_explanation_comes_back_in_every_language(self):
+        """The result screen picks the reader's language, and was only ever
+        sent the Uzbek explanation."""
+        self.problem.explanation_en = 'F = m * a = 6 N'
+        self.problem.explanation_ru = 'F = m · a = 6 Н'
+        self.problem.save()
+        data = self._check('6').data
+        self.assertEqual(data['explanation_en'], 'F = m * a = 6 N')
+        self.assertEqual(data['explanation_ru'], 'F = m · a = 6 Н')
+
     def test_an_empty_answer_is_rejected(self):
         self.assertEqual(self._check('').status_code, status.HTTP_400_BAD_REQUEST)
 

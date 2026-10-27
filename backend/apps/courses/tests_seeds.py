@@ -208,7 +208,30 @@ class SeedProblemsTests(TestCase):
 
         _seed('seed_learn_content')
         self.assertEqual(Problem.objects.count(), 30)
-        self.assertTrue(Problem.objects.filter(answer='Harakat').exists())
+        self.assertTrue(Problem.objects.filter(number=10, answer='25 m/s').exists())
+
+    def test_every_answer_is_a_number_its_own_explanation_reaches(self):
+        """Audit, 28 October 2026: about half of the old key was wrong -- #10
+        asked for a speed and expected "12.5 m/s²", #19 expected the words
+        "Falon vaqtda falon burchak teng". The server grades the number now, so
+        every answer has to be one, and the worked explanation has to arrive at
+        it -- in every language the reader might see it in."""
+        import re
+
+        from .models import Problem
+        from .views import ProblemViewSet
+
+        _seed('seed_learn_content')
+        for problem in Problem.objects.all():
+            with self.subTest(number=problem.number):
+                number = re.match(r'[-+]?\d+(?:\.\d+)?', problem.answer)
+                self.assertIsNotNone(number, problem.answer)
+                self.assertTrue(ProblemViewSet._matches(number.group(), problem.answer))
+                for field in ('explanation', 'explanation_en', 'explanation_ru'):
+                    text = getattr(problem, field).replace(',', '.').replace(' ', '')
+                    self.assertIn(number.group(), text, field)
+                for field in ('question_en', 'question_ru'):
+                    self.assertTrue(getattr(problem, field), field)
 
     def test_it_leaves_out_the_115_placeholders(self):
         """`problemsData` holds 145 entries, 115 of them generated filler —

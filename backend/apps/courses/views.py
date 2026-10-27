@@ -1,3 +1,5 @@
+import re
+
 from django.db.models import Count
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -249,15 +251,24 @@ class ProblemViewSet(viewsets.ModelViewSet):
             'correct': correct,
             'answer': problem.answer,
             'explanation': problem.explanation,
+            'explanation_en': problem.explanation_en,
+            'explanation_ru': problem.explanation_ru,
         }, status=status.HTTP_200_OK)
 
-    @staticmethod
-    def _matches(given, expected):
+    _NUMBER = re.compile(r'[-+]?\d+(?:\.\d+)?')
+
+    @classmethod
+    def _matches(cls, given, expected):
         """Forgiving on whitespace, case and the comma/point decimal mark.
 
         The browser used `userAnswer.trim() === problem.answer`, so "20 M",
         "20m" and "14,81 m/s" were all marked wrong against "20 m" and
         "14.81 m/s". Uzbek and Russian keyboards produce the comma form.
+
+        And when the answer is a number, the number is what is graded: "25",
+        "25.0" and "25 м/с" are all 25 m/s, and 2.8 is a fair 2.83 for a
+        pupil without a calculator (within 2%). The unit is not checked — a
+        Russian keyboard writes it in Cyrillic.
         """
         def normalise(value):
             return (
@@ -267,7 +278,16 @@ class ProblemViewSet(viewsets.ModelViewSet):
                 .replace(' ', '')
             )
 
-        return normalise(given) == normalise(expected)
+        given, expected = normalise(given), normalise(expected)
+        if given == expected:
+            return True
+
+        want = cls._NUMBER.match(expected)
+        got = cls._NUMBER.match(given)
+        if not want or not got:
+            return False
+        want, got = float(want.group()), float(got.group())
+        return abs(got - want) <= 0.02 * max(abs(want), 1e-9)
 
     def get_queryset(self):
         qs = Problem.objects.all()

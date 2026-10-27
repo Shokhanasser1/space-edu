@@ -177,12 +177,13 @@ function readProblems() {
     .map(([number, problem]) => ({
       number: Number(number),
       question: problem.question,
-      question_en: '',
-      question_ru: '',
+      question_en: problem.question_en ?? '',
+      question_ru: problem.question_ru ?? '',
       answer: problem.answer,
       explanation: problem.explanation ?? '',
-      explanation_en: '',
-      difficulty: 'medium',
+      explanation_en: problem.explanation_en ?? '',
+      explanation_ru: problem.explanation_ru ?? '',
+      difficulty: problem.difficulty ?? 'medium',
     }));
 }
 
