@@ -30,13 +30,22 @@ from .email_code import CHANGE_EMAIL, LOGIN, PASSWORD_RESET, TTL, VERIFY_EMAIL, 
 logger = logging.getLogger(__name__)
 
 
-# Every message counts against two budgets (audit, 28 October 2026: five
-# throwaway accounts made the site send 205 messages to 55 addresses of the
-# caller's choosing). Per recipient, so nobody can be flooded through us; and
-# per day for the whole site, below the mail account's own cap -- Gmail stops
-# an account sending for a day once it passes that, and then every sign-in
-# code and password reset fails. EMAIL_DAILY_LIMIT is in settings.
+# Every code counts against budgets before it is issued (audit, 28 October
+# 2026: five throwaway accounts made the site send 205 messages to 55
+# addresses of the caller's choosing):
+#
+# - five an hour to any one mailbox, so nobody can be flooded through us;
+# - EMAIL_DAILY_LIMIT a day for the whole site, below the mail account's own
+#   cap -- Gmail stops an account sending for a day once it passes that;
+# - of which only NEW_ADDRESS_SHARE may go to addresses nobody has confirmed
+#   (registration, a new address), because that is where a flood comes from,
+#   and sign-in codes and resets for accounts that exist keep the rest.
+#
+# A security notice (an address being changed) is never held back: filling a
+# person's budget with codes would otherwise silence the warning.
 PER_RECIPIENT_PER_HOUR = 5
+NEW_ADDRESS_SHARE = 0.7
+NEW_ADDRESS_PURPOSES = {VERIFY_EMAIL, CHANGE_EMAIL}
 
 
 def _take(key, limit, ttl):
@@ -53,22 +62,36 @@ def _take(key, limit, ttl):
     return taken <= limit
 
 
-def _within_budget(recipient):
-    address = str(recipient).strip().lower()
-    digest = hashlib.sha256(address.encode()).hexdigest()[:32]
+def _mailbox(address):
+    """The mailbox an address reaches: "Pupil+x@gmail.com" and "p.u.pil@gmail.com"
+    are one inbox, and would otherwise be five more messages each."""
+    local, _, domain = str(address).strip().lower().partition('@')
+    local = local.split('+', 1)[0]
+    if domain in ('gmail.com', 'googlemail.com'):
+        local, domain = local.replace('.', ''), 'gmail.com'
+    return f'{local}@{domain}'
+
+
+def _within_budget(recipient, purpose):
+    digest = hashlib.sha256(_mailbox(recipient).encode()).hexdigest()[:32]
     if not _take(f'mail:to:{digest}', PER_RECIPIENT_PER_HOUR, 3600):
-        logger.warning('Mail held back: %s messages this hour to one address already', PER_RECIPIENT_PER_HOUR)
+        logger.warning('Code held back: %s messages this hour to one mailbox already', PER_RECIPIENT_PER_HOUR)
         return False
+
     day = timezone.localdate().isoformat()
-    if not _take(f'mail:day:{day}', settings.EMAIL_DAILY_LIMIT, 25 * 3600):
-        logger.error('Mail held back: the daily limit of %s messages is spent', settings.EMAIL_DAILY_LIMIT)
+    limit = settings.EMAIL_DAILY_LIMIT
+    if purpose in NEW_ADDRESS_PURPOSES and not _take(
+        f'mail:day:new:{day}', int(limit * NEW_ADDRESS_SHARE), 25 * 3600,
+    ):
+        logger.error('Code held back: the share of the day for unconfirmed addresses is spent')
+        return False
+    if not _take(f'mail:day:{day}', limit, 25 * 3600):
+        logger.error('Code held back: the daily limit of %s messages is spent', limit)
         return False
     return True
 
 
 def _deliver(subject, body, recipient):
-    if not _within_budget(recipient):
-        return
     try:
         send_mail(
             subject=subject,
@@ -82,13 +105,20 @@ def _deliver(subject, body, recipient):
 
 
 def _send_code(email, purpose, subject, lines_uz, lines_en, lines_ru, path=''):
-    """Issue a code for `purpose`, mail it, and return it.
+    """Issue a code for `purpose`, mail it, and return it -- or None if the
+    mail budget held it back.
 
     The return value is for the caller's logging, never for a response body: a
     code echoed back to whoever asked for it proves nothing about who they are.
     That was a real finding -- `dev_code` in the sign-in response, under a DEBUG
     flag that defaulted to on, was a two-request takeover of any account.
     """
+    # Before the code is issued: one issued and not sent would replace the
+    # code the person is already holding, and asking for codes in somebody's
+    # name would lock them out. Held back, the live code stays live.
+    if not _within_budget(email, purpose):
+        return None
+
     code = store_code(email, purpose)
     minutes = TTL[purpose] // 60
 
