@@ -88,6 +88,18 @@ jobs:
           python manage.py migrate --noinput
           python manage.py seed_learn_content
 
+      - name: Deployment checks
+        # Django's own audit of the settings the server runs (deploy/). The
+        # placeholders only have to get past production.py's refusals.
+        env:
+          DJANGO_SETTINGS_MODULE: base.settings.production
+          SECRET_KEY: ci-only-placeholder-production-key-0123456789abcdef
+          ALLOWED_HOSTS: uzcosmos.example
+          EMAIL_BACKEND: django.core.mail.backends.smtp.EmailBackend
+          EMAIL_HOST: smtp.example.com
+          DB_URL: postgres://postgres:ci@localhost:5432/ci
+        run: python manage.py check --deploy --fail-level WARNING
+
   frontend:
     name: Frontend build
     runs-on: ubuntu-latest

@@ -262,13 +262,15 @@ class SettingsReloadMixin:
     code that reads them — which is where these bugs live.
     """
 
+    settings_module = 'base.settings'
+
     def _reload_settings(self, **env):
         original = {name: os.environ.get(name) for name in env}
         os.environ.update({name: value for name, value in env.items()})
         try:
             for name in [m for m in sys.modules if m.startswith('base.settings')]:
                 sys.modules.pop(name, None)
-            return importlib.import_module('base.settings')
+            return importlib.import_module(self.settings_module)
         finally:
             for name, value in original.items():
                 if value is None:
@@ -489,3 +491,85 @@ class FrontendLinkTests(SimpleTestCase):
                                CORS_ALLOWED_ORIGINS=['http://localhost:3000']):
             self.assertEqual(frontend_link('/verify-email'), 'http://localhost:3000/verify-email')
             self.assertEqual(frontend_link(), 'http://localhost:3000')
+
+
+class ProductionSettingsTests(SettingsReloadMixin, SimpleTestCase):
+    """The hardened module came back on 28 October 2026, for the first server
+    of our own. docs/HANDOVER.md listed what had to return with it; each item
+    is a test here, because each one was lost once already."""
+
+    settings_module = 'base.settings.production'
+
+    SERVER_ENV = {
+        'SECRET_KEY': 'k3y-' + 'abcdefghijklmnopqrstuvwxyz0123456789' * 2,
+        'EMAIL_BACKEND': 'django.core.mail.backends.smtp.EmailBackend',
+        'EMAIL_HOST': 'smtp.example.com',
+        'EMAIL_HOST_USER': 'robot@example.com',
+        'EMAIL_HOST_PASSWORD': 'app-password',
+    }
+
+    def _production(self, **env):
+        return self._reload_settings(**{**self.SERVER_ENV, **env})
+
+    def test_debug_is_off_whatever_the_environment_says(self):
+        """With DEBUG on, an unhandled error renders a page holding SECRET_KEY."""
+        self.assertFalse(self._production(DEBUG='true').DEBUG)
+
+    def test_cors_is_not_open_to_everyone(self):
+        self.assertFalse(getattr(self._production(), 'CORS_ALLOW_ALL_ORIGINS', False))
+
+    def test_the_entry_points_a_server_runs_default_to_production(self):
+        """manage.py stays on development, which is what a laptop wants. What
+        gunicorn loads must be the hardened module unless somebody names the
+        other one (C-7) -- an unset variable on a server is not a request for
+        DEBUG."""
+        from pathlib import Path as _Path
+
+        here = _Path(__file__).resolve().parent
+        for entry in ('wsgi.py', 'asgi.py'):
+            source = (here / entry).read_text(encoding='utf-8')
+            self.assertIn("'base.settings.production'", source, entry)
+
+    def test_cookies_travel_over_https_only(self):
+        settings = self._production()
+        self.assertTrue(settings.SESSION_COOKIE_SECURE)
+        self.assertTrue(settings.CSRF_COOKIE_SECURE)
+        self.assertEqual(settings.SECURE_PROXY_SSL_HEADER, ('HTTP_X_FORWARDED_PROTO', 'https'))
+        self.assertGreater(settings.SECURE_HSTS_SECONDS, 0)
+
+    def test_static_files_are_served_by_whitenoise(self):
+        """runserver is the only thing that serves /static/ on its own, and the
+        admin is unusable without it."""
+        middleware = self._production().MIDDLEWARE
+        self.assertEqual(middleware[:2], [
+            'django.middleware.security.SecurityMiddleware',
+            'whitenoise.middleware.WhiteNoiseMiddleware',
+        ])
+
+    def test_uploads_still_have_a_default_storage_without_r2(self):
+        """The old module built STORAGES with `staticfiles` alone when R2 was
+        off, and every ImageField save raised InvalidStorageError."""
+        storages = self._production(CLOUDFLARE_R2_ACCESS_KEY_ID='').STORAGES
+        self.assertIn('default', storages)
+        self.assertIn('staticfiles', storages)
+
+    def test_a_development_or_short_secret_key_refuses_to_start(self):
+        """It signs every session and every JWT on the site."""
+        for key in ('django-insecure-' + 'x' * 50, 'too-short'):
+            with self.subTest(key=key), self.assertRaises(ImproperlyConfigured):
+                self._production(SECRET_KEY=key)
+
+    def test_a_server_that_cannot_send_mail_refuses_to_start(self):
+        """Registration, password resets and sign-in codes all go by e-mail.
+        On a laptop the console backend is the safe default; on a server it is
+        a child waiting for a code that only the log can read."""
+        for env in ({'EMAIL_BACKEND': ''}, {'EMAIL_HOST_PASSWORD': ''}):
+            with self.subTest(env=env), self.assertRaises(ImproperlyConfigured):
+                self._production(**env)
+
+    def test_errors_reach_the_container_log(self):
+        """Django's own console handler only runs while DEBUG is on, so with it
+        off a 500 left no trace anywhere."""
+        logging = self._production().LOGGING
+        handlers = [logging['handlers'][name]['class'] for name in logging['root']['handlers']]
+        self.assertIn('logging.StreamHandler', handlers)

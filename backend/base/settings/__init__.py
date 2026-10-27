@@ -1,15 +1,14 @@
-"""Settings entry point.
+"""Settings entry point: local development.
 
-There is one environment right now: local development. The hardened module and
-the switch that chose between them went with the rest of the deployment
-configuration, and have to come back together — a switch with nothing to switch
-to is worse than no switch, because it reads as if there were a safe mode when
-there is not.
+This package is what manage.py loads, so a laptop gets DEBUG, open CORS and
+mail printed to the console. A server does not come through here: base/wsgi.py
+and base/asgi.py default to `base.settings.production`, the hardened module.
 
-Whatever replaces this has to fail *closed*, in the sense of rule C-7 in
-CONTRIBUTING.md: the permissive branch is the one you have to ask for by name.
-Written the other way round, as it was, a typo or an unset variable silently
-booted development — DEBUG on, CORS open to everyone, and the e-mail sign-in
-code returned in the response body.
+That split is how this fails *closed* (rule C-7 in CONTRIBUTING.md): an unset
+DJANGO_SETTINGS_MODULE on a server gets the safe settings, and the permissive
+ones have to be asked for by name. The earlier form — one switch in here, read
+from DJANGO_ENV — booted development on a typo or an unset variable, which
+meant DEBUG on, CORS open to everyone, and the e-mail sign-in code returned in
+the response body.
 """
 from .development import *  # noqa: F401,F403

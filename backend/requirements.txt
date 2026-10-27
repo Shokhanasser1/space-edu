@@ -9,6 +9,11 @@ python-decouple==3.8.*
 dj-database-url==2.2.*
 psycopg2-binary==2.9.*
 
+# What a server runs (base/settings/production.py, deploy/): the WSGI server,
+# and the admin's static files served from inside the app.
+gunicorn==23.*
+whitenoise==6.*
+
 # Verifying the ID token Google's sign-in button hands the browser: signature,
 # expiry, and the audience it was minted for. Fifteen lines of it are used, and
 # the alternative -- django-allauth or social-auth -- is roughly twenty tables,
