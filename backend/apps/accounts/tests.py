@@ -118,6 +118,36 @@ class LoginThrottleTests(TestCase):
         codes = [self._bad_login().status_code for _ in range(12)]
         self.assertIn(status.HTTP_429_TOO_MANY_REQUESTS, codes)
 
+    def test_wrong_guesses_checked_side_by_side_are_all_counted(self):
+        """Audit, 28 October 2026: the failure history was read on the way in
+        and written back after the password check, so guesses that were
+        checked at the same time each wrote back a history holding only
+        themselves. Twelve gunicorn threads made the 10/hour budget about
+        twelve times larger. Simulated here as two requests that both pass
+        the check before either has failed."""
+        from rest_framework.parsers import JSONParser
+        from rest_framework.request import Request
+        from rest_framework.test import APIRequestFactory
+
+        from apps.accounts.throttles import LoginRateThrottle, record_credential_failure
+
+        factory = APIRequestFactory()
+
+        def arriving():
+            request = Request(factory.post(
+                '/api/v1/auth/login/', {'email': 'victim@example.com'}, format='json'),
+                parsers=[JSONParser()])
+            self.assertTrue(LoginRateThrottle().allow_request(request, None))
+            return request
+
+        first, second = arriving(), arriving()
+        record_credential_failure(first)
+        record_credential_failure(second)
+
+        codes = [self._bad_login().status_code for _ in range(9)]
+        self.assertEqual(codes[-1], status.HTTP_429_TOO_MANY_REQUESTS,
+                         'two failures were spent, so the ninth more must be refused')
+
     def test_throttle_not_bypassable_by_rotating_x_forwarded_for(self):
         """A terminating proxy appends the real peer address to
         X-Forwarded-For, so with NUM_PROXIES=1 the trusted value is the last

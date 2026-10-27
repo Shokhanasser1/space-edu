@@ -51,24 +51,28 @@ class _FailureOnlyRateThrottle(SimpleRateThrottle):
     cost is only incurred by the ones that guess wrong.
 
     The view calls `record_credential_failure(request)` once it knows.
+
+    **Counted with one atomic increment per failure.** It used to keep DRF's
+    list of timestamps, read on the way in and written back after the password
+    check — so guesses checked at the same time each wrote back a list holding
+    only themselves, and twelve gunicorn threads made the budget about twelve
+    times larger. An increment cannot lose a guess (Redis INCR). The window is
+    fixed, opening at the first failure: it is never extended, so hammering a
+    locked-out bucket does not push the unlock further away.
     """
 
     def allow_request(self, request, view):
         if self.rate is None:
             return True
 
-        self.key = self.get_cache_key(request, view)
-        if self.key is None:
+        key = self.get_cache_key(request, view)
+        if key is None:
             return True
-
-        self.history = self.cache.get(self.key, [])
+        self.key = f'{key}:failures'
+        self.started_key = f'{key}:since'
         self.now = self.timer()
-        while self.history and self.history[-1] <= self.now - self.duration:
-            self.history.pop()
 
-        if len(self.history) >= self.num_requests:
-            # Deliberately does not extend the window. Hammering a locked-out
-            # bucket should not keep pushing the unlock further away.
+        if self.cache.get(self.key, 0) >= self.num_requests:
             return self.throttle_failure()
 
         pending = getattr(request, '_credential_throttles', None)
@@ -79,8 +83,25 @@ class _FailureOnlyRateThrottle(SimpleRateThrottle):
         return True
 
     def record_failure(self):
-        self.history.insert(0, self.now)
-        self.cache.set(self.key, self.history, self.duration)
+        if self.cache.add(self.key, 1, self.duration):
+            self.cache.set(self.started_key, self.now, self.duration)
+            return
+        try:
+            # Django's Redis incr checks the key exists, then INCRs. Expiring in
+            # between recreates it at 1 with no expiry — a bucket that would
+            # never empty — so a 1 here gets its window back.
+            if self.cache.incr(self.key) == 1:
+                self.cache.touch(self.key, self.duration)
+        except ValueError:
+            # The window closed between add() and incr(): this opens the next.
+            self.cache.add(self.key, 1, self.duration)
+            self.cache.set(self.started_key, self.now, self.duration)
+
+    def wait(self):
+        started = self.cache.get(self.started_key)
+        if started is None:
+            return self.duration
+        return max(0.0, self.duration - (self.now - started))
 
 
 def record_credential_failure(request):
