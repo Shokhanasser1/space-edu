@@ -19,6 +19,16 @@ fi
 mkdir -p "$EDGE/sites"
 docker compose -f "$EDGE/compose.yml" up -d   # also creates the `edge` network
 
+# Docker applies ip_range only when it creates a network. If `edge` was made
+# some other way, a container started without a fixed address could take the
+# edge's or the site's, and the site would trust or proxy to the wrong one.
+range="$(docker network inspect edge --format '{{range .IPAM.Config}}{{.IPRange}}{{end}}')"
+if [ "$range" != "10.200.0.128/25" ]; then
+  echo "The edge network hands out fixed addresses to anyone (IPRange '$range')." >&2
+  echo "Recreate it: stop every stack on it, docker network rm edge, deploy again." >&2
+  exit 1
+fi
+
 cd "$RELEASE_DIR/deploy"
 ln -sfn "$ROOT/.env" .env
 

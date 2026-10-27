@@ -43,22 +43,26 @@ class _AlwaysOnRateThrottle(SimpleRateThrottle):
 
 
 class _FailureOnlyRateThrottle(SimpleRateThrottle):
-    """Checks the budget on the way in; spends it only if the view says to.
+    """Spends the budget on wrong guesses only.
 
     `SimpleRateThrottle.allow_request` records a hit for every request that
     passes. That is right for something whose cost is the request itself — an
     e-mail sent, an account created — and wrong for a password check, where the
     cost is only incurred by the ones that guess wrong.
 
-    The view calls `record_credential_failure(request)` once it knows.
+    **Reserved on the way in, given back on success.** Every request takes one
+    attempt with an atomic increment (Redis INCR) before the password is
+    checked, and is refused if that went over the budget. The view gives the
+    attempt back when the password was right or never checked
+    (`release_unspent_credential_attempts`). The first version read a list of
+    timestamps on the way in and wrote it back after the check, so guesses
+    checked side by side each wrote back a list holding only themselves —
+    twelve gunicorn threads made the budget about twelve times larger. Counting
+    after the check instead still let through every request that arrived before
+    the failures were written; reserving first does not.
 
-    **Counted with one atomic increment per failure.** It used to keep DRF's
-    list of timestamps, read on the way in and written back after the password
-    check — so guesses checked at the same time each wrote back a list holding
-    only themselves, and twelve gunicorn threads made the budget about twelve
-    times larger. An increment cannot lose a guess (Redis INCR). The window is
-    fixed, opening at the first failure: it is never extended, so hammering a
-    locked-out bucket does not push the unlock further away.
+    The window is fixed, opening at the first attempt, and is never extended:
+    hammering a locked-out bucket does not push the unlock further away.
     """
 
     def allow_request(self, request, view):
@@ -68,11 +72,11 @@ class _FailureOnlyRateThrottle(SimpleRateThrottle):
         key = self.get_cache_key(request, view)
         if key is None:
             return True
-        self.key = f'{key}:failures'
+        self.key = f'{key}:attempts'
         self.started_key = f'{key}:since'
         self.now = self.timer()
 
-        if self.cache.get(self.key, 0) >= self.num_requests:
+        if self._reserve() > self.num_requests:
             return self.throttle_failure()
 
         pending = getattr(request, '_credential_throttles', None)
@@ -82,20 +86,33 @@ class _FailureOnlyRateThrottle(SimpleRateThrottle):
         pending.append(self)
         return True
 
-    def record_failure(self):
+    def _reserve(self):
         if self.cache.add(self.key, 1, self.duration):
             self.cache.set(self.started_key, self.now, self.duration)
-            return
+            return 1
         try:
-            # Django's Redis incr checks the key exists, then INCRs. Expiring in
-            # between recreates it at 1 with no expiry — a bucket that would
-            # never empty — so a 1 here gets its window back.
-            if self.cache.incr(self.key) == 1:
-                self.cache.touch(self.key, self.duration)
+            taken = self.cache.incr(self.key)
         except ValueError:
             # The window closed between add() and incr(): this opens the next.
             self.cache.add(self.key, 1, self.duration)
             self.cache.set(self.started_key, self.now, self.duration)
+            return 1
+        # Django's Redis incr checks the key exists, then INCRs. Expiring in
+        # between recreates it at 1 with no expiry — a bucket that would never
+        # empty — so a 1 here gets its window back.
+        if taken == 1:
+            self.cache.touch(self.key, self.duration)
+        return taken
+
+    def release(self):
+        try:
+            left = self.cache.decr(self.key)
+        except ValueError:
+            return  # the window has closed; nothing to give back
+        if left <= 0:
+            # Same race as above, the other way: a key recreated at -1 with no
+            # expiry would be a permanent extra attempt.
+            self.cache.delete(self.key)
 
     def wait(self):
         started = self.cache.get(self.started_key)
@@ -105,9 +122,21 @@ class _FailureOnlyRateThrottle(SimpleRateThrottle):
 
 
 def record_credential_failure(request):
-    """Spend one attempt on every failure-only throttle that let this through."""
+    """The password was wrong: keep the attempts this request reserved."""
+    request._credential_failed = True
+
+
+def release_unspent_credential_attempts(request):
+    """Give the reserved attempts back unless the request was a wrong guess.
+
+    Called once the response is ready, so a correct password, a request with
+    no password at all and one refused by another throttle all hand theirs back.
+    """
+    if getattr(request, '_credential_failed', False):
+        return
     for throttle in getattr(request, '_credential_throttles', ()):
-        throttle.record_failure()
+        throttle.release()
+    request._credential_throttles = []
 
 
 class LoginRateThrottle(_FailureOnlyRateThrottle):

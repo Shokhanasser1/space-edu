@@ -148,6 +148,39 @@ class LoginThrottleTests(TestCase):
         self.assertEqual(codes[-1], status.HTTP_429_TOO_MANY_REQUESTS,
                          'two failures were spent, so the ninth more must be refused')
 
+    def test_the_last_attempt_cannot_be_checked_twice_at_once(self):
+        """Counting each failure atomically still let every request that
+        arrived before the failures were written through to the password
+        check -- the budget plus however many threads were busy. An attempt
+        is reserved on the way in now, so with one left only one is checked."""
+        from rest_framework.parsers import JSONParser
+        from rest_framework.request import Request
+        from rest_framework.test import APIRequestFactory
+
+        from apps.accounts.throttles import LoginRateThrottle
+
+        for _ in range(9):
+            self.assertEqual(self._bad_login().status_code, status.HTTP_401_UNAUTHORIZED)
+
+        factory = APIRequestFactory()
+        allowed = [
+            LoginRateThrottle().allow_request(Request(factory.post(
+                '/api/v1/auth/login/', {'email': 'victim@example.com'}, format='json'),
+                parsers=[JSONParser()]), None)
+            for _ in range(2)
+        ]
+        self.assertEqual(allowed, [True, False])
+
+    def test_a_correct_password_gives_its_reservation_back(self):
+        """Only wrong guesses spend the budget: a pupil who signs in fifteen
+        times an hour is not locked out by the reservation."""
+        for _ in range(15):
+            response = self.client.post(
+                '/api/v1/auth/login/',
+                {'email': 'victim@example.com', 'password': VALID_PW}, format='json')
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(self._bad_login().status_code, status.HTTP_401_UNAUTHORIZED)
+
     def test_throttle_not_bypassable_by_rotating_x_forwarded_for(self):
         """A terminating proxy appends the real peer address to
         X-Forwarded-For, so with NUM_PROXIES=1 the trusted value is the last

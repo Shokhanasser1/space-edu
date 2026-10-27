@@ -55,6 +55,7 @@ from .throttles import (
     RegisterDailyRateThrottle,
     RegisterRateThrottle,
     record_credential_failure,
+    release_unspent_credential_attempts,
 )
 from .tokens import revoke_refresh_tokens
 
@@ -154,6 +155,12 @@ class LoginView(APIView):
             'user': UserSerializer(user, context={'request': request}).data,
             **_get_tokens(user),
         })
+
+    def finalize_response(self, request, response, *args, **kwargs):
+        # Every way out of this view passes here, including a 429 from the
+        # other throttle: only a wrong password keeps its reserved attempt.
+        release_unspent_credential_attempts(request)
+        return super().finalize_response(request, response, *args, **kwargs)
 
 
 class LogoutView(APIView):
