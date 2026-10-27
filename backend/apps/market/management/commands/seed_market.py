@@ -411,8 +411,11 @@ ITEMS = [
     ),
 
     # ── Boosts ────────────────────────────────────────────────────────────────
+    # Off sale (is_active=False): nothing on the server reads a boost yet, so a
+    # pupil who paid 200 fuel for double XP got nothing for it (audit, 28
+    # October 2026). Turn them on in the same change that makes them work.
     dict(
-        slug='double-xp-7d', category='boosts', item_type='boost',
+        slug='double-xp-7d', category='boosts', item_type='boost', is_active=False,
         title=('Double XP — 7 Days', 'Ikki barobar XP — 7 kun', 'Двойной XP — 7 дней'),
         description=(
             'Every lesson, quiz and streak counts twice for a full week.',
@@ -423,7 +426,7 @@ ITEMS = [
         is_bestseller=True, is_limited=True, stock=100, tags='boost,xp,limited',
     ),
     dict(
-        slug='triple-xp-1d', category='boosts', item_type='boost',
+        slug='triple-xp-1d', category='boosts', item_type='boost', is_active=False,
         title=('Triple XP — 24 Hours', 'Uch barobar XP — 24 soat', 'Тройной XP — 24 часа'),
         description=(
             'One day, three times the progress. Best spent on a weekend marathon.',
@@ -433,7 +436,7 @@ ITEMS = [
         price=20000, cost_fuel=120, is_new=True, tags='boost,xp,marafon',
     ),
     dict(
-        slug='fuel-refill-500', category='boosts', item_type='boost',
+        slug='fuel-refill-500', category='boosts', item_type='boost', is_active=False,
         title=('Fuel Refill +500', "Yoqilg'i +500", 'Заправка +500'),
         description=(
             'Tops your tank up by 500 units the moment you buy it.',

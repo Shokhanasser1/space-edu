@@ -435,3 +435,34 @@ class ExternalProductAdminApiTests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('cost_fuel', response.data)
+
+
+class BoostsAreNotSoldTests(TestCase):
+    """Audit, 28 October 2026: "Double XP — 7 days" cost 200 fuel and
+    "Fuel Refill +500" promised 500 fuel, and nothing on the server reads a
+    boost -- a pupil paid and nothing happened. They stay off sale until a
+    boost actually does something."""
+
+    def test_the_seed_leaves_every_boost_off_sale(self):
+        from django.core.management import call_command
+
+        call_command('seed_market', verbosity=0)
+        boosts = MarketItem.objects.filter(item_type='boost')
+        self.assertTrue(boosts.exists())
+        self.assertFalse(boosts.filter(is_active=True).exists())
+
+    def test_a_boost_cannot_be_bought(self):
+        from django.core.management import call_command
+
+        from apps.accounts.models import User
+
+        call_command('seed_market', verbosity=0)
+        pupil = User.objects.create_user(username='p', email='p@x.uz', password='Str0ngPassw0rd!x')
+        # Plenty of fuel, so a refusal is about the boost and not the balance.
+        from apps.gamification.models import UserGamificationProfile
+        UserGamificationProfile.objects.update_or_create(user=pupil, defaults={'fuel': 10000})
+        client = APIClient()
+        client.force_authenticate(pupil)
+        r = client.post('/api/v1/market/purchase/', {'item_slug': 'double-xp-7d'}, format='json')
+        self.assertNotEqual(r.status_code, status.HTTP_200_OK)
+        self.assertNotEqual(r.status_code, status.HTTP_201_CREATED)
