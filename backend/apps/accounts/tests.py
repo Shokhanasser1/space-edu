@@ -171,6 +171,33 @@ class LoginThrottleTests(TestCase):
         ]
         self.assertEqual(allowed, [True, False])
 
+    def test_an_attempt_reserved_in_one_window_is_not_refunded_into_the_next(self):
+        """A request still running when its window expired used to give its
+        attempt back to whichever window was open by then -- an extra guess
+        there for every request timed to straddle the boundary."""
+        from rest_framework.parsers import JSONParser
+        from rest_framework.request import Request
+        from rest_framework.test import APIRequestFactory
+
+        from apps.accounts.throttles import LoginRateThrottle
+
+        factory = APIRequestFactory()
+
+        def arriving():
+            throttle = LoginRateThrottle()
+            request = Request(factory.post(
+                '/api/v1/auth/login/', {'email': 'victim@example.com'}, format='json'),
+                parsers=[JSONParser()])
+            self.assertTrue(throttle.allow_request(request, None))
+            return throttle
+
+        straddling = arriving()
+        cache.clear()                    # the window expires
+        arriving()                       # the next one opens with one attempt
+        straddling.release()
+
+        self.assertEqual(cache.get(straddling.key), 1)
+
     def test_a_correct_password_gives_its_reservation_back(self):
         """Only wrong guesses spend the budget: a pupil who signs in fifteen
         times an hour is not locked out by the reservation."""

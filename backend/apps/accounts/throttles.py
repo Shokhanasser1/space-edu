@@ -86,17 +86,24 @@ class _FailureOnlyRateThrottle(SimpleRateThrottle):
         pending.append(self)
         return True
 
+    def _open_window(self):
+        self.cache.set(self.started_key, self.now, self.duration)
+        self.reserved_in = self.now
+        return 1
+
     def _reserve(self):
         if self.cache.add(self.key, 1, self.duration):
-            self.cache.set(self.started_key, self.now, self.duration)
-            return 1
+            return self._open_window()
         try:
             taken = self.cache.incr(self.key)
         except ValueError:
             # The window closed between add() and incr(): this opens the next.
             self.cache.add(self.key, 1, self.duration)
-            self.cache.set(self.started_key, self.now, self.duration)
-            return 1
+            return self._open_window()
+        # Which window this attempt belongs to, so it is only ever given back
+        # to that one. None (the opener has not written it yet) means it is
+        # never given back — the safe way round.
+        self.reserved_in = self.cache.get(self.started_key)
         # Django's Redis incr checks the key exists, then INCRs. Expiring in
         # between recreates it at 1 with no expiry — a bucket that would never
         # empty — so a 1 here gets its window back.
@@ -105,6 +112,11 @@ class _FailureOnlyRateThrottle(SimpleRateThrottle):
         return taken
 
     def release(self):
+        # A request still running when its window expired would otherwise hand
+        # its attempt to the next window — an extra guess for every request
+        # timed to straddle the boundary.
+        if self.reserved_in is None or self.cache.get(self.started_key) != self.reserved_in:
+            return
         try:
             left = self.cache.decr(self.key)
         except ValueError:
