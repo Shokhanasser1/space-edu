@@ -56,7 +56,7 @@ function TopicCard({ topic, index, color }) {
           : '0 2px 10px rgba(0,0,0,0.25)',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', paddingLeft: '20px', flex: 1 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', paddingLeft: '20px', flex: 1, minWidth: 0 }}>
         <div style={{
           position: 'relative',
           width: '42px',

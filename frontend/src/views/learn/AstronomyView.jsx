@@ -57,7 +57,7 @@ function TopicCard({ topic, index, color }) {
       }}
     >
       {/* Left */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', paddingLeft: '20px', flex: 1 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', paddingLeft: '20px', flex: 1, minWidth: 0 }}>
         {/* Badge */}
         <div style={{
           position: 'relative',

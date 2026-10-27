@@ -61,7 +61,7 @@ function TopicCard({ topic, index, color }) {
       }}
     >
       {/* Left: Badge + title */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', paddingLeft: '20px', flex: 1 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', paddingLeft: '20px', flex: 1, minWidth: 0 }}>
         {/* Orbitron numbered badge */}
         <div style={{
           position: 'relative',

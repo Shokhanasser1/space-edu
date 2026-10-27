@@ -13,7 +13,11 @@ import { useTranslation } from '@/hooks/useTranslation';
  * bo'ladi" with an answer taken off a cycling list — so most of the set was a
  * dead end dressed up as content. It now draws the problems that exist.
  */
+// At most ten to a row; a phone gets as many as fit, so the page never
+// scrolls sideways (ten 62px squares are 692px).
 const PER_ROW = 10;
+const SQUARE = 62;
+const GAP = 8;
 
 export default function ProblemsView() {
   const solvedProblems = useProblemsStore((state) => state.solvedProblems);
@@ -23,10 +27,6 @@ export default function ProblemsView() {
   const colorBorder = 'rgba(74,222,128,0.25)';
 
   const numbers = problems.map((problem) => problem.number);
-  const rows = [];
-  for (let i = 0; i < numbers.length; i += PER_ROW) {
-    rows.push(numbers.slice(i, i + PER_ROW));
-  }
 
   const { t, i18n } = useTranslation();
   const solvedCount = Object.values(solvedProblems).filter((status) => status === 'correct').length;
@@ -187,20 +187,27 @@ export default function ProblemsView() {
             width: '100%',
           }}
         >
-          {rows.map((row, rowIdx) => (
-            <div key={rowIdx} style={{ display: 'flex', gap: '8px', flexWrap: 'nowrap' }}>
-              {row.map((num) => (
-                <ProblemSquare 
-                  key={num} 
-                  num={num} 
-                  color={color} 
-                  colorLight={colorLight} 
-                  colorBorder={colorBorder} 
-                  status={solvedProblems[num]}
-                />
-              ))}
-            </div>
-          ))}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: `repeat(auto-fill, ${SQUARE}px)`,
+              gap: `${GAP}px`,
+              justifyContent: 'center',
+              width: '100%',
+              maxWidth: `${PER_ROW * SQUARE + (PER_ROW - 1) * GAP}px`,
+            }}
+          >
+            {numbers.map((num) => (
+              <ProblemSquare
+                key={num}
+                num={num}
+                color={color}
+                colorLight={colorLight}
+                colorBorder={colorBorder}
+                status={solvedProblems[num]}
+              />
+            ))}
+          </div>
         </motion.div>
       </div>
     </div>
@@ -238,8 +245,8 @@ function ProblemSquare({ num, color, colorLight, colorBorder, status }) {
       onMouseLeave={() => setHovered(false)}
       onClick={() => navigate(`/learn/problems/${num}`)}
       style={{
-        width: '62px',
-        height: '62px',
+        width: `${SQUARE}px`,
+        height: `${SQUARE}px`,
         borderRadius: '12px',
         display: 'flex',
         alignItems: 'center',

@@ -47,7 +47,7 @@ export default function SecurityPanel() {
 
 function Card({ icon, title, children }) {
   return (
-    <div className="rounded-3xl border border-white/[0.08] bg-white/[0.025] backdrop-blur-xl p-6 sm:p-7">
+    <div className="min-w-0 rounded-3xl border border-white/[0.08] bg-white/[0.025] backdrop-blur-xl p-6 sm:p-7">
       <h3 className="flex items-center gap-2.5 text-[11px] font-[800] uppercase tracking-[0.2em] text-white/40 mb-5">
         {icon} {title}
       </h3>
@@ -361,8 +361,9 @@ function EmailCard({ t, user, updateUser, setTokens, hasPassword }) {
 
   return (
     <Card icon={<Mail className="w-3.5 h-3.5 text-violet-light" />} title={t('profilePage', 'changeEmail')}>
-      <div className="flex items-center gap-2 mb-5 text-xs font-[600]">
-        <span className="text-white/50">{user?.email}</span>
+      <div className="flex flex-wrap items-center gap-2 mb-5 text-xs font-[600]">
+        {/* A long address has no spaces to wrap at; on a phone it pushed the card past the screen. */}
+        <span className="text-white/50 min-w-0 break-all">{user?.email}</span>
         {user?.email_verified ? (
           <span className="inline-flex items-center gap-1 text-violet-pale">
             <MailCheck className="w-3.5 h-3.5" /> {t('profilePage', 'emailVerified')}
