@@ -199,3 +199,37 @@ describe('a mission', () => {
     expect(screen.queryByRole('button', { name: 'Claim Reward' })).toBeNull();
   });
 });
+
+/**
+ * Audit, 28 October 2026: the completed-lessons list showed raw slugs
+ * ("kin-one"), and a profile that failed to load said nothing -- the loader
+ * could not fail, so "Data refreshed" showed even when nothing had loaded.
+ */
+describe('the profile, loaded or not', () => {
+  it('names a finished lesson in the reader language', async () => {
+    const { useUserStore } = await import('@/store/useUserStore');
+    useUserStore.getState().setLanguage('RUS');
+    api.get.mockImplementation((url) => {
+      if (url === '/gamification/profile/full/') return Promise.resolve(fullProfile({ rank: null, total_players: 0 }));
+      if (url === '/progress/') {
+        return Promise.resolve({ data: { lessons: [{
+          lesson_slug: 'kin-one', lesson_name: 'Tezlik', lesson_name_en: 'Speed',
+          lesson_name_ru: 'Скорость', score: 0, is_mastered: false,
+        }], enrollments: [] } });
+      }
+      return Promise.resolve({ data: [] });
+    });
+    show();
+    expect(await screen.findByText('Скорость')).toBeInTheDocument();
+    expect(screen.queryByText('kin-one')).toBeNull();
+    useUserStore.getState().setLanguage('ENG');
+  });
+
+  it('says so when it could not load', async () => {
+    api.get.mockImplementation((url) => (url === '/gamification/profile/full/'
+      ? Promise.reject(new Error('offline'))
+      : Promise.resolve({ data: [] })));
+    show();
+    expect(await screen.findByText(/could not load/i)).toBeInTheDocument();
+  });
+});

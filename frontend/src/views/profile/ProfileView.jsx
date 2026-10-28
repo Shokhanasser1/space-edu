@@ -119,7 +119,9 @@ export default function ProfileView() {
   const [toast, setToast] = useState(null);
 
   const [fullProfile, setFullProfile] = useState(null);
-  const [progress, setProgress] = useState({ lessons: [], enrollments: [] });
+  // null until the server has answered: the local lesson list is only the
+  // fallback for a server that did not.
+  const [progress, setProgress] = useState(null);
   const [allBadges, setAllBadges] = useState([]);
   const [showBadgesModal, setShowBadgesModal] = useState(false);
   
@@ -151,6 +153,11 @@ export default function ProfileView() {
     ]);
 
     const [fpRes, pRes, bRes] = results;
+
+    // allSettled never throws, so "Data refreshed" showed when every request
+    // had failed and "Could not load" never showed at all. Without the profile
+    // itself there is nothing to show.
+    if (fpRes.status === 'rejected') throw fpRes.reason;
 
     if (fpRes.status === 'fulfilled') {
       const data = fpRes.value.data;
@@ -315,9 +322,12 @@ export default function ProfileView() {
 
   const apiLessons = progress?.lessons ?? [];
   
-  // Merge API lessons with local ones that might not be in API yet
+  // The server's list when there is one. The local list is keyed on route ids
+  // ("physics-1--0-"), not slugs, so merging the two showed every lesson twice
+  // until a reload; it is only the fallback for a server that did not answer.
   const completedLessons = useMemo(() => {
     const combined = [...apiLessons];
+    if (progress) return combined.filter((l) => l.score != null);
     localCompletedSlugs.forEach(slug => {
       if (!combined.some(l => l.lesson_slug === slug)) {
         combined.push({
@@ -331,7 +341,14 @@ export default function ProfileView() {
       }
     });
     return combined.filter((l) => l.score != null);
-  }, [apiLessons, localCompletedSlugs]);
+  }, [progress, apiLessons, localCompletedSlugs]);
+
+  // A name, in the reader's language: the rows used to show raw slugs.
+  const lessonTitle = (row) =>
+    lessonMetadata[row.lesson_slug]?.title
+    || { en: row.lesson_name_en, ru: row.lesson_name_ru }[i18n.language]
+    || row.lesson_name
+    || row.lesson_slug;
 
   return (
     <div className="min-h-screen pt-24 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto relative">
@@ -742,7 +759,7 @@ export default function ProfileView() {
               <div className="space-y-3">
                 {completedLessons.slice(0, 3).map((row) => {
                   const meta = lessonMetadata[row.lesson_slug];
-                  const displayTitle = meta?.title || row.lesson_slug;
+                  const displayTitle = lessonTitle(row);
                   const displaySubject = meta?.subject || (row.local_only ? 'Lesson' : 'Academy');
                   
                   return (
@@ -955,7 +972,7 @@ export default function ProfileView() {
             <div className="space-y-4">
               {completedLessons.map((row) => {
                 const meta = lessonMetadata[row.lesson_slug];
-                const displayTitle = meta?.title || row.lesson_slug;
+                const displayTitle = lessonTitle(row);
                 const displaySubject = meta?.subject || (row.local_only ? 'Lesson' : 'Academy');
                 return (
                   <div key={row.lesson_slug} className="rounded-2xl border border-white/10 bg-white/5 p-5 flex items-center justify-between gap-4">

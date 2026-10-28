@@ -299,3 +299,23 @@ class GroupHeadingTests(TestCase):
         record_lesson_test(user, group.id, 100)
 
         self.assertFalse(UserLessonProgress.objects.filter(user=user, lesson=group).exists())
+
+
+class ProgressNamesTests(TestCase):
+    """Audit, 28 October 2026: the profile's "completed lessons" listed raw
+    slugs ("kin-one") -- the progress rows carried no name to show."""
+
+    def test_each_row_carries_the_lesson_name_in_three_languages(self):
+        user = User.objects.create_user(username='u', email='u@e.com', password='x')
+        client = APIClient()
+        client.force_authenticate(user)
+        sphere = Sphere.objects.create(slug='physics', title='Fizika', title_en='Physics')
+        topic = Topic.objects.create(sphere=sphere, slug='t', title='T')
+        TopicLesson.objects.create(topic=topic, slug='kin-one', name='Tezlik',
+                                   name_en='Speed', name_ru='Скорость')
+        client.post('/api/v1/progress/lessons/kin-one/complete/', {'score': 100}, format='json')
+
+        row = client.get('/api/v1/progress/').data['lessons'][0]
+
+        self.assertEqual((row['lesson_name'], row['lesson_name_en'], row['lesson_name_ru']),
+                         ('Tezlik', 'Speed', 'Скорость'))
