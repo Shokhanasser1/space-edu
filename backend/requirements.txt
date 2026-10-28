@@ -13,6 +13,8 @@ psycopg2-binary==2.9.*
 # and the admin's static files served from inside the app.
 gunicorn==23.*
 whitenoise==6.*
+# Django's Redis cache backend imports it; REDIS_URL is set on the server.
+redis==6.*
 
 # Verifying the ID token Google's sign-in button hands the browser: signature,
 # expiry, and the audience it was minted for. Fifteen lines of it are used, and

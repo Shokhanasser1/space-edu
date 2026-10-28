@@ -49,6 +49,18 @@ class CacheConfigTests(SimpleTestCase):
             'LocMemCache is per-process; sign-in codes and throttles break with >1 worker',
         )
 
+    def test_the_redis_client_is_installed(self):
+        """First deploy, 28 October 2026: REDIS_URL is set on the server, and
+        Django's Redis backend imports the `redis` package -- which no
+        requirements file listed, because no laptop had ever set REDIS_URL.
+        Every throttled request was a 500."""
+        import importlib
+
+        from django.core.cache.backends.redis import RedisCacheClient
+
+        importlib.import_module('redis')
+        self.assertTrue(RedisCacheClient)
+
 
 class ThrottleConfigTests(SimpleTestCase):
     """Findings: NUM_PROXIES unset made throttling bypassable via a spoofed
