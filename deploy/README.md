@@ -37,7 +37,10 @@ Django's `/admin/` is not served: it has no limit on sign-in attempts. Staff use
 3. `bash deploy/deploy.sh env` — writes `/opt/uzcosmos/.env` from
    `backend/.env`, with a new `SECRET_KEY` and the domain filled into
    `ALLOWED_HOSTS`, `CORS_ALLOWED_ORIGINS`, `CSRF_TRUSTED_ORIGINS` and
-   `FRONTEND_URL`. Re-running it keeps the server's key.
+   `FRONTEND_URL`. Re-running it keeps the server's key. Anything that must
+   differ on the server goes in `backend/.env.production` (git-ignored), which
+   wins over `backend/.env` -- above all `DB_URL`: the site should not run on
+   the database credentials every developer holds in their `.env`.
 4. `bash deploy/deploy.sh` — the first release.
 5. In Google Cloud Console, add `https://<DOMAIN>` to the OAuth client's
    authorised JavaScript origins, or the Google button refuses to load.

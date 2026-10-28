@@ -25,18 +25,27 @@ setup)
 
 env)
   src=backend/.env
+  # Values that must differ on the server -- above all DB_URL, so the site
+  # does not run on the database credentials every developer holds. Optional
+  # and git-ignored (.env.*); what it sets wins over backend/.env.
+  prod=backend/.env.production
   [ -f "$src" ] || { echo "No $src to copy from." >&2; exit 1; }
+  vars() { if [ -f "$1" ]; then tr -d '\r' < "$1" | grep -E '^[A-Za-z_][A-Za-z0-9_]*='; fi; true; }
   # Compose would read ${...} inside a value as a variable and substitute it.
-  if tr -d '\r' < "$src" | grep -E '^[A-Za-z_][A-Za-z0-9_]*=' | cut -d= -f2- | grep -q '\$'; then
-    echo "A value in $src contains \$, which compose would substitute. Change it first." >&2
+  if { vars "$src"; vars "$prod"; } | cut -d= -f2- | grep -q '\$'; then
+    echo "A value in $src or $prod contains \$, which compose would substitute. Change it first." >&2
     exit 1
   fi
+  server_only='SECRET_KEY|DEBUG|ALLOWED_HOSTS|CORS_ALLOWED_ORIGINS|CORS_ALLOWED_ORIGIN_REGEXES|CSRF_TRUSTED_ORIGINS|FRONTEND_URL|REDIS_URL|TEST_DB_URL|NUM_PROXIES|DJANGO_SETTINGS_MODULE'
+  overridden="$(vars "$prod" | cut -d= -f1 | paste -sd'|' -)"
   # Everything from the laptop's file except what has to differ on a server.
   # The values go file -> ssh -> file; none of them is printed.
   {
-    echo "# Written by deploy/deploy.sh env from backend/.env, $(date -u +%F). Edit there and re-run."
-    tr -d '\r' < "$src" | grep -E '^[A-Za-z_][A-Za-z0-9_]*=' \
-      | grep -vE '^(SECRET_KEY|DEBUG|ALLOWED_HOSTS|CORS_ALLOWED_ORIGINS|CORS_ALLOWED_ORIGIN_REGEXES|CSRF_TRUSTED_ORIGINS|FRONTEND_URL|REDIS_URL|TEST_DB_URL|NUM_PROXIES|DJANGO_SETTINGS_MODULE)='
+    echo "# Written by deploy/deploy.sh env from backend/.env (+ .env.production), $(date -u +%F). Edit there and re-run."
+    # `|| true`: grep -v with nothing left to print exits 1, and under set -e
+    # that would end this block before the lines below are written.
+    vars "$src" | grep -vE "^($server_only${overridden:+|$overridden})=" || true
+    vars "$prod" | grep -vE "^($server_only)=" || true
     echo "SECRET_KEY=$(python -c 'import secrets; print(secrets.token_urlsafe(64))' | tr -d '\r')"
     echo "ALLOWED_HOSTS=$DOMAIN"
     echo "CORS_ALLOWED_ORIGINS=https://$DOMAIN"
