@@ -1110,3 +1110,12 @@ class DailyChallengeMidnightTests(TestCase):
         with patch('apps.challenges.views.within_midnight_grace', return_value=False):
             r = self._submit(self.yesterday_qs, 2, challenge_date=str(self.yesterday.date))
         self.assertEqual(r.data['result']['score'], 0)
+
+    def test_a_date_alone_does_not_buy_yesterdays_completion_bonus(self):
+        """Only a page that showed yesterday's questions can name them; a
+        request carrying the date and anything else is today's."""
+        from unittest.mock import patch
+
+        with patch('apps.challenges.views.within_midnight_grace', return_value=True):
+            r = self._submit(self.today_qs[:1], 3, challenge_date=str(self.yesterday.date))
+        self.assertEqual(r.data['result']['date'], str(timezone.localdate()))

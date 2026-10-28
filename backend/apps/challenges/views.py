@@ -109,10 +109,16 @@ class SubmitChallengeView(APIView):
         # midnight. It was always graded against "today", so a pupil who
         # started at 23:58 and sent at 00:01 had every answer ignored, scored
         # 0 and lost the new day's challenge too (audit, 28 October 2026).
+        # Only a page that showed yesterday's questions can name exactly them:
+        # the date alone would buy yesterday's completion bonus for anyone who
+        # sends it in those minutes.
         challenge = DailyChallenge.get_or_create_today()
         asked = serializer.validated_data.get('challenge_date')
         if asked == challenge.date - timezone.timedelta(days=1) and within_midnight_grace():
-            challenge = DailyChallenge.objects.filter(date=asked).first() or challenge
+            yesterday = DailyChallenge.objects.filter(date=asked).first()
+            sent = {a['question_id'] for a in serializer.validated_data['answers']}
+            if yesterday and sent == set(yesterday.questions.values_list('id', flat=True)):
+                challenge = yesterday
 
         if UserChallengeResult.objects.filter(user=request.user, challenge=challenge).exists():
             return Response(

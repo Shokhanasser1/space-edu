@@ -31,7 +31,10 @@ def record_lesson_test(user, lesson_id, percentage):
         if percentage < MASTERY_PERCENT:
             return
         lesson = TopicLesson.objects.select_related('topic').get(pk=lesson_id)
-        progress = complete_lesson(user, lesson)['progress']
+        result = complete_lesson(user, lesson)
+        if result is None:
+            return
+        progress = result['progress']
     if percentage <= progress.score:
         return
     progress.score = percentage
@@ -66,8 +69,15 @@ def finish_topic_if_done(user, topic, profile):
 
 def complete_lesson(user, lesson):
     """Mark a lesson done and pay for it the first time. Used by the complete
-    button and by a lesson test passed before the button was pressed."""
+    button and by a lesson test passed before the button was pressed.
+
+    None for a group node: a heading, not a lesson, and every caller has to
+    get that rule, not only the one that thought to check.
+    """
     from apps.gamification.models import UserGamificationProfile
+
+    if lesson.children.exists():
+        return None
 
     with transaction.atomic():
         progress, created = UserLessonProgress.objects.get_or_create(

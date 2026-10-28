@@ -281,3 +281,21 @@ class LessonWithoutProfileTests(TestCase):
 
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.data['xp_earned'], 25)
+
+
+class GroupHeadingTests(TestCase):
+    """A group node is a heading, not a lesson; LessonCompleteView refuses
+    it, and a lesson test passed on one must not complete it either."""
+
+    def test_a_test_on_a_group_heading_completes_nothing(self):
+        from .views import record_lesson_test
+
+        user = User.objects.create_user(username='u', email='u@e.com', password='x')
+        sphere = Sphere.objects.create(slug='physics', title='Fizika', title_en='Physics')
+        topic = Topic.objects.create(sphere=sphere, slug='t', title='T')
+        group = TopicLesson.objects.create(topic=topic, slug='group', name='Group')
+        TopicLesson.objects.create(topic=topic, slug='part', name='Part', parent=group)
+
+        record_lesson_test(user, group.id, 100)
+
+        self.assertFalse(UserLessonProgress.objects.filter(user=user, lesson=group).exists())
