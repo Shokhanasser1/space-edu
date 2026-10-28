@@ -38,6 +38,7 @@ const EXACT = new Map([
   ['This account has no e-mail address to confirm.', ['serverErrors', 'noEmailToConfirm']],
   ['No address change was asked for.', ['serverErrors', 'noEmailChange']],
   ['That address was taken while you were confirming it.', ['serverErrors', 'emailTaken']],
+  ['Too many messages have gone to these addresses. Try again in an hour.', ['serverErrors', 'mailBudgetSpent']],
   ['No sign-in was received from Google.', ['loginPage', 'googleFailed']],
   ['That Google sign-in could not be verified.', ['loginPage', 'googleFailed']],
   ['Signing in with Google is not set up on this server.', ['loginPage', 'googleUnavailable']],

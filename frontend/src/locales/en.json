@@ -2981,6 +2981,7 @@
     }
   },
   "serverErrors": {
+    "mailBudgetSpent": "Too many messages have gone to these addresses. Try again in an hour.",
     "emailTaken": "This e-mail address is already registered. Sign in instead, or reset your password.",
     "codeInvalid": "That code is wrong or has expired. Ask for a new one.",
     "codeFormat": "The code is six digits.",

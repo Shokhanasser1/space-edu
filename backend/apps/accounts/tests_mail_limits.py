@@ -58,10 +58,11 @@ class MailBudgetTests(TestCase):
     def test_codes_cannot_crowd_out_a_security_notice(self):
         """Filling a person's hourly budget with codes would otherwise silence
         the message telling them their address is being changed."""
-        from .emails import send_email_change_notice
+        from .emails import reserve_notice, send_email_change_notice
 
         for _ in range(8):
             send_verification_code('owner@example.com')
+        self.assertTrue(reserve_notice('owner@example.com'))
         send_email_change_notice('owner@example.com', 'thief@example.com')
         self.assertEqual(mail.outbox[-1].to, ['owner@example.com'])
         self.assertIn('thief@example.com', mail.outbox[-1].body)
@@ -83,11 +84,10 @@ class MailBudgetTests(TestCase):
     def test_notices_have_a_budget_of_their_own(self):
         """Never held back by codes, but not unlimited either: changing the
         address over and over would otherwise mail the old one without end."""
-        from .emails import NOTICES_PER_HOUR, send_email_change_notice
+        from .emails import NOTICES_PER_HOUR, reserve_notice
 
-        for n in range(NOTICES_PER_HOUR + 3):
-            send_email_change_notice('owner@example.com', f'new{n}@example.com')
-        self.assertEqual(len(mail.outbox), NOTICES_PER_HOUR)
+        granted = [reserve_notice('owner@example.com') for _ in range(NOTICES_PER_HOUR + 3)]
+        self.assertEqual(granted.count(True), NOTICES_PER_HOUR)
 
 
 @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
@@ -128,3 +128,37 @@ class AddressChangeNoticeTests(TestCase):
     def test_an_unconfirmed_address_is_not_mailed(self):
         self._change('new@example.com')
         self.assertEqual(self._notices(), [])
+
+    def test_no_change_is_left_pending_when_its_code_was_not_sent(self):
+        """A held-back code left the request standing: the address went into
+        pending_email, nothing was sent, and a change code issued for that
+        address on another account -- codes are keyed on the address -- could
+        then complete it with no notice to the owner."""
+        from .emails import PER_RECIPIENT_PER_HOUR
+
+        self.confirm()
+        for _ in range(PER_RECIPIENT_PER_HOUR):
+            send_verification_code('new@example.com')
+        mail.outbox.clear()
+
+        r = self._change('new@example.com')
+
+        self.assertEqual(r.status_code, 429)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.pending_email, '')
+        self.assertEqual(mail.outbox, [])
+
+    def test_no_change_goes_ahead_that_the_owner_cannot_be_told_about(self):
+        from .emails import NOTICES_PER_HOUR
+
+        self.confirm()
+        for n in range(NOTICES_PER_HOUR):
+            self.assertEqual(self._change(f'new{n}@example.com').status_code, 200)
+        mail.outbox.clear()
+
+        r = self._change('one-more@example.com')
+
+        self.assertEqual(r.status_code, 429)
+        self.user.refresh_from_db()
+        self.assertNotEqual(self.user.pending_email, 'one-more@example.com')
+        self.assertEqual(mail.outbox, [])

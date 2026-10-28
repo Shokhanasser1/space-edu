@@ -43,7 +43,8 @@ logger = logging.getLogger(__name__)
 #
 # A security notice (an address being changed) has a per-mailbox bucket of its
 # own, so filling a person's budget with codes cannot silence the warning, and
-# it still counts toward the day.
+# it still counts toward the day. It is reserved before the change is accepted
+# (`reserve_notice`), and a change that cannot be announced is refused.
 PER_RECIPIENT_PER_HOUR = 5
 NOTICES_PER_HOUR = 3
 NEW_ADDRESS_SHARE = 0.7
@@ -211,5 +212,14 @@ def send_email_change_notice(old_email, new_email):
         '',
         '— UZ COSMOS',
     ])
-    if _within_budget(old_email, None):
-        _deliver('UZ COSMOS — your address is being changed', body, old_email)
+    _deliver('UZ COSMOS — your address is being changed', body, old_email)
+
+
+def reserve_notice(old_email):
+    """Take the notice's place in the budgets before the change it warns about.
+
+    The caller refuses the change when this is False: an address change the
+    owner cannot be told about must not go ahead silently. Reserved first, so
+    a notice is never the thing that finds the budget spent afterwards.
+    """
+    return _within_budget(old_email, None)

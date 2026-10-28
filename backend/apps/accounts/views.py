@@ -20,6 +20,7 @@ from .email_code import (
 )
 from .emails import (
     send_email_change_code,
+    reserve_notice,
     send_email_change_notice,
     send_password_reset_code,
     send_sign_in_code,
@@ -503,6 +504,9 @@ class PasswordChangeView(APIView):
         })
 
 
+MAIL_BUDGET_SPENT = {'detail': 'Too many messages have gone to these addresses. Try again in an hour.'}
+
+
 class EmailChangeRequestView(APIView):
     """POST { new_email, current_password } — start moving the account.
 
@@ -555,16 +559,25 @@ class EmailChangeRequestView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        # The notice goes to the address being left, with no code in it and
+        # nothing to click: somebody finding out their address is being moved
+        # while they can still do something about it is the whole of it. Only
+        # to a confirmed address -- an account can be registered on somebody
+        # else's, and this would mail them on demand.
+        #
+        # Both messages are secured before anything changes. A change the owner
+        # cannot be told about, or whose code was not sent, is refused rather
+        # than left pending: codes are keyed on the address, so one issued for
+        # it on another account could otherwise complete it in silence.
+        notify = bool(user.email and user.is_email_verified)
+        if notify and not reserve_notice(user.email):
+            return Response(MAIL_BUDGET_SPENT, status=status.HTTP_429_TOO_MANY_REQUESTS)
+        if send_email_change_code(new_email) is None:
+            return Response(MAIL_BUDGET_SPENT, status=status.HTTP_429_TOO_MANY_REQUESTS)
+
         user.pending_email = new_email
         user.save(update_fields=['pending_email'])
-
-        issued = send_email_change_code(new_email)
-        if issued is not None and user.email and user.is_email_verified:
-            # To the address being left, with no code in it and nothing to
-            # click. Somebody finding out their address is being moved while
-            # they can still do something about it is the whole of this message.
-            # Only to a confirmed address: an account can be registered on
-            # somebody else's address, and this would mail them on demand.
+        if notify:
             send_email_change_notice(user.email, new_email)
 
         return Response({'pending_email': new_email})

@@ -2981,6 +2981,7 @@
     }
   },
   "serverErrors": {
+    "mailBudgetSpent": "Bu manzillarga juda ko‘p xat yuborildi. Bir soatdan keyin urinib ko‘ring.",
     "emailTaken": "Bu elektron pochta allaqachon ro'yxatdan o'tgan. Kiring yoki parolni tiklang.",
     "codeInvalid": "Kod noto'g'ri yoki eskirgan. Yangisini so'rang.",
     "codeFormat": "Kod olti raqamdan iborat.",
