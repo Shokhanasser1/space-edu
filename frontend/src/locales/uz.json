@@ -2571,6 +2571,11 @@
     }
   },
   "profilePage": {
+    "missionDaily": "Kunlik",
+    "missionClaimed": "Olindi",
+    "missionInProgress": "Jarayonda",
+    "missionRewardClaimed": "Mukofot olindi! +{fuel} yoqilg‘i",
+    "missionClaimFailed": "Mukofotni olib bo‘lmadi.",
     "securityTitle": "Hisob",
     "changePassword": "Parolni o‘zgartirish",
     "currentPassword": "Joriy parol",

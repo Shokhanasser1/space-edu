@@ -176,7 +176,17 @@ describe('a mission', () => {
     missions([{ ...mission({ title_en: 'Three days running' }), progress: 3 }]);
     show();
     await screen.findByText('Three days running');
-    expect(screen.getByRole('button', { name: 'Claim reward' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Claim Reward' })).toBeEnabled();
+  });
+
+  it('is shown in the reader language, not always in English', async () => {
+    const { useUserStore } = await import('@/store/useUserStore');
+    useUserStore.getState().setLanguage('RUS');
+    missions([{ ...mission({ title_en: 'Three days running', title_ru: 'Три дня подряд' }), progress: 3 }]);
+    show();
+    expect(await screen.findByText('Три дня подряд')).toBeInTheDocument();
+    expect(screen.queryByText('Three days running')).toBeNull();
+    useUserStore.getState().setLanguage('ENG');
   });
 
   it('is not offered for a lesson finished on another day', async () => {
@@ -186,6 +196,6 @@ describe('a mission', () => {
     }]);
     show();
     await screen.findByText('A lesson today');
-    expect(screen.queryByRole('button', { name: 'Claim reward' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Claim Reward' })).toBeNull();
   });
 });

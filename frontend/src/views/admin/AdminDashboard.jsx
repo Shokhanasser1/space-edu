@@ -297,7 +297,7 @@ function ChatTab() {
   return (
     <div>
       <ErrorNote error={error} onDismiss={() => setError(null)} />
-      <h2 className="text-2xl font-black mb-6">{t('admin', 'chatRooms')}</h2>
+      <h2 className="text-2xl font-black mb-6">{t('admin', 'chat')}</h2>
       <div className="flex gap-3 mb-6">
         <input value={name} onChange={e => setName(e.target.value)} placeholder={t('admin', 'roomName')} className="bg-slate-50 dark:bg-white/5 border border-slate-900/10 dark:border-white/10 rounded-xl px-4 py-2 text-sm flex-1 focus:outline-none focus:border-violet/40 text-slate-900 dark:text-white" />
         <input value={slug} onChange={e => setSlug(e.target.value)} placeholder={t('admin', 'slug')} className="bg-slate-50 dark:bg-white/5 border border-slate-900/10 dark:border-white/10 rounded-xl px-4 py-2 text-sm w-40 focus:outline-none focus:border-violet/40 text-slate-900 dark:text-white" />

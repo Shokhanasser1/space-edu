@@ -27,6 +27,9 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useGamificationStore } from '@/store/useGamificationStore';
 import { useTranslation } from '@/hooks/useTranslation';
 
+// The reward's name in the reader's language; it was English for everyone.
+const rewardTitle = (reward, lang) => reward[`title_${lang}`] || reward.title_en;
+
 // ── Icon mapping (backend sends icon string, we map to Lucide component) ─────
 const ICON_MAP = {
   BookOpen, Code2, GraduationCap, MessageSquare, Trophy,
@@ -98,7 +101,7 @@ function Toast({ message, type, onClose }) {
 function RewardCard({ reward, owned, onPurchase, purchasing, userCoins }) {
   // `t` lives in RewardsStoreView further down this file; it was never in
   // scope here, so every render of this component threw ReferenceError.
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const tier = TIER_CONFIG[reward.tier] || TIER_CONFIG.common;
   const Icon = ICON_MAP[reward.icon] || Star;
@@ -129,7 +132,7 @@ function RewardCard({ reward, owned, onPurchase, purchasing, userCoins }) {
 
         {/* Title & description */}
         <h3 className="text-[15px] font-bold text-white mb-1.5 leading-tight group-hover:text-white transition-colors">
-          {reward.title_en}
+          {rewardTitle(reward, i18n.language)}
         </h3>
         <p className="text-[12px] text-white/45 leading-relaxed mb-4 line-clamp-2 flex-1">
           {reward.description_en}
@@ -186,7 +189,7 @@ function RewardCard({ reward, owned, onPurchase, purchasing, userCoins }) {
 
 // ── Confirmation Modal ────────────────────────────────────────────────────────
 function ConfirmModal({ reward, userCoins, onConfirm, onCancel, purchasing }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   if (!reward) return null;
   const tier = TIER_CONFIG[reward.tier] || TIER_CONFIG.common;
@@ -211,7 +214,7 @@ function ConfirmModal({ reward, userCoins, onConfirm, onCancel, purchasing }) {
           <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${tier.color} flex items-center justify-center mx-auto mb-4 shadow-xl ring-2 ${tier.ring}`}>
             <Icon className="w-8 h-8 text-white" />
           </div>
-          <h3 className="text-xl font-bold text-white mb-1">{t('store', 'unlockPrompt').replace('{item}', reward.title_en)}</h3>
+          <h3 className="text-xl font-bold text-white mb-1">{t('store', 'unlockPrompt').replace('{item}', rewardTitle(reward, i18n.language))}</h3>
           <p className="text-sm text-white/50">{reward.description_en}</p>
         </div>
 
@@ -332,7 +335,7 @@ export default function RewardsStoreView() {
 
       setPurchasedSlugs((prev) => new Set([...prev, reward.slug]));
       setConfirmReward(null);
-      showToast(t('store', 'purchaseSuccess').replace('{item}', reward.title_en), 'success');
+      showToast(t('store', 'purchaseSuccess').replace('{item}', rewardTitle(reward, i18n.language)), 'success');
     } catch (err) {
       showToast(err.response?.data?.detail || t('store', 'purchaseFailed'), 'error');
     } finally {

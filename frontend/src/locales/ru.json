@@ -2571,6 +2571,11 @@
     }
   },
   "profilePage": {
+    "missionDaily": "Ежедневная",
+    "missionClaimed": "Получено",
+    "missionInProgress": "В процессе",
+    "missionRewardClaimed": "Награда получена! +{fuel} топлива",
+    "missionClaimFailed": "Не удалось получить награду.",
     "securityTitle": "Аккаунт",
     "changePassword": "Сменить пароль",
     "currentPassword": "Текущий пароль",

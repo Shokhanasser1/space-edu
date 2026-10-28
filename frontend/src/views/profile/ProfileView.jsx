@@ -266,8 +266,9 @@ export default function ProfileView() {
       return {
         id: m.id,
         slug: m.slug,
-        title: m.title_en || m.title_uz,
-        description: m.description_en || m.description_uz,
+        // In the reader's language; it was English for everyone.
+        title: m[`title_${i18n.language}`] || m.title_en,
+        description: m[`description_${i18n.language}`] || m.description_en,
         reward_fuel: m.reward_fuel,
         reward_xp: m.reward_xp,
         progress: item.is_completed ? 100 : progress,
@@ -276,7 +277,7 @@ export default function ProfileView() {
         mission_type: m.mission_type,
       };
     });
-  }, [apiMissions]);
+  }, [apiMissions, i18n.language]);
 
   const claimMission = async (mission) => {
     if (mission.is_completed) return;
@@ -285,9 +286,9 @@ export default function ProfileView() {
     try {
       await api.post('/gamification/missions/claim/', { mission_id: mission.id });
       await fetchAll();
-      showToast(`Reward claimed! +${mission.reward_fuel} fuel`);
+      showToast(t('profilePage', 'missionRewardClaimed', { fuel: mission.reward_fuel }));
     } catch {
-      showToast('Failed to claim reward.', true);
+      showToast(t('profilePage', 'missionClaimFailed'), true);
     }
   };
 
@@ -860,7 +861,7 @@ export default function ProfileView() {
                         {mission.title}
                       </p>
                       <span className={`text-xs font-bold ${claimed ? 'text-emerald-400' : 'text-violet-300'}`}>
-                        {isDaily ? 'Daily' : claimed ? 'Done' : `${progressVal}%`}
+                        {isDaily ? t('profilePage', 'missionDaily') : claimed ? t('profilePage', 'done') : `${progressVal}%`}
                       </span>
                     </div>
                     {!isDaily && !claimed && (
@@ -893,7 +894,7 @@ export default function ProfileView() {
                               : 'border border-white/20 bg-white/5 opacity-50 cursor-not-allowed'
                         }`}
                       >
-                        {claimed ? 'Claimed' : canClaim ? 'Claim reward' : 'In progress'}
+                        {claimed ? t('profilePage', 'missionClaimed') : canClaim ? t('profilePage', 'claimReward') : t('profilePage', 'missionInProgress')}
                       </button>
                     </div>
                   </div>
@@ -1039,7 +1040,7 @@ export default function ProfileView() {
                       </div>
                       <div className="text-right shrink-0">
                         <span className={`text-xs font-black uppercase tracking-widest ${claimed ? 'text-emerald-400' : 'text-violet-400'}`}>
-                          {isDaily ? 'Daily' : claimed ? 'Archived' : `${progressVal}%`}
+                          {isDaily ? t('profilePage', 'missionDaily') : claimed ? t('profilePage', 'missionClaimed') : `${progressVal}%`}
                         </span>
                       </div>
                     </div>
@@ -1067,7 +1068,7 @@ export default function ProfileView() {
                               : 'bg-white/5 text-white/20'
                         }`}
                       >
-                        {claimed ? 'Claimed' : canClaim ? 'Claim Now' : 'In Progress'}
+                        {claimed ? t('profilePage', 'missionClaimed') : canClaim ? t('profilePage', 'claimReward') : t('profilePage', 'missionInProgress')}
                       </button>
                     </div>
                   </div>
