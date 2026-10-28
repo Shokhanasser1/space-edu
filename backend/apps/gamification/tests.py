@@ -754,3 +754,52 @@ class MissionProgressInProfileTests(TestCase):
         Mission.objects.create(slug='lesson-today', title_en='A lesson today', description_en='x',
                                mission_type='lesson', target_value=1, is_daily=True)
         self.assertEqual(self._progress('lesson-today'), 0)
+
+
+class MasteryAndBadgeTimingTests(TestCase):
+    """Audit, 28 October 2026: a daily "master a lesson" mission counted
+    lessons *finished* today, and XP badges were only checked when a lesson
+    was completed -- XP from quizzes never earned one."""
+
+    def setUp(self):
+        from apps.courses.models import Sphere, Topic, TopicLesson
+
+        cache.clear()
+        self.user = User.objects.create_user(username='alice', email='a@e.com', password='x')
+        self.client = APIClient()
+        self.client.force_authenticate(self.user)
+        sphere = Sphere.objects.create(slug='physics', title='Fizika', title_en='Physics')
+        topic = Topic.objects.create(sphere=sphere, slug='t', title='T')
+        self.lesson = TopicLesson.objects.create(topic=topic, slug='l', name='L')
+
+    def test_mastery_earned_today_on_an_older_lesson_counts_today(self):
+        from apps.progress.models import UserLessonProgress
+        from apps.progress.views import record_lesson_test
+
+        from .views import mission_progress
+
+        self.client.post('/api/v1/progress/lessons/l/complete/', {'score': 100}, format='json')
+        UserLessonProgress.objects.filter(user=self.user).update(
+            completed_at=timezone.now() - timezone.timedelta(days=1))
+        record_lesson_test(self.user, self.lesson.id, 100)
+
+        mission = Mission.objects.create(slug='m', title_en='Master one today', description_en='d',
+                                         mission_type='mastery', target_value=1, is_daily=True)
+        self.assertEqual(mission_progress(self.user, mission), 1)
+
+    def test_xp_from_a_quiz_earns_the_xp_badge(self):
+        from apps.challenges.models import ChallengeQuestion
+
+        from .models import Badge, UserBadge
+
+        Badge.objects.create(slug='first-steps', title_en='First', title_uz='F', title_ru='F',
+                             description_en='d', description_uz='d', description_ru='d',
+                             icon='x', condition_type='xp_threshold', condition_value=50)
+        for i in range(3):
+            ChallengeQuestion.objects.create(category='astronomy', difficulty='easy',
+                                             question=f'Q{i}', options=['a', 'b', 'c', 'd'], correct_answer=0)
+        r = self.client.post('/api/v1/challenges/quiz/start/', {'category': 'astronomy', 'count': 10}, format='json')
+        answers = [{'question_id': q['id'], 'selected': 0} for q in r.data['questions']]
+        self.client.post(f'/api/v1/challenges/quiz/{r.data["session_id"]}/submit/', {'answers': answers}, format='json')
+
+        self.assertTrue(UserBadge.objects.filter(user=self.user, badge__slug='first-steps').exists())

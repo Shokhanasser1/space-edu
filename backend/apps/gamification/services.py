@@ -1,7 +1,18 @@
 from .models import Badge, UserBadge
 
 
-def check_and_award_badges(user, profile, lesson_count):
+def check_and_award_badges(user, profile, lesson_count=None):
+    """Award every badge the user now qualifies for.
+
+    Called after anything that pays XP or advances the streak -- it used to run
+    on lesson completion only, so XP from quizzes, the daily challenge and
+    missions never earned an XP badge until the next lesson.
+    """
+    if lesson_count is None:
+        from apps.progress.models import UserLessonProgress
+
+        lesson_count = UserLessonProgress.objects.filter(user=user).count()
+    profile.refresh_from_db(fields=['xp', 'streak', 'last_play_date'])
     existing_ids = set(UserBadge.objects.filter(user=user).values_list('badge_id', flat=True))
     candidates = Badge.objects.exclude(id__in=existing_ids)
 
@@ -20,7 +31,11 @@ def check_and_award_badges(user, profile, lesson_count):
             earned = False
 
         if earned:
-            UserBadge.objects.create(user=user, badge=badge)
-            new_badges.append(badge.slug)
+            # get_or_create: two requests finishing at once both found the badge
+            # missing, and the second create was an IntegrityError -- a 500
+            # after the XP had already been paid.
+            _, created = UserBadge.objects.get_or_create(user=user, badge=badge)
+            if created:
+                new_badges.append(badge.slug)
 
     return new_badges

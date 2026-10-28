@@ -20,6 +20,10 @@ class UserLessonProgress(models.Model):
     attempts = models.PositiveSmallIntegerField(default=0)
     is_mastered = models.BooleanField(default=False)
     completed_at = models.DateTimeField(auto_now=True)
+    # When the lesson test was first passed. `completed_at` is when the lesson
+    # was finished, so "master a lesson today" could not see mastery earned
+    # today on a lesson finished yesterday.
+    mastered_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         unique_together = ('user', 'lesson')

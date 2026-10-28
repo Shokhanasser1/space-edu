@@ -23,6 +23,7 @@ from .serializers import (
     UserRewardPurchaseSerializer,
     public_name,
 )
+from .services import check_and_award_badges
 
 
 class GamificationProfileView(generics.RetrieveAPIView):
@@ -330,7 +331,12 @@ def mission_progress(user, mission):
     if mission.mission_type == 'lesson':
         return lessons.count()
     if mission.mission_type == 'mastery':
-        return lessons.filter(is_mastered=True).count()
+        mastered = UserLessonProgress.objects.filter(user=user, is_mastered=True)
+        if mission.is_daily:
+            # Mastered today, not finished today: a lesson finished yesterday
+            # and mastered this morning counted for nothing.
+            mastered = mastered.filter(mastered_at__date=timezone.localdate())
+        return mastered.count()
     if mission.mission_type == 'inventory':
         return items.count()
     # 'custom' has no machine-checkable definition, so it cannot be self-claimed.
@@ -390,6 +396,7 @@ class MissionClaimView(APIView):
         profile, _ = UserGamificationProfile.objects.get_or_create(user=request.user)
         profile.add_xp(mission.reward_xp)
         profile.add_fuel(mission.reward_fuel)
+        check_and_award_badges(request.user, profile)
 
         return Response({
             'success': True,

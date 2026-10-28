@@ -6,6 +6,7 @@ removed `gamification/grant/` let the client name the amount, and one request
 produced level 101.
 """
 from django.test import TestCase
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
 
@@ -186,3 +187,97 @@ class StreakFromLessonsTests(TestCase):
         profile = self.user.gamification
         profile.refresh_from_db()
         self.assertEqual(profile.streak, 1)
+
+
+class LessonTestOrderTests(TestCase):
+    """Audit, 28 October 2026. The "Test" button sits on every lesson row, and
+    a test passed before the lesson was marked complete was thrown away --
+    there was no progress row to write it to -- and the 24-hour retake rule
+    then refused the same-day retake. A category quiz that happened to draw
+    one of the lesson's questions blocked the first real test the same way."""
+
+    def setUp(self):
+        from django.core.cache import cache
+
+        from apps.challenges.models import ChallengeQuestion
+
+        cache.clear()
+        self.user = User.objects.create_user(username='u', email='u@e.com', password='x')
+        self.client = APIClient()
+        self.client.force_authenticate(self.user)
+        sphere = Sphere.objects.create(slug='physics', title='Fizika', title_en='Physics')
+        self.topic = Topic.objects.create(sphere=sphere, slug='physics-kin', title='Kin', fuel_reward=50)
+        self.lesson = TopicLesson.objects.create(
+            topic=self.topic, slug='kin-one', name='One', xp_reward=25, fuel_reward=25)
+        TopicLesson.objects.create(topic=self.topic, slug='kin-two', name='Two')
+        self.questions = [ChallengeQuestion.objects.create(
+            category='physics', difficulty='easy', lesson=self.lesson,
+            question=f'Q{i}', options=['a', 'b', 'c', 'd'], correct_answer=1) for i in range(5)]
+
+    def _lesson_test(self, selected=1):
+        r = self.client.post('/api/v1/challenges/quiz/start/', {'lesson': 'kin-one'}, format='json')
+        answers = [{'question_id': q['id'], 'selected': selected} for q in r.data['questions']]
+        return self.client.post(
+            f'/api/v1/challenges/quiz/{r.data["session_id"]}/submit/', {'answers': answers}, format='json')
+
+    def _progress(self):
+        return UserLessonProgress.objects.filter(user=self.user, lesson=self.lesson).first()
+
+    def test_a_test_passed_before_completing_completes_and_masters_the_lesson(self):
+        self._lesson_test(selected=1)
+        progress = self._progress()
+        self.assertIsNotNone(progress)
+        self.assertTrue(progress.is_mastered)
+        self.assertIsNotNone(progress.mastered_at)
+
+    def test_the_lesson_xp_is_paid_once_whichever_comes_first(self):
+        self._lesson_test(selected=1)
+        r = self.client.post('/api/v1/progress/lessons/kin-one/complete/', {'score': 100}, format='json')
+        self.assertEqual(r.data['xp_earned'], 0)
+        self.user.gamification.refresh_from_db()
+        self.assertGreaterEqual(self.user.gamification.xp, 25)
+
+    def test_a_failed_test_before_completing_completes_nothing(self):
+        self._lesson_test(selected=0)
+        self.assertIsNone(self._progress())
+
+    def test_one_question_seen_in_a_category_quiz_does_not_block_the_lesson_test(self):
+        from apps.challenges.models import QuizSession
+
+        self.client.post('/api/v1/progress/lessons/kin-one/complete/', {'score': 100}, format='json')
+        seen = QuizSession.objects.create(
+            user=self.user, category='physics', total=1, is_completed=True,
+            completed_at=timezone.now())
+        seen.questions.set(self.questions[:1])
+
+        self._lesson_test(selected=1)
+        self.assertTrue(self._progress().is_mastered)
+
+    def test_a_retake_right_after_the_answers_were_shown_still_does_not_count(self):
+        self.client.post('/api/v1/progress/lessons/kin-one/complete/', {'score': 100}, format='json')
+        self._lesson_test(selected=0)          # failed: every answer is now on screen
+        self._lesson_test(selected=1)          # a copy of the key a minute later
+        self.assertFalse(self._progress().is_mastered)
+
+
+class LessonWithoutProfileTests(TestCase):
+    """An account from before profiles were created on sign-up has none, and
+    `request.user.gamification` raised after the progress row was written --
+    a 500, and the retry paid nothing."""
+
+    def test_the_first_completion_pays_and_creates_the_profile(self):
+        from apps.gamification.models import UserGamificationProfile
+
+        user = User.objects.create_user(username='old', email='old@e.com', password='x')
+        UserGamificationProfile.objects.filter(user=user).delete()
+        user = User.objects.get(pk=user.pk)
+        client = APIClient()
+        client.force_authenticate(user)
+        sphere = Sphere.objects.create(slug='physics', title='Fizika', title_en='Physics')
+        topic = Topic.objects.create(sphere=sphere, slug='t', title='T')
+        TopicLesson.objects.create(topic=topic, slug='l', name='L', xp_reward=25)
+
+        r = client.post('/api/v1/progress/lessons/l/complete/', {'score': 100}, format='json')
+
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.data['xp_earned'], 25)

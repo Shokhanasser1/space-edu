@@ -9,6 +9,7 @@ from rest_framework.views import APIView
 from apps.courses.models import TopicLesson
 from apps.gamification.models import UserGamificationProfile
 from apps.gamification.serializers import public_name
+from apps.gamification.services import check_and_award_badges
 from apps.permissions import AdminWriteOrReadOnly
 
 from .models import ChallengeQuestion, DailyChallenge, UserChallengeResult, UserStreak, QuizSession, QuizAnswer
@@ -163,6 +164,7 @@ class SubmitChallengeView(APIView):
         # The profile's streak, which nothing but a disabled button used to
         # advance (progress.views counts lessons the same way).
         profile.claim_daily_streak()
+        check_and_award_badges(request.user, profile)
 
         return Response({
             'result': UserChallengeResultSerializer(result).data,
@@ -405,6 +407,7 @@ class QuizSubmitView(APIView):
             if profile is not None:
                 profile.add_xp(xp_earned)
                 profile.claim_daily_streak()
+                check_and_award_badges(request.user, profile)
 
             # A lesson's whole test, graded here, is what masters the lesson --
             # not the score the lesson page used to report about itself. Whole:
@@ -416,15 +419,19 @@ class QuizSubmitView(APIView):
                 pool = ChallengeQuestion.objects.filter(lesson_id=lesson_id, is_active=True)
                 # Every submit answers with the correct indices, so a retake a
                 # minute later is a copy of the answer key. It counts once a day
-                # has passed since the answers were last shown.
-                answers_just_shown = QuizSession.objects.filter(
+                # has passed -- unless what was shown would not have been
+                # enough to pass anyway. Any recent quiz that touched the
+                # lesson used to block it, so one of its questions drawn into
+                # a category quiz cost the pupil a day (audit, 28 October 2026).
+                from apps.progress.views import MASTERY_PERCENT, record_lesson_test
+
+                recent = QuizSession.objects.filter(
                     user=request.user, is_completed=True,
                     completed_at__gte=timezone.now() - LESSON_RETAKE_COOLDOWN,
-                    questions__lesson_id=lesson_id,
-                ).exclude(pk=session.pk).exists()
-                if session.total >= pool.count() and not answers_just_shown:
-                    from apps.progress.views import record_lesson_test
-
+                ).exclude(pk=session.pk)
+                shown = pool.filter(quiz_sessions__in=recent).distinct().count()
+                key_was_shown = shown * 100 >= MASTERY_PERCENT * max(pool.count(), 1)
+                if session.total >= pool.count() and not key_was_shown:
                     record_lesson_test(request.user, lesson_id, round(percentage))
 
         session.refresh_from_db()
