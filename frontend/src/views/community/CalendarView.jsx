@@ -72,7 +72,10 @@ export default function CalendarView() {
       } catch { return text; }
     };
 
-    api.get('/events/')
+    // `upcoming=true`: page one of the plain list is the twenty oldest rows,
+    // and the future ones were filtered out of that here, so a table with
+    // enough past events left the calendar empty.
+    api.get('/events/', { params: { upcoming: 'true' } })
       .then(async ({ data }) => {
         const list = Array.isArray(data) ? data : data.results || [];
         const today = new Date().toISOString().slice(0, 10);

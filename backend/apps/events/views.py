@@ -1,3 +1,4 @@
+from django.utils import timezone
 from rest_framework import viewsets
 from rest_framework.exceptions import ValidationError
 
@@ -28,6 +29,11 @@ class SpaceEventViewSet(viewsets.ModelViewSet):
         historical = self.request.query_params.get('historical')
         if historical == 'true':
             qs = qs.filter(is_historical=True)
+        # What the calendar shows. It read page one -- twenty rows, oldest
+        # first -- and kept the future ones, so a table with twenty past
+        # events had nothing to come on it.
+        if self.request.query_params.get('upcoming') == 'true':
+            qs = qs.filter(is_historical=False, event_date__gte=timezone.localdate())
         return qs
 
     def get_serializer_class(self):
