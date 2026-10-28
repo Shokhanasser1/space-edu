@@ -18,6 +18,7 @@ class MarketItemSerializer(serializers.ModelSerializer):
     image_url = serializers.SerializerMethodField()
     category_name = serializers.CharField(source='category.name_en', read_only=True, default=None)
     is_discount_active = serializers.BooleanField(read_only=True)
+    effective_cost_fuel = serializers.IntegerField(read_only=True)
     effective_price = serializers.IntegerField(read_only=True)
     in_stock = serializers.BooleanField(read_only=True)
     # The client has to be able to tell a real product from a virtual one
@@ -32,6 +33,7 @@ class MarketItemSerializer(serializers.ModelSerializer):
             'item_type', 'category', 'category_name',
             'price', 'original_price', 'discount_percent',
             'discount_start', 'discount_end', 'is_discount_active', 'effective_price',
+            'effective_cost_fuel',
             'cost_fuel', 'is_bestseller', 'is_new', 'is_featured', 'is_limited',
             'external_url', 'merchant', 'external_price', 'currency', 'is_external',
             'stock', 'sold_count', 'in_stock',

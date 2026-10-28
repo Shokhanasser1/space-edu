@@ -466,3 +466,39 @@ class BoostsAreNotSoldTests(TestCase):
         r = client.post('/api/v1/market/purchase/', {'item_slug': 'double-xp-7d'}, format='json')
         self.assertNotEqual(r.status_code, status.HTTP_200_OK)
         self.assertNotEqual(r.status_code, status.HTTP_201_CREATED)
+
+
+class FuelDiscountTests(TestCase):
+    """Audit, 28 October 2026: a sale was a soum-price decoration. The card
+    said "-25%" and the purchase took the full fuel price, and the badge
+    stayed up after the sale had ended. A sale now lowers the fuel price
+    while it runs, on the server and on the card alike."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='alice', email='a@e.com', password='x')
+        self.user.gamification.fuel = 1000
+        self.user.gamification.save(update_fields=['fuel'])
+        self.client = APIClient()
+        self.client.force_authenticate(self.user)
+
+    def _buy(self, item):
+        self.client.post('/api/v1/market/purchase/', {'item_slug': item.slug}, format='json')
+        self.user.gamification.refresh_from_db()
+        return 1000 - self.user.gamification.fuel
+
+    def test_a_running_sale_takes_the_reduced_price(self):
+        item = _item(cost_fuel=200, discount_percent=25,
+                     discount_end=timezone.now() + timezone.timedelta(days=1))
+        self.assertEqual(self._buy(item), 150)
+
+    def test_a_finished_sale_takes_the_full_price(self):
+        item = _item(cost_fuel=200, discount_percent=25,
+                     discount_end=timezone.now() - timezone.timedelta(days=1))
+        self.assertEqual(self._buy(item), 200)
+
+    def test_the_card_is_sent_the_price_the_purchase_will_take(self):
+        _item(cost_fuel=200, discount_percent=25,
+              discount_end=timezone.now() + timezone.timedelta(days=1))
+        rows = self.client.get('/api/v1/market/items/').data
+        rows = rows['results'] if isinstance(rows, dict) else rows
+        self.assertEqual(rows[0]['effective_cost_fuel'], 150)

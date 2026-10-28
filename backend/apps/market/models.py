@@ -151,6 +151,14 @@ class MarketItem(models.Model):
         return self.original_price or self.price
 
     @property
+    def effective_cost_fuel(self):
+        """What a purchase takes. A sale used to change only the soum figures,
+        so the card said -25% and the full fuel price was taken."""
+        if self.is_discount_active:
+            return round(self.cost_fuel * (100 - self.discount_percent) / 100)
+        return self.cost_fuel
+
+    @property
     def in_stock(self):
         return self.stock == 0 or self.stock > self.sold_count
 

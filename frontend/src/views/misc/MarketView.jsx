@@ -218,14 +218,21 @@ const MOCK_ITEMS = [
 // What our own goods cost. They used to show `price`, a soum column left over
 // from when this was a shop, while the button took `cost_fuel` -- a child saw
 // "45 000 so'm" and paid 300 fuel.
-const fuelCost = (item) => item.cost_fuel ?? 0;
+// `effective_cost_fuel` is what the purchase takes: a sale lowers it while it
+// runs. A sale used to change only the soum figures -- the card said -25% and
+// the full fuel price was taken -- and its badge outlived it.
+const fuelCost = (item) => item.effective_cost_fuel ?? item.cost_fuel ?? 0;
+const onSale = (item) => Boolean(item.is_discount_active) && !isRealProduct(item);
 
-function FuelPrice({ amount, large = false }) {
+function FuelPrice({ amount, was, large = false }) {
   const { t } = useTranslation();
   return (
-    <span className={`inline-flex items-center gap-1.5 font-[900] text-amber-300 leading-none ${large ? 'text-4xl' : 'text-xl'}`}>
+    <span className={`inline-flex items-center gap-1.5 flex-wrap font-[900] text-amber-300 leading-none ${large ? 'text-4xl' : 'text-xl'}`}>
       <Fuel className={large ? 'w-7 h-7' : 'w-4 h-4'} />
       {formatMoney(amount)}
+      {was != null && was !== amount ? (
+        <span className={`font-medium text-white/30 line-through ${large ? 'text-lg' : 'text-sm'}`}>{formatMoney(was)}</span>
+      ) : null}
       <span className={`font-[700] text-amber-200/70 ${large ? 'text-lg' : 'text-xs'}`}>{t('market', 'fuel')}</span>
     </span>
   );
@@ -345,7 +352,7 @@ function ItemCard({ item, onClick, onBuy, buying, owned }) {
               <Store className="w-3 h-3" /> {t('market', 'realProduct')}
             </span>
           )}
-          {item.discount_percent > 0 && (
+          {onSale(item) && (
             <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-lg shadow-lg w-max">
               -{item.discount_percent}%
             </span>
@@ -374,7 +381,7 @@ function ItemCard({ item, onClick, onBuy, buying, owned }) {
               {shopPrice || t('market', 'priceAtShop')}
             </span>
           ) : (
-            <FuelPrice amount={fuelCost(item)} />
+            <FuelPrice amount={fuelCost(item)} was={item.cost_fuel} />
           )}
         </div>
         
@@ -443,7 +450,7 @@ function ProductModal({ item, onClose, onBuy, buying, owned }) {
             )}
             {/* Badges */}
             <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
-              {item.discount_percent > 0 && <span className="bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg w-max">-{item.discount_percent}%</span>}
+              {onSale(item) && <span className="bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg w-max">-{item.discount_percent}%</span>}
               {item.is_bestseller && <span className="bg-orange-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 w-max"><Flame className="w-4 h-4" /> {t('market', 'bestSellers').toUpperCase()}</span>}
             </div>
           </div>
@@ -488,7 +495,7 @@ function ProductModal({ item, onClose, onBuy, buying, owned }) {
                   )}
                 </>
               ) : (
-                <FuelPrice amount={fuelCost(item)} large />
+                <FuelPrice amount={fuelCost(item)} was={item.cost_fuel} large />
               )}
 
               {real ? (
@@ -646,7 +653,7 @@ export default function MarketView() {
     .filter(item => {
       if (activeCategory !== 'all' && item.item_type !== activeCategory) return false;
       if (searchQuery && !(item.title_en.toLowerCase().includes(searchQuery.toLowerCase()) || (item.title_ru && item.title_ru.toLowerCase().includes(searchQuery.toLowerCase())))) return false;
-      if (activeFilter === 'discount' && !item.discount_percent) return false;
+      if (activeFilter === 'discount' && !onSale(item)) return false;
       if (activeFilter === 'bestseller' && !item.is_bestseller) return false;
       if (activeFilter === 'new' && !item.is_new) return false;
       return true;
@@ -654,13 +661,13 @@ export default function MarketView() {
     .sort((a, b) => {
       if (sortOrder === 'price-asc') return fuelCost(a) - fuelCost(b);
       if (sortOrder === 'price-desc') return fuelCost(b) - fuelCost(a);
-      if (sortOrder === 'discount') return (b.discount_percent || 0) - (a.discount_percent || 0);
+      if (sortOrder === 'discount') return (onSale(b) ? b.discount_percent : 0) - (onSale(a) ? a.discount_percent : 0);
       return 0;
     });
 
   // Derived sections for the Home View
   const bestSellers = items.filter(i => i.is_bestseller).slice(0, 4);
-  const wowPrices = items.filter(i => i.discount_percent > 0).sort((a,b) => b.discount_percent - a.discount_percent).slice(0, 4);
+  const wowPrices = items.filter(onSale).sort((a,b) => b.discount_percent - a.discount_percent).slice(0, 4);
   const newModels = items.filter(i => i.is_new).slice(0, 4);
   const forYou = items.slice().sort(() => 0.5 - Math.random()).slice(0, 4);
 

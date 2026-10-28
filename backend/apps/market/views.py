@@ -220,9 +220,10 @@ class PurchaseView(APIView):
                 # spend_fuel() re-reads the balance under a row lock and returns
                 # False if it is short. Checking first and debiting afterwards let
                 # two concurrent purchases both pass on the same balance.
-                if not profile.spend_fuel(item.cost_fuel):
+                cost = item.effective_cost_fuel
+                if not profile.spend_fuel(cost):
                     return Response(
-                        {'detail': f'Not enough fuel. Need {item.cost_fuel}, have {profile.fuel}.'},
+                        {'detail': f'Not enough fuel. Need {cost}, have {profile.fuel}.'},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
                 inventory = UserInventory.objects.create(user=request.user, item=item)

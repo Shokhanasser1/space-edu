@@ -314,3 +314,28 @@ describe('purchaseErrorMessage', () => {
     expect(purchaseErrorMessage(undefined, t)).toBe('t:purchaseFailed');
   });
 });
+
+describe('a sale', () => {
+  // Audit, 28 October 2026: "-25%" was a soum figure -- the purchase took the
+  // full fuel price -- and the badge stayed up after the sale had ended.
+  it('shows the fuel price the purchase will take, and the full one struck out', async () => {
+    api.get.mockResolvedValue(catalogue({
+      ...VIRTUAL_ITEM, cost_fuel: 300, effective_cost_fuel: 225,
+      discount_percent: 25, is_discount_active: true,
+    }));
+    render(<MarketView />);
+    // On sale, so it is in the sale section as well as the catalogue.
+    expect((await screen.findAllByRole('button', { name: /purchase item · 225/i })).length).toBeGreaterThan(0);
+    expect(screen.getAllByText('-25%').length).toBeGreaterThan(0);
+  });
+
+  it('shows no sale once it has ended', async () => {
+    api.get.mockResolvedValue(catalogue({
+      ...VIRTUAL_ITEM, cost_fuel: 300, effective_cost_fuel: 300,
+      discount_percent: 25, is_discount_active: false,
+    }));
+    render(<MarketView />);
+    await screen.findByRole('button', { name: /purchase item · 300/i });
+    expect(screen.queryByText('-25%')).toBeNull();
+  });
+});
