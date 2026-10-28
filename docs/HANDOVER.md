@@ -4,9 +4,11 @@
 branch and it is pushed. The deployment configuration has since been removed —
 see "The deployment is gone, on purpose" below.*
 
-*28 October 2026: deployed again, on a server of our own — `deploy/README.md`.
-The four things listed under "The deployment is gone" all came back, with
-tests (`ProductionSettingsTests`) and a CI step (`check --deploy`).*
+*28 October 2026: **live at https://space-edu.duckdns.org**, on a server of
+our own — `deploy/README.md`. The four things listed under "The deployment is
+gone" all came back, with tests (`ProductionSettingsTests`) and a CI step
+(`check --deploy`). What the pre-launch audit found and fixed is in the last
+section, "28 October 2026 — live".*
 
 ---
 
@@ -231,6 +233,10 @@ second merge from the old base would reintroduce all three of the above.
 
 | | |
 |---|---|
+| **Production database credentials** | **Kept shared on purpose, 28 October 2026.** The live site runs on the same Neon role and password as every `.env.team` (`neondb_owner`), so anyone with a team `.env` can read and change pupils' data. The owner's decision: it stays so for now, because nobody writes to the shared database without the lead's consent (`docs/TEAM.md`, rule 3). The way out is ready: a Neon branch for production, its `DB_URL` in `backend/.env.production` (git-ignored, wins over `.env` — `deploy/README.md`), then `deploy.sh env` and a release. Do it before the link goes to a whole school. |
+| **R2 and Gmail keys, `NASA_API_KEY`** | The R2 keys and the Gmail app password are in every team `.env` and have been through a chat window: rotate them. There is no NASA key on the server, so the picture of the day runs on `DEMO_KEY` and sometimes fails. |
+| **XP for the lab** | The lab used to show "+20 XP" that only the browser held; it is a tick now. Real lab XP needs a server endpoint with the list of lab missions on the server — say if it is wanted. |
+| **PR #26 (admin sign-in)** | A student's PR, reviewed: compatible with `main`, the staff check is UX only and the API enforces it. Merge or not is the lead's call. |
 | **Q1 — credential exposure** | **Closed 25 August 2026, except the key rotation.** History rewritten and **pushed** (`.git` 214 MB → 85 MB, `main` matches `origin/main`). Step 3 — GitHub still serving the old blobs by SHA — is now a **recorded accepted risk**, because the file was finally opened and read: it holds nine accounts of which six are tests and two are invented characters, nine `pbkdf2_sha256` hashes, two throwaway messages, and exactly one real personal address, the owner's own. **It contains no data belonging to a minor**; the three birth dates that suggested otherwise sit within days of their own `date_joined` and are a date picker defaulting to today. The row-by-row evidence and the conditions that would re-open this are in `docs/SECURITY-INCIDENT-2026-08-22.md`. Still genuinely open, and cheap: rotate `SECRET_KEY`, the R2 keys, `GEMINI_API_KEY` and the Neon role password by hand — all of them have been through a chat window. |
 | **B1 — review, then decide about DMs** | The moderation floor is built and DMs are **off** (`DM_ENABLED=false`). Turning them on is a product decision about a duty of care to 10-to-18-year-olds, not a code change. Before flipping it: decide who reads `GET /chat/reports/queue/` and how often, and how long a first suspension should be — the mechanism exists (`suspend_days`, 1-90, chat-scoped and time-boxed) but nobody has decided the policy. |
 
@@ -740,3 +746,57 @@ mistake later.
   the same ternary inline; it lives in one place now. The three
   `ProfileView.test.jsx` failures that only appeared on non-English machines are
   gone with it — 416 frontend tests, all passing, on a Russian-locale laptop.
+
+---
+
+## 28 October 2026 — live
+
+The site went up on a Contabo server (Ubuntu 24.04) at
+https://space-edu.duckdns.org, after an audit with the project-hardening
+procedure, Semgrep, gitleaks, npm audit, pip-audit and two independent
+reviews — one for security, one for wrong logic — and a pass in a browser at
+desktop and phone widths. Everything below has a test that failed first.
+
+**How it runs** (`deploy/README.md`): Docker Compose — gunicorn for the API,
+Caddy for the Vite build with the security headers and the CSP, Redis for
+codes and throttles — behind one shared edge Caddy that owns ports 80/443 and
+the certificates, so other projects can join the same server. `deploy.sh`
+releases a `git archive` of a commit, runs `migrate`, and keeps five releases
+for a rollback. Only the lead deploys.
+
+**Security, before launch:** `/admin/` is not served (it had no limit on
+sign-in attempts — Django admin works locally against the same database);
+Pillow 10.4 (65 advisories) and DRF 3.15 (an anonymous memory-exhaustion
+request) upgraded, npm advisories in what ships cleared; a login attempt is
+reserved atomically before the password check, so parallel guesses no longer
+multiply the budget; bodies capped and buffered by Caddy; the edge and the
+site have fixed addresses on the shared network; MediaPipe pinned; outgoing
+mail has a per-mailbox and a daily budget (`EMAIL_DAILY_LIMIT`), checked
+before a code is issued, and an address change that cannot be announced is
+refused.
+
+**Found only on the server:** the `redis` client was never in
+`requirements.txt` (no laptop had set `REDIS_URL`), so every throttled API
+call was a 500 on the first release; and `/.env` answered 200 with the app's
+own page. Both fixed the same day.
+
+**Wrong logic that pupils would have met:**
+
+- About half of the Masalalar answer key was wrong (#10 expected "12.5 m/s²"
+  for a speed). All 30 are rewritten as checked computations in three
+  languages, graded on the number.
+- Fuel stopped at 1000 while rewards cost up to 1600; the cap is gone. The
+  market showed soum prices and spent fuel on one click; it shows the fuel
+  price, asks first, and a sale really lowers it while it runs.
+- Boosts were sold and did nothing — off sale until they do.
+- No pupil could start a streak (the only button that advanced it waited for
+  it); a lesson, quiz or daily challenge counts the day now. Mission
+  progress comes from the server.
+- A lesson test passed before "complete" was thrown away; it completes and
+  masters the lesson now. A daily challenge sent just after midnight scored
+  zero. XP badges only came from lessons. The lesson page promised a reward on
+  every visit. Missions, rewards and the profile's lesson list were English
+  or raw slugs on a Uzbek page.
+- Four pages scrolled sideways on a phone.
+
+Still open is in "Open, and why" at the top.

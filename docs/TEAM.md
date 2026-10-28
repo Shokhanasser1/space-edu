@@ -19,16 +19,25 @@ code, not on the ceremony around it.
 Your whole workflow, start to finish:
 
 ```bash
+git stash                        # only if you have unsaved changes
 git pull --rebase origin main    # start from what everybody else already has
+git stash pop
 #  ... write the code, run the checks ...
-git add -A
+git add path/to/the/files/you/changed     # by name, never -A
 git commit -m "fix: the lesson page showed yesterday's progress"
 git push origin main
 ```
 
 If the push is rejected as *behind*, somebody pushed while you were working:
 `git pull --rebase origin main`, run your tests again, push again. That is the
-only failure mode of this flow, and it is thirty seconds.
+only failure mode of this flow, and it is thirty seconds. Git refuses to let a
+push overwrite anybody's work — force-pushing to `main` is blocked — so the
+only way to lose someone's code is to throw it away yourself while resolving a
+conflict.
+
+**A conflict in a file you did not edit: stop.** Do not pick "mine" or
+"theirs" to make it go away — that is how somebody's finished work disappears
+without anyone noticing. Run `git rebase --abort` and write to the lead.
 
 **What this costs, said plainly.** Nothing now stands between a broken commit
 and everybody else's clone. The check did not disappear — it moved to *after*
@@ -194,17 +203,24 @@ It also means one person can ruin everyone's afternoon.
 ### Rules
 
 1. **Only the lead runs `migrate` against the shared database, and only from
-   `main` after the migration has merged.** Test your migration locally first —
-   unset `DB_URL` and you are on your own SQLite file in seconds.
+   `main` after the migration has merged.** In practice the release does it:
+   `deploy.sh` runs `migrate` every time the lead deploys. Test your migration
+   locally first — unset `DB_URL` and you are on your own SQLite file in
+   seconds. Pull before you run `makemigrations`: a migration numbered after an
+   old `main` collides with one already merged (`courses` and `market` gained
+   0006 and 0007 on 28 October 2026).
 2. **Never run a destructive command against it.** `flush`,
    `seed_learn_content --prune`, `seed_market --fresh` (it deletes every item
    and category before writing its own), `rotate_leaked_credentials`, an
    unfiltered `delete()` in `manage.py shell`. If you are about to type one, you want your
    local database, not this one.
-3. **The live site runs on it.** Since 28 October 2026 the deployed site
-   (`deploy/README.md`) uses this same database — the owner's choice. A test
-   account you register, a lesson you half-write in the admin, a row you
-   delete: real pupils see it. Experiment on your local SQLite instead.
+3. **The live site runs on it, so nothing is written to it without the lead's
+   say-so.** Since 28 October 2026 the deployed site (`deploy/README.md`) uses
+   this same database and the same credentials as your `.env.team` — the
+   owner's choice, made on the understanding that nobody writes to it without
+   asking first. A test account you register, a lesson you half-write in the
+   admin, a seed you run, a row you delete: real pupils see it. Experiment on
+   your local SQLite instead.
 4. **Back it up before anything structural.** A month of admin-authored content
    lives only here:
 

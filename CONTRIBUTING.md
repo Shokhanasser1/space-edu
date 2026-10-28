@@ -280,8 +280,10 @@ payment mode.
 > CORS open to everyone, and the sign-in code returned in the response body.
 > That last one is a two-request takeover of any account.
 >
-> There is no deployment profile in the repository at the moment. Whatever is
-> written when one comes back has to fail closed the second way.
+> The deployment profile that came back on 28 October 2026 does it the second
+> way: `base/wsgi.py` and `base/asgi.py` — what a server runs — default to
+> `base.settings.production`, which refuses to start without a real
+> `SECRET_KEY` or a mail server; only `manage.py` defaults to development.
 
 ### C-8. Security randomness comes from `secrets`
 
@@ -489,9 +491,11 @@ Seven things. Six out of seven is not done.
 
 ## Releases and incidents
 
-There is nothing deployed right now and no deployment configuration in the
-repository — see `docs/HANDOVER.md`. These apply from the day there is one
-again, and the day it is set up is the day to read them, not after.
+The site is live at https://space-edu.duckdns.org since 28 October 2026, and
+**only the lead deploys** — `deploy/README.md` has the commands. A push to
+`main` is not a release: nothing reaches the server until the lead runs
+`deploy.sh`, and the release runs the migrations against the database the
+whole team shares.
 
 - **Never deploy on a Friday** or when the person who wrote the change is
   unreachable.

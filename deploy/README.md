@@ -47,6 +47,9 @@ Django's `/admin/` is not served: it has no limit on sign-in attempts. Staff use
 
 ## Every release
 
+Only the lead deploys: a release runs the migrations against the database the
+whole team shares, and a push to `main` is not a release on its own.
+
 ```bash
 git push origin main
 bash deploy/deploy.sh            # origin/main

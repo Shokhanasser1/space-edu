@@ -26,5 +26,8 @@ readable by every visitor.
 | `npm run check:locales` | All three locale files must carry the same keys. |
 | `npm run assets:compress` | Texture compression. Linux or WSL only — libvips fails on Windows. |
 
-There is no deployment configuration in this repository. See
-`docs/HANDOVER.md` for what has to be decided before there is one again.
+The production build is made on the server by `deploy/web.Dockerfile` and
+served by Caddy with the security headers and the Content-Security-Policy in
+`deploy/web/Caddyfile` — see `deploy/README.md`. The policy is an allow-list:
+a new script, iframe or `fetch` to another host fails silently in production
+until that host is added there.
