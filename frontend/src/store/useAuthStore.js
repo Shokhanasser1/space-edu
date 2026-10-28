@@ -6,6 +6,7 @@ import { useLearningStore } from './useLearningStore';
 import { useUserStore } from './useUserStore';
 import useStarStore from './useStarStore';
 import { useProblemsStore } from './useProblemsStore';
+import { useLikesStore } from './useLikesStore';
 
 const STORAGE_KEY = 'uz-cosmos-auth';
 
@@ -21,6 +22,9 @@ export const useAuthStore = create()(
         _resetAllStores();
         set({ user, accessToken, refreshToken, isAuthenticated: true });
         _setupAuth();
+        // Every way in, not only the password form: a Google sign-in showed
+        // 0 XP, level 1 and 100 fuel until the page was reloaded.
+        useGamificationStore.getState().pullFromServer();
       },
 
       setTokens: (accessToken, refreshToken) => {
@@ -116,6 +120,8 @@ function _resetAllStores() {
   useUserStore.getState().resetProgress();
   useStarStore.setState({ collection: [], points: 0, badges: [], starOfTheDay: null, lastDailyCheck: null });
   useProblemsStore.getState().resetProblems();
+  // The next pupil at a school computer saw the last one's liked lessons.
+  useLikesStore.setState({ likedLessons: [] });
 }
 
 function _setupAuth() {

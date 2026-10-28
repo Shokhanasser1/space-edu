@@ -55,3 +55,23 @@ describe('the two-column layout', () => {
     expect(inlineGrids).toEqual([]);
   });
 });
+
+describe('the reward window', () => {
+  // Audit, 28 October 2026: completing a lesson added 25 XP and 25 fuel in the
+  // browser and opened the reward window with confetti on every visit, a
+  // re-run included -- the server pays a re-run nothing, so the numbers then
+  // snapped back. The window shows what the server paid, and only when it paid.
+  const code = async () =>
+    (await source()).replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+
+  it('adds nothing in the browser', async () => {
+    expect(await code()).not.toMatch(/addRewards\(/);
+  });
+
+  it('opens only when the server paid something, with the amounts it paid', async () => {
+    const src = await code();
+    expect(src).toMatch(/result\.xp_earned \|\| result\.fuel_earned/);
+    expect(src).toMatch(/\+\{earned\.xp\}/);
+    expect(src).toMatch(/\+\{earned\.fuel\}/);
+  });
+});

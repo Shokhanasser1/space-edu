@@ -18,13 +18,14 @@ export default function UniversalLessonView() {
   const { t, i18n } = useTranslation();
   const { subject, topicId, subIdx, lessonIdx, partIdx } = useParams();
   const navigate = useNavigate();
-  const addRewards = useGamificationStore(s => s.addRewards);
   const pullFromServer = useGamificationStore(s => s.pullFromServer);
   const completeLessonLocal = useLearningStore(s => s.completeLesson);
   const { likeLesson, unlikeLesson, isLiked } = useLikesStore();
   
   const [completed, setCompleted] = useState(false);
   const [showRewardModal, setShowRewardModal] = useState(false);
+  // What the server actually paid: the first completion pays, a re-run pays 0.
+  const [earned, setEarned] = useState({ xp: 0, fuel: 0 });
   const [toast, setToast] = useState(null);
 
   const lessonUniqueId = `${subject}-${topicId}-${subIdx || ''}-${lessonIdx || ''}-${partIdx || ''}`;
@@ -122,39 +123,41 @@ export default function UniversalLessonView() {
     if (completed) return;
     setCompleted(true);
 
-    // Optimistic, so the counter moves at once. The server decides the real
-    // amount — this used to POST /gamification/grant/ with numbers the browser
-    // chose, and one request produced level 101.
-    addRewards(25, 25);
     completeLessonLocal(lessonUniqueId, topicId, 100, 25, {
       title: displayTitle,
       subject: subject
     });
-    setShowRewardModal(true);
 
-    let saved = false;
+    // The reward is whatever the server paid. This used to add 25 XP and 25
+    // fuel locally and show the reward window and confetti on every visit --
+    // a re-run, which pays nothing, included -- and the numbers then snapped
+    // back on the next sync (audit, 28 October 2026).
+    let result = null;
     if (lessonSlug) {
       try {
-        await api.post(`/progress/lessons/${lessonSlug}/complete/`, { score: 100 });
+        ({ data: result } = await api.post(`/progress/lessons/${lessonSlug}/complete/`, { score: 100 }));
         await pullFromServer();
-        saved = true;
       } catch {
         // Falls through to the unsaved message below.
       }
     }
 
     setToast({
-      msg: saved ? t('lesson', 'progressSaved') : t('lesson', 'progressNotSaved'),
-      type: saved ? 'success' : 'error',
+      msg: result ? t('lesson', 'progressSaved') : t('lesson', 'progressNotSaved'),
+      type: result ? 'success' : 'error',
     });
     setTimeout(() => setToast(null), 3000);
 
-    confetti({
-      particleCount: 150,
-      spread: 70,
-      origin: { y: 0.6 },
-      colors: [color, '#ffffff', '#ffd700']
-    });
+    if (result && (result.xp_earned || result.fuel_earned)) {
+      setEarned({ xp: result.xp_earned, fuel: result.fuel_earned });
+      setShowRewardModal(true);
+      confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: [color, '#ffffff', '#ffd700']
+      });
+    }
   };
 
   const handleToggleLike = () => {
@@ -438,7 +441,7 @@ export default function UniversalLessonView() {
                     filter: 'drop-shadow(0 0 8px rgba(251,191,36,0.55))',
                     textShadow: 'none',
                   }}>
-                    +25 XP &nbsp;+&nbsp; 25 COINS
+                    +25 XP &nbsp;+&nbsp; 25 {t('market', 'fuel')}
                   </span>
                 </div>
               </div>
@@ -588,12 +591,12 @@ export default function UniversalLessonView() {
               
               <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginBottom: '40px' }}>
                 <div style={{ background: 'rgba(255,255,255,0.05)', padding: '20px', borderRadius: '24px', flex: 1, border: '1px solid rgba(255,255,255,0.1)' }}>
-                  <div style={{ color: '#00e5ff', fontSize: '24px', fontWeight: 900, marginBottom: '4px' }}>+25</div>
+                  <div style={{ color: '#00e5ff', fontSize: '24px', fontWeight: 900, marginBottom: '4px' }}>+{earned.xp}</div>
                   <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '12px', textTransform: 'uppercase', fontWeight: 700 }}>XP</div>
                 </div>
                 <div style={{ background: 'rgba(255,255,255,0.05)', padding: '20px', borderRadius: '24px', flex: 1, border: '1px solid rgba(255,255,255,0.1)' }}>
-                  <div style={{ color: '#fbbf24', fontSize: '24px', fontWeight: 900, marginBottom: '4px' }}>+25</div>
-                  <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '12px', textTransform: 'uppercase', fontWeight: 700 }}>Coins</div>
+                  <div style={{ color: '#fbbf24', fontSize: '24px', fontWeight: 900, marginBottom: '4px' }}>+{earned.fuel}</div>
+                  <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '12px', textTransform: 'uppercase', fontWeight: 700 }}>{t('market', 'fuel')}</div>
                 </div>
               </div>
 

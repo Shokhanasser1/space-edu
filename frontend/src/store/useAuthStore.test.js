@@ -303,3 +303,27 @@ describe('another tab', () => {
     expect(useGamificationStore.getState().xp).toBe(0);
   });
 });
+
+describe('a new sign-in on a shared computer', () => {
+  // Audit, 28 October 2026. The password form fetched the profile after
+  // login(); the Google button did not, so a Google sign-in showed 0 XP,
+  // level 1 and 100 fuel until a reload. And the liked lessons were the one
+  // store a sign-in did not reset -- the next pupil at a school computer saw
+  // the last one's.
+  it('pulls the real balance whichever way the pupil signed in', () => {
+    api.get.mockResolvedValue({ data: { xp: 900, level: 4, fuel: 1300 } });
+
+    useAuthStore.getState().login(USER, 'access-1', 'refresh-1');
+
+    expect(api.get).toHaveBeenCalledWith('/gamification/profile/');
+  });
+
+  it('does not show the previous pupil their liked lessons', async () => {
+    const { useLikesStore } = await import('./useLikesStore');
+    useLikesStore.getState().likeLesson({ id: 'physics-1--0-', title: 'Kinematika' });
+
+    useAuthStore.getState().login(USER, 'access-1', 'refresh-1');
+
+    expect(useLikesStore.getState().likedLessons).toEqual([]);
+  });
+});
