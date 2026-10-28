@@ -83,9 +83,7 @@ export function LabMissions({ missions, prefix }) {
               </span>
               {done ? (
                 <span className="sr-only">{t('lab', 'kitMissionDone')}</span>
-              ) : (
-                <span className="shrink-0 text-[10px] font-bold text-amber-300/80">{t('lab', 'kitMissionXp')}</span>
-              )}
+              ) : null}
             </li>
           );
         })}

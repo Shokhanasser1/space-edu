@@ -9,7 +9,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { useUserStore } from '@/store/useUserStore';
-import { useGamificationStore, LAB_MISSION_XP } from '@/store/useGamificationStore';
+import { useGamificationStore } from '@/store/useGamificationStore';
 import en from '@/locales/en.json';
 import { LabExplain, LabFacts, LabMissions, LabPresets } from './LabKit';
 
@@ -24,14 +24,15 @@ describe('LabMissions', () => {
     { id: 'two', title: 'Go polar', done: false },
   ];
 
-  it('pays a finished mission once and keeps it ticked', () => {
+  it('counts a finished mission once and keeps it ticked', () => {
     const { rerender } = render(<LabMissions prefix="lab_test_" missions={missions(true)} />);
     expect(useGamificationStore.getState().labMissions).toEqual(['lab_test_one']);
-    expect(useGamificationStore.getState().xp).toBe(LAB_MISSION_XP);
-    // The reader moves away from the goal: still done, not paid again.
+    // No XP: a lab mission promised +20 that only the browser ever held.
+    expect(useGamificationStore.getState().xp).toBe(0);
+    // The reader moves away from the goal: still done, not counted again.
     rerender(<LabMissions prefix="lab_test_" missions={missions(false)} />);
     expect(screen.getByText('1 / 2')).toBeTruthy();
-    expect(useGamificationStore.getState().xp).toBe(LAB_MISSION_XP);
+    expect(useGamificationStore.getState().labMissions).toEqual(['lab_test_one']);
   });
 
   it('says so when every mission is done', () => {

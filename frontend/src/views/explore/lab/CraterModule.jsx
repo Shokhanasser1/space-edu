@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Target } from 'lucide-react';
+import { Check, Target } from 'lucide-react';
 
 import { useTranslation } from '@/hooks/useTranslation';
 import { useGamificationStore } from '@/store/useGamificationStore';
@@ -117,8 +117,10 @@ function Scientific({ value, unit }) {
 
 export function CraterImpactLab() {
   const { t } = useTranslation();
-  const trackEvent = useGamificationStore((s) => s.trackEvent);
-  const alreadyEarned = useGamificationStore((s) => s.trackedEvents.includes(GOOD_GUESS_EVENT));
+  // A lab mission, not a calendar event: `trackEvent` counted a good guess
+  // towards the astronomy-events badge and its +100 XP.
+  const completeLabMission = useGamificationStore((s) => s.completeLabMission);
+  const alreadyEarned = useGamificationStore((s) => s.labMissions.includes(GOOD_GUESS_EVENT));
 
   const [body, setBody] = useState(METEOR_CRATER.body);
   const [diameterLog, setDiameterLog] = useState(Math.log10(METEOR_CRATER.diameterM));
@@ -185,7 +187,7 @@ export function CraterImpactLab() {
   const impact = () => {
     if (prefersReducedMotion() || typeof requestAnimationFrame !== 'function') {
       setPhase('done');
-      if (goodGuess) trackEvent(GOOD_GUESS_EVENT);
+      if (goodGuess) completeLabMission(GOOD_GUESS_EVENT);
       return;
     }
     setPhase('animating');
@@ -227,14 +229,14 @@ export function CraterImpactLab() {
       }
       if (s >= FLIGHT_S + GROW_S + 0.1) {
         setPhase('done');
-        if (goodGuess) trackEvent(GOOD_GUESS_EVENT);
+        if (goodGuess) completeLabMission(GOOD_GUESS_EVENT);
         return;
       }
       frame = requestAnimationFrame(step);
     };
     frame = requestAnimationFrame(step);
     return () => cancelAnimationFrame(frame);
-  }, [phase, theta, astR, result, pxPerM, viewWidthM, goodGuess, trackEvent]);
+  }, [phase, theta, astR, result, pxPerM, viewWidthM, goodGuess, completeLabMission]);
 
   const look = BODY_LOOK[body];
   const ground = groundPath(phase === 'done' ? result.diameterM : 0, result.complex, pxPerM, viewWidthM);
@@ -400,9 +402,11 @@ export function CraterImpactLab() {
             >
               {t('lab', 'craterImpact')}
             </button>
-            <span className="px-3 py-2.5 rounded-xl text-xs font-bold text-amber-300 bg-amber-400/10 border border-amber-400/30">
-              {t('lab', alreadyEarned ? 'craterXpEarned' : 'craterXpReward')}
-            </span>
+            {alreadyEarned ? (
+              <span className="inline-flex items-center gap-1 px-3 py-2.5 rounded-xl text-xs font-bold text-emerald-300 bg-emerald-400/10 border border-emerald-400/30">
+                <Check className="w-3.5 h-3.5" aria-hidden="true" /> {t('lab', 'kitMissionDone')}
+              </span>
+            ) : null}
           </div>
 
           <div className="rounded-2xl border border-white/10 bg-black/30 p-4 text-xs leading-relaxed text-gray-300 space-y-2">

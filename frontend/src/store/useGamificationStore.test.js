@@ -20,7 +20,7 @@ vi.mock('@/lib/api', () => ({
   setupApiAuth: vi.fn(),
 }));
 
-const { useGamificationStore, LAB_MISSION_XP } = await import('./useGamificationStore');
+const { useGamificationStore } = await import('./useGamificationStore');
 
 const initial = useGamificationStore.getState();
 
@@ -143,11 +143,12 @@ describe('Laboratory missions', () => {
     useGamificationStore.setState({ xp: 0, level: 1, labMissions: [], trackedEvents: [], badges: [] }, false);
   });
 
-  it('pay once per mission', () => {
+  it('count once per mission, and promise no XP the server would wipe', () => {
     const { completeLabMission } = useGamificationStore.getState();
     expect(completeLabMission('lab_satellite_geo')).toBe(true);
     expect(completeLabMission('lab_satellite_geo')).toBe(false);
-    expect(useGamificationStore.getState().xp).toBe(LAB_MISSION_XP);
+    expect(useGamificationStore.getState().labMissions).toEqual(['lab_satellite_geo']);
+    expect(useGamificationStore.getState().xp).toBe(0);
   });
 
   it('do not count as tracked astronomical events', () => {
@@ -156,6 +157,6 @@ describe('Laboratory missions', () => {
     const state = useGamificationStore.getState();
     expect(state.trackedEvents).toEqual([]);
     expect(state.badges.some((b) => b.id === 'event_tracker')).toBe(false);
-    expect(state.xp).toBe(4 * LAB_MISSION_XP);
+    expect(state.xp).toBe(0);
   });
 });

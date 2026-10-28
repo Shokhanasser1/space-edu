@@ -5,7 +5,6 @@ import api from '@/lib/api';
 const calcLevel = (xp) => Math.floor(Math.sqrt(xp / 100)) + 1;
 
 /** XP for finishing one Laboratory mission. Optimistic and local, like the rest. */
-export const LAB_MISSION_XP = 20;
 
 const initialState = {
   xp: 0,
@@ -120,11 +119,14 @@ export const useGamificationStore = create()(
       // events and pays a Stargazer badge and +100 XP from its third entry on,
       // so lab goals routed through it handed out an astronomy-events badge
       // for moving a slider. Returns whether this call was the first.
+      //
+      // No XP: it was added here, in the browser only, and the next sync with
+      // the server wiped it -- the lab promised "+20 XP" and never kept it
+      // (audit, 28 October 2026). XP for the lab needs a server endpoint first.
       completeLabMission: (missionId) => {
         const s = get();
         if (s.labMissions.includes(missionId)) return false;
         set({ labMissions: [...s.labMissions, missionId] });
-        get().addXp(LAB_MISSION_XP);
         return true;
       },
 

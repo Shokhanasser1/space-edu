@@ -73,7 +73,9 @@ describe('predict, then impact', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: en.lab.craterImpact }));
     expect(screen.getByRole('status').textContent).toContain(en.lab.craterResultClose);
-    expect(useGamificationStore.getState().trackedEvents).toContain('lab_crater_prediction');
+    // A lab mission, not a calendar event towards the astronomy badge.
+    expect(useGamificationStore.getState().labMissions).toContain('lab_crater_prediction');
+    expect(useGamificationStore.getState().trackedEvents).not.toContain('lab_crater_prediction');
   });
 
   it('hides the crater again when an input changes', () => {
