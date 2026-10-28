@@ -55,15 +55,14 @@ class MailBudgetTests(TestCase):
         self.assertIsNone(send_verification_code('pupil@example.com'))
         self.assertTrue(check_code('pupil@example.com', sent, VERIFY_EMAIL))
 
-    def test_a_security_notice_is_never_held_back(self):
+    def test_codes_cannot_crowd_out_a_security_notice(self):
         """Filling a person's hourly budget with codes would otherwise silence
         the message telling them their address is being changed."""
         from .emails import send_email_change_notice
 
-        for _ in range(5):
+        for _ in range(8):
             send_verification_code('owner@example.com')
-        with self.settings(EMAIL_DAILY_LIMIT=5):
-            send_email_change_notice('owner@example.com', 'thief@example.com')
+        send_email_change_notice('owner@example.com', 'thief@example.com')
         self.assertEqual(mail.outbox[-1].to, ['owner@example.com'])
         self.assertIn('thief@example.com', mail.outbox[-1].body)
 
@@ -79,3 +78,53 @@ class MailBudgetTests(TestCase):
             send_password_reset_code('pupil@example.com')
         self.assertEqual(mail.outbox[-1].to, ['pupil@example.com'])
         self.assertLess(len(mail.outbox), 10)
+
+
+    def test_notices_have_a_budget_of_their_own(self):
+        """Never held back by codes, but not unlimited either: changing the
+        address over and over would otherwise mail the old one without end."""
+        from .emails import NOTICES_PER_HOUR, send_email_change_notice
+
+        for n in range(NOTICES_PER_HOUR + 3):
+            send_email_change_notice('owner@example.com', f'new{n}@example.com')
+        self.assertEqual(len(mail.outbox), NOTICES_PER_HOUR)
+
+
+@override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+class AddressChangeNoticeTests(TestCase):
+    """The notice goes to the address being left. An account can be
+    registered on somebody else's address without ever confirming it, so a
+    notice is only for an address the account has proved it owns."""
+
+    def setUp(self):
+        from django.utils import timezone
+        from rest_framework.test import APIClient
+
+        from .models import User
+
+        cache.clear()
+        self.user = User.objects.create_user(
+            username='u', email='owner@example.com', password='Str0ngPassw0rd!x')
+        self.client = APIClient()
+        self.client.force_authenticate(self.user)
+        def confirm():
+            self.user.email_verified_at = timezone.now()
+            self.user.save(update_fields=['email_verified_at'])
+        self.confirm = confirm
+
+    def _change(self, to):
+        return self.client.post('/api/v1/auth/email/change/request/',
+                                {'new_email': to, 'current_password': 'Str0ngPassw0rd!x'},
+                                format='json')
+
+    def _notices(self):
+        return [m for m in mail.outbox if m.to == ['owner@example.com']]
+
+    def test_a_confirmed_address_is_told(self):
+        self.confirm()
+        self._change('new@example.com')
+        self.assertEqual(len(self._notices()), 1)
+
+    def test_an_unconfirmed_address_is_not_mailed(self):
+        self._change('new@example.com')
+        self.assertEqual(self._notices(), [])

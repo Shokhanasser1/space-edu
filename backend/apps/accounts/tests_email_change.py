@@ -59,7 +59,12 @@ class EmailChangeRequestTests(TestCase):
         """Somebody at an unattended school computer changing the address is how
         an account is taken quietly. This is the message that reaches the person
         it belongs to while they can still do something, and there is nothing in
-        it to click or to type in anywhere."""
+        it to click or to type in anywhere. Only to a confirmed address -- see
+        tests_mail_limits.AddressChangeNoticeTests."""
+        from django.utils import timezone
+
+        self.user.email_verified_at = timezone.now()
+        self.user.save(update_fields=['email_verified_at'])
         self._ask()
         notices = [m for m in mail.outbox if m.to == ['pilot@example.com']]
         self.assertEqual(len(notices), 1)

@@ -558,11 +558,13 @@ class EmailChangeRequestView(APIView):
         user.pending_email = new_email
         user.save(update_fields=['pending_email'])
 
-        send_email_change_code(new_email)
-        if user.email:
+        issued = send_email_change_code(new_email)
+        if issued is not None and user.email and user.is_email_verified:
             # To the address being left, with no code in it and nothing to
             # click. Somebody finding out their address is being moved while
             # they can still do something about it is the whole of this message.
+            # Only to a confirmed address: an account can be registered on
+            # somebody else's address, and this would mail them on demand.
             send_email_change_notice(user.email, new_email)
 
         return Response({'pending_email': new_email})

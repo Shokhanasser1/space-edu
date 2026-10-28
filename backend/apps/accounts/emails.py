@@ -41,9 +41,11 @@ logger = logging.getLogger(__name__)
 #   (registration, a new address), because that is where a flood comes from,
 #   and sign-in codes and resets for accounts that exist keep the rest.
 #
-# A security notice (an address being changed) is never held back: filling a
-# person's budget with codes would otherwise silence the warning.
+# A security notice (an address being changed) has a per-mailbox bucket of its
+# own, so filling a person's budget with codes cannot silence the warning, and
+# it still counts toward the day.
 PER_RECIPIENT_PER_HOUR = 5
+NOTICES_PER_HOUR = 3
 NEW_ADDRESS_SHARE = 0.7
 NEW_ADDRESS_PURPOSES = {VERIFY_EMAIL, CHANGE_EMAIL}
 
@@ -73,9 +75,11 @@ def _mailbox(address):
 
 
 def _within_budget(recipient, purpose):
+    """`purpose` is a code's purpose, or None for a notice."""
     digest = hashlib.sha256(_mailbox(recipient).encode()).hexdigest()[:32]
-    if not _take(f'mail:to:{digest}', PER_RECIPIENT_PER_HOUR, 3600):
-        logger.warning('Code held back: %s messages this hour to one mailbox already', PER_RECIPIENT_PER_HOUR)
+    bucket, per_hour = ('notice', NOTICES_PER_HOUR) if purpose is None else ('to', PER_RECIPIENT_PER_HOUR)
+    if not _take(f'mail:{bucket}:{digest}', per_hour, 3600):
+        logger.warning('Mail held back: %s this hour to one mailbox already', per_hour)
         return False
 
     day = timezone.localdate().isoformat()
@@ -207,4 +211,5 @@ def send_email_change_notice(old_email, new_email):
         '',
         '— UZ COSMOS',
     ])
-    _deliver('UZ COSMOS — your address is being changed', body, old_email)
+    if _within_budget(old_email, None):
+        _deliver('UZ COSMOS — your address is being changed', body, old_email)
