@@ -54,6 +54,15 @@ The release is `git archive` of that commit, so only what is committed travels.
 On the server it is built, `migrate` runs, the containers are replaced, and the
 five newest releases are kept under `/opt/uzcosmos/releases/`.
 
+When a release changes the learn content (`courses/fixtures/learn_content.json`),
+load it once afterwards:
+
+```bash
+ssh <HOST> 'cd /opt/uzcosmos/current/deploy && docker compose exec -T api python manage.py seed_learn_content'
+```
+
+Live since 28 October 2026 at https://space-edu.duckdns.org.
+
 ## Things that will bite
 
 - **The production settings refuse to start** without a 50-character

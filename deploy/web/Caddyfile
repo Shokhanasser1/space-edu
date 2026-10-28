@@ -58,6 +58,14 @@
 		respond 404
 	}
 
+	# No file on this site starts with a dot. Without this the SPA fallback
+	# answered /.env and /.git/config with 200 and the app's own page, which
+	# every scanner reports as a leak. (ACME's /.well-known/ is the edge's.)
+	@dotfiles path_regexp /\.
+	handle @dotfiles {
+		respond 404
+	}
+
 	@django path /api/* /static/*
 	handle @django {
 		# Uploads are 2 MB at most (apps/validators.py). The whole body is read
