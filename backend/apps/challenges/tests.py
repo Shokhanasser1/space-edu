@@ -1064,3 +1064,49 @@ class StreakFromChallengesTests(TestCase):
         self.client.post(
             '/api/v1/challenges/submit/', {'answers': [{'question_id': qid, 'selected': 1}]}, format='json')
         self.assertEqual(self._streak(), 1)
+
+
+class DailyChallengeMidnightTests(TestCase):
+    """Audit, 28 October 2026: a pupil who loaded the challenge at 23:58 and
+    sent it at 00:01 was graded against the new day's questions -- every
+    answer ignored, 0 out of 5, and today's challenge used up. The page now
+    says which day's challenge it is answering, and yesterday's is accepted
+    for a few minutes after midnight."""
+
+    def setUp(self):
+        cache.clear()
+        self.user = User.objects.create_user(username='alice', email='a@e.com', password='x')
+        self.client = APIClient()
+        self.client.force_authenticate(self.user)
+        today = timezone.localdate()
+        self.yesterday_qs = [ChallengeQuestion.objects.create(
+            category='general', difficulty='easy', question=f'Y{i}',
+            options=['a', 'b', 'c', 'd'], correct_answer=2) for i in range(5)]
+        self.today_qs = [ChallengeQuestion.objects.create(
+            category='general', difficulty='easy', question=f'T{i}',
+            options=['a', 'b', 'c', 'd'], correct_answer=3) for i in range(5)]
+        self.yesterday = DailyChallenge.objects.create(date=today - timezone.timedelta(days=1))
+        self.yesterday.questions.set(self.yesterday_qs)
+        DailyChallenge.objects.create(date=today).questions.set(self.today_qs)
+
+    def _submit(self, questions, selected, **extra):
+        return self.client.post('/api/v1/challenges/submit/', {
+            'answers': [{'question_id': q.id, 'selected': selected} for q in questions], **extra,
+        }, format='json')
+
+    def test_yesterdays_challenge_sent_just_after_midnight_is_graded_as_yesterdays(self):
+        from unittest.mock import patch
+
+        with patch('apps.challenges.views.within_midnight_grace', return_value=True):
+            r = self._submit(self.yesterday_qs, 2, challenge_date=str(self.yesterday.date))
+        self.assertEqual(r.status_code, 201)
+        self.assertEqual(r.data['result']['score'], 5)
+        # ...and today's is still there to do.
+        self.assertEqual(self._submit(self.today_qs, 3).status_code, 201)
+
+    def test_outside_the_grace_minutes_it_is_todays_challenge(self):
+        from unittest.mock import patch
+
+        with patch('apps.challenges.views.within_midnight_grace', return_value=False):
+            r = self._submit(self.yesterday_qs, 2, challenge_date=str(self.yesterday.date))
+        self.assertEqual(r.data['result']['score'], 0)

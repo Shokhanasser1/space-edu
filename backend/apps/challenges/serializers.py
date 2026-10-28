@@ -86,6 +86,9 @@ class SubmitAnswersSerializer(serializers.Serializer):
         child=AnswerSerializer(), min_length=1, max_length=MAX_ANSWERS,
     )
     time_taken = serializers.IntegerField(min_value=0, max_value=86400, default=0)
+    # The day of the challenge the page loaded (DailyChallenge.date); see
+    # SubmitChallengeView for why. Optional, so older pages keep working.
+    challenge_date = serializers.DateField(required=False)
 
 
 class UserChallengeResultSerializer(serializers.ModelSerializer):

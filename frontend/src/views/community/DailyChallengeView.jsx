@@ -44,6 +44,9 @@ export default function DailyChallengeView() {
   // questions and collected a 400 at the end for their trouble.
   const [loadState, setLoadState] = useState('loading');
   const [saveFailed, setSaveFailed] = useState(false);
+  // Which day's challenge this is: sent back with the answers, so one started
+  // at 23:58 and sent at 00:01 is graded against the questions it showed.
+  const [challengeDate, setChallengeDate] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -54,6 +57,7 @@ export default function DailyChallengeView() {
         if (cancelled) return;
         const list = data.questions ?? [];
         setQuestions(list);
+        setChallengeDate(data.date ?? null);
         setTimeLimit(data.time_limit || 60);
         if (data.already_completed) setLoadState('done');
         else setLoadState(list.length ? 'ready' : 'empty');
@@ -129,6 +133,7 @@ export default function DailyChallengeView() {
     api.post('/challenges/submit/', {
       answers: collected,
       time_taken: collected.reduce((sum, a) => sum + a.time_spent, 0),
+      ...(challengeDate ? { challenge_date: challengeDate } : {}),
     })
       .then(({ data }) => {
         setResult(data.result ?? null);

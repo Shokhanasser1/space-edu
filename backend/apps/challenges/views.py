@@ -89,20 +89,36 @@ class TodayChallengeView(APIView):
         return Response(data)
 
 
+MIDNIGHT_GRACE = timezone.timedelta(minutes=15)
+
+
+def within_midnight_grace():
+    """The first minutes of the day, when yesterday's challenge may still arrive."""
+    now = timezone.localtime()
+    return now - now.replace(hour=0, minute=0, second=0, microsecond=0) < MIDNIGHT_GRACE
+
+
 class SubmitChallengeView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        serializer = SubmitAnswersSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        # Graded against the day the page loaded, for a few minutes after
+        # midnight. It was always graded against "today", so a pupil who
+        # started at 23:58 and sent at 00:01 had every answer ignored, scored
+        # 0 and lost the new day's challenge too (audit, 28 October 2026).
         challenge = DailyChallenge.get_or_create_today()
+        asked = serializer.validated_data.get('challenge_date')
+        if asked == challenge.date - timezone.timedelta(days=1) and within_midnight_grace():
+            challenge = DailyChallenge.objects.filter(date=asked).first() or challenge
 
         if UserChallengeResult.objects.filter(user=request.user, challenge=challenge).exists():
             return Response(
                 {'detail': 'You already completed today\'s challenge.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
-        serializer = SubmitAnswersSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
 
         answers = serializer.validated_data['answers']
         time_taken = serializer.validated_data.get('time_taken', 0)
