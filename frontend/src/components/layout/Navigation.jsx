@@ -6,7 +6,7 @@ import {
   ChevronDown, Menu, X, Globe,
   Zap, Trophy,
   FlaskConical, Activity, Calendar, History,
-  Gamepad2, FolderGit2, User, Star, LayoutGrid, Brain, Coins, Crown,
+  Gamepad2, FolderGit2, User, Star, LayoutGrid, Brain, Coins, Crown, Shield,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useUserStore } from "@/store/useUserStore";
@@ -42,9 +42,12 @@ const FEATURES = (t) => [
   { path: "/premium", label: t('nav', 'premium'), icon: Crown },
 ];
 
-const PROFILE_ITEMS = (t) => [
+// The admin panel is listed for staff only. Nothing on the site led to it, so
+// an administrator had to know to type the address.
+const PROFILE_ITEMS = (t, isStaff) => [
   { path: "/profile", label: t('nav', 'myProfile'), icon: User },
   { path: "/portfolio", label: t('nav', 'portfolio'), icon: FolderGit2 },
+  ...(isStaff ? [{ path: "/admin-panel", label: t('nav', 'adminPanel'), icon: Shield }] : []),
 ];
 
 // ── shared button styles ──────────────────────────────────────────────────────
@@ -177,6 +180,7 @@ export default function Navigation() {
   const [mobileSection, setMobileSection] = useState(null);
   const location = useLocation();
   const { isAuthenticated } = useAuthStore();
+  const isStaff = useAuthStore((s) => Boolean(s.user?.is_staff));
   const { language, setLanguage } = useUserStore();
   const { t, i18n } = useTranslation();
 
@@ -188,7 +192,7 @@ export default function Navigation() {
 
   const mainNav = MAIN_NAV(t);
   const features = FEATURES(t);
-  const profileItems = PROFILE_ITEMS(t);
+  const profileItems = PROFILE_ITEMS(t, isStaff);
 
   const isActive = useCallback((path) =>
     location.pathname === path || (path !== '/' && location.pathname.startsWith(path)),

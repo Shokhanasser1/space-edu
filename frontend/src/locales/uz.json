@@ -26,7 +26,8 @@
     "quiz": "Viktorina va TEST",
     "premium": "Premium",
     "myProfile": "Mening Profilim",
-    "language": "Til"
+    "language": "Til",
+    "adminPanel": "Admin panel"
   },
   "home": {
     "title": "Koinotni kashf eting",
@@ -1890,7 +1891,8 @@
     "privacyPolicy": "Maxfiylik siyosati",
     "termsOfUse": "Foydalanish shartlari",
     "sitemap": "Sayt xaritasi",
-    "allRightsReserved": "Space Edu — Barcha huquqlar himoyalangan."
+    "allRightsReserved": "Space Edu — Barcha huquqlar himoyalangan.",
+    "admin": "Admin"
   },
   "daily": {
     "challengeCompleted": "Chaqiriq Yakunlandi!",
@@ -2841,6 +2843,20 @@
     "messages": "xabar",
     "exit": "Chiqish",
     "console": "Konsol"
+  },
+  "adminLogin": {
+    "title": "Admin",
+    "highlight": "panel",
+    "subtitle": "Platformani boshqarish uchun xodim hisobi bilan kiring",
+    "emailLabel": "Email yoki foydalanuvchi nomi",
+    "passwordLabel": "Parol",
+    "submit": "Panelga kirish",
+    "fillAll": "Barcha maydonlarni to'ldiring.",
+    "notStaff": "Bu hisobda admin huquqi yo'q. Xodim hisobi bilan kiring.",
+    "signedInNotStaff": "Siz {{who}} sifatida kirgansiz, bu hisobda admin huquqi yo'q. Xodim hisobi bilan kirish uchun avval chiqing.",
+    "signOutFirst": "Chiqish",
+    "backToSite": "Saytga qaytish",
+    "footer": "Faqat xodimlar uchun"
   },
   "skyView": {
     "canvasLabel": "Siz tanlagan joy va vaqtdagi tungi osmon",
